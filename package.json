@@ -1,5 +1,5 @@
 {
-    "name": "@frankjstein/core",
+    "name": "frankjstein",
     "version": "0.1.0-alpha",
     "publishConfig": {
         "access": "public"
