@@ -85,7 +85,8 @@ jobs:
                   fi
 
             - name: 🚀 Publicar en NPM
-              run: npm publish --tag ${{ env.NPM_TAG }}
-              env:
-                  # [TEMPLATE] Asegúrate de que el token de NPM siempre se llame NPM_TOKEN en los Secrets de tu repo
-                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+              run: |
+                  # Configuramos el archivo .npmrc para que apunte al registro oficial con tu token
+                  echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+                  # Ahora ejecutamos la publicación con el tag detectado
+                  npm publish --tag ${{ env.NPM_TAG }}

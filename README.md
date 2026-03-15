@@ -121,3 +121,8 @@ document.body.append(app);
 ## 📄 Licencia
 
 Este proyecto está bajo la Licencia Apache 2.0 - mira el archivo [LICENSE](https://github.com/tuadmin/FrankJStein/blob/main/LICENSE) para más detalles.
+
+## 📜 Créditos y Reconocimientos
+
+* **Skeleton UI:** Los estilos de carga utilizados en los ejemplos de Suspense provienen de [Skeleton Screen CSS](https://github.com/nullilac/skeleton-screen-css) por nullilac (Licencia MIT).
+* **Core Engine:** FrankJStein utiliza una arquitectura nativa optimizada para el rendimiento del DOM.
