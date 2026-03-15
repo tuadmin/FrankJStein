@@ -123,8 +123,14 @@ document.body.append(app);
 FrankJStein te da un poder absoluto sobre el DOM, pero un gran poder requiere responsabilidad. Para evitar caer en "Pyramids of Doom" o en errores de Scope, te recomendamos adoptar estas prácticas:
 
 ### 1. Usa Template Literals
-En lugar de pasar strings como argumentos formales `h1("Hola")`, las etiquetas de FrankJStein soportan funciones de literales. **Usa \`strings\` directamente**: `h1\`Hola\``. 
-También puedes interpolar nodos y signals limpiamente: `h1\`Conteo: ${tags.i(signal)}\``.
+En lugar de pasar strings como argumentos formales `h1("Hello World js")`, las etiquetas de FrankJStein soportan funciones de literales. **Usa \`strings\` directamente**: 
+```js
+h1`Hello World js` 
+```
+También puedes interpolar nodos y signals limpiamente: 
+```js
+h1`Conteo: ${tags.i(signal)}`;
+```
 
 ### 2. Mini-componentes y JSDoc (Separación de Dominios)
 Cuando la UI empieza a crecer, extrae porciones de la interfaz a funciones puras. Utiliza el tipo `TuJsHtml.Types.Tags` a través de JSDoc para que tu editor mantenga el auto-completado nativo en todo lugar.
