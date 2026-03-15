@@ -36,7 +36,7 @@ jobs:
             - name: ⚙️ Configurar Node.js 25
               uses: actions/setup-node@v6
               with:
-                  node-version: "25.x"
+                  node-version: "25"
                   registry-url: "https://registry.npmjs.org/"
 
             # [TEMPLATE] Si en futuros proyectos el código NO está pre-compilado en el repositorio,
@@ -45,6 +45,21 @@ jobs:
             #   run: |
             #     npm install
             #     npm run build
+            - name: 🔍 Validar presencia del Token de NPM
+              run: |
+                  if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
+                      echo "❌ ERROR: El secreto 'NPM_TOKEN' está vacío o no existe en GitHub."
+                      echo "Asegúrate de haberlo configurado en Settings > Secrets > Actions."
+                      exit 1
+                  fi
+
+                  # Validación básica de longitud (los tokens de NPM suelen tener más de 30 caracteres)
+                  TOKEN_LEN=${#NPM_TOKEN_REF}
+                  if [ $TOKEN_LEN -lt 20 ]; then
+                      echo "⚠️ ADVERTENCIA: El token parece demasiado corto. Revisa si lo copiaste bien."
+                  fi
+              env:
+                  NPM_TOKEN_REF: ${{ secrets.NPM_TOKEN }}
 
             - name: 🗜️ Preparar y Empaquetar los Ejemplos
               run: |
