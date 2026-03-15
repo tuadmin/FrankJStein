@@ -126,3 +126,9 @@ Este proyecto está bajo la Licencia Apache 2.0 - mira el archivo [LICENSE](http
 
 * **Skeleton UI:** Los estilos de carga utilizados en los ejemplos de Suspense provienen de [Skeleton Screen CSS](https://github.com/nullilac/skeleton-screen-css) por nullilac (Licencia MIT).
 * **Core Engine:** FrankJStein utiliza una arquitectura nativa optimizada para el rendimiento del DOM.
+
+## ❤️ Apoya el proyecto
+
+Si FrankJStein te ha sido útil, considera apoyar su desarrollo. ¡Cada pequeña contribución ayuda a mantener al monstruo con vida!
+
+[![GitHub Sponsors](https://img.shields.io/badge/Sponsor_me-EA4AAA?style=for-the-badge&logo=github-sponsors&logoColor=white)](https://github.com/sponsors/tuadmin)
