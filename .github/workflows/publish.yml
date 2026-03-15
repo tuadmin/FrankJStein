@@ -104,4 +104,4 @@ jobs:
                   # Crear .npmrc localmente
                   echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
                   # Forzamos la publicación. Si es la primera vez, a veces ayuda usar --access public
-                  npm publish --tag ${{ env.NPM_TAG }} --access public
+                  npm publish --tag ${{ env.NPM_TAG }} --provenance --access public
