@@ -1,0 +1,91 @@
+name: Build, Release y Publicar
+
+on:
+    push:
+        tags:
+            - "v*"
+
+permissions:
+    contents: write
+
+jobs:
+    release-and-publish:
+        runs-on: ubuntu-latest
+
+        steps:
+            # --- 🛡️ EL GUARDIA DE SEGURIDAD ---
+            - name: 🛡️ Validar formato estricto del Tag (SemVer)
+              run: |
+                  TAG="${{ github.ref_name }}"
+                  # Regex que exige vX.Y.Z y prohíbe ceros a la izquierda (ej: v00.1.0 fallará)
+                  # Acepta opcionalmente sufijos con guion (ej: -alpha.1, -rc.2)
+                  REGEX="^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[a-zA-Z0-9.-]+)?$"
+
+                  if [[ ! $TAG =~ $REGEX ]]; then
+                    echo "❌ ERROR FATAL: El tag '$TAG' tiene un error tipográfico."
+                    echo "Debe seguir el formato estricto: vX.Y.Z o vX.Y.Z-texto (Ej: v0.1.0 o v1.0.0-beta.1)"
+                    echo "El flujo se detiene aquí para evitar el caos."
+                    exit 1 # Esto cancela todo el Workflow instantáneamente
+                  fi
+                  echo "✅ Tag '$TAG' validado correctamente. ¡Avanzando!"
+
+            # --- 📥 CONTINÚA EL FLUJO NORMAL ---
+            - name: 📥 Checkout del código
+              uses: actions/checkout@v5
+
+            - name: ⚙️ Configurar Node.js 25
+              uses: actions/setup-node@v6
+              with:
+                  node-version: "25.x"
+                  registry-url: "https://registry.npmjs.org/"
+
+            # [TEMPLATE] Si en futuros proyectos el código NO está pre-compilado en el repositorio,
+            # descomenta esto para que GitHub compile la carpeta 'dist/' automáticamente.
+            # - name: 📦 Compilar proyecto
+            #   run: |
+            #     npm install
+            #     npm run build
+
+            - name: 🗜️ Preparar y Empaquetar los Ejemplos
+              run: |
+                  # 1. Copiamos el motor ya compilado directamente a la carpeta de ejemplos
+                  # [TEMPLATE] Cambia 'dist/frankjstein.js' por el archivo principal de tu futuro proyecto
+                  cp dist/frankjstein.js examples/frankjstein.js
+
+                  # 2. Reemplazamos las rutas relativas de desarrollo por rutas locales
+                  # [TEMPLATE] Cambia '../dist/frankjstein.js' por la ruta que uses en tu código fuente futuro
+                  find examples/ -type f \( -name "*.html" -o -name "*.js" \) -exec sed -i 's|../dist/frankjstein.js|./frankjstein.js|g' {} +
+
+                  # 3. Comprimimos la carpeta modificada
+                  # [TEMPLATE] Cambia 'ejemplos-frankjstein.zip' por el nombre de tu futuro proyecto
+                  zip -r ejemplos-frankjstein.zip examples/
+
+            - name: 📢 Crear GitHub Release y Adjuntar Archivos
+              uses: softprops/action-gh-release@v2
+              with:
+                  generate_release_notes: true
+                  # [TEMPLATE] Aquí listas los archivos que se adjuntarán a la pestaña de Releases de GitHub
+                  files: |
+                      dist/frankjstein.js
+                      dist/frankjstein.d.ts
+                      ejemplos-frankjstein.zip
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: 🕵️‍♂️ Detectar tipo de versión para NPM
+              id: check-version
+              run: |
+                  # [TEMPLATE] Esta lógica funciona para cualquier proyecto que use package.json
+                  VERSION=$(node -p "require('./package.json').version")
+                  echo "Publicando versión: $VERSION"
+                  if [[ "$VERSION" == *"-"* ]]; then
+                    echo "NPM_TAG=next" >> $GITHUB_ENV
+                  else
+                    echo "NPM_TAG=latest" >> $GITHUB_ENV
+                  fi
+
+            - name: 🚀 Publicar en NPM
+              run: npm publish --tag ${{ env.NPM_TAG }}
+              env:
+                  # [TEMPLATE] Asegúrate de que el token de NPM siempre se llame NPM_TOKEN en los Secrets de tu repo
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
