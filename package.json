@@ -1,6 +1,6 @@
 {
     "name": "frankjstein",
-    "version": "0.1.0",
+    "version": "0.1.0-alpha",
     "description": "Fragment Reactive Async Node Kit JavaScript Suspense Tree Engine Integrated Natively",
     "main": "dist/frankjstein.js",
     "types": "dist/frankjstein.d.ts",
