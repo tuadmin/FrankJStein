@@ -1,4 +1,8 @@
-# 🧟‍♂️ FrankJStein
+<p align="center">
+  <img src="./assets/logo-full.svg" alt="FrankJStein Framework Logo" width="500" />
+</p>
+
+# FrankJStein
 
 > **F**ragment **R**eactive **A**sync **N**ode **K**it **J**avaScript **S**uspense **T**ree **E**ngine **I**ntegrated **N**atively
 
@@ -35,47 +39,48 @@ import { TuJsHtml, ELEMENT_UTIL, createSignal } from "frankjstein";
 Aquí tienes un ejemplo de lo fácil que es crear una interfaz que consume datos asíncronos con un estado de carga (Fallback) integrado:
 
 ```javascript
-import { TuJsHtml, ELEMENT_UTIL } from "frankjstein";
+import { TuJsHtml } from "frankjstein";
 
 const app = new TuJsHtml(function (tags) {
-    const { main, h1, p, button, hr } = tags;
-    const { "div.user-card": userCard, "span.badge": badge } = tags;
+    const { main, h1, p, hr } = tags;
+    // ❌ Error común: Desestructurar etiquetas que se usarán post-await en el scope global.
+    // const { "div.user-card": userCard } = tags; 
 
     main({ style: { padding: "20px", fontFamily: "sans-serif" } });
-    h1("Panel de Usuario");
-    p("Ejemplo básico de asincronía con Frank J. Stein");
+    h1`Panel de Usuario`;
+    p`Ejemplo básico de asincronía con Frank J. Stein`;
     hr();
 
-    // Fragmento Asíncrono ($f) con Suspense integrado
-    tags.$f(async ({ h2, ul, li }) => {
+    // Fragmento Asíncrono ($fragment) con Suspense integrado
+    // ✅ Siempre desestructura desde los 'tags' internos pasados al callback
+    tags.$fragment(async ({ h2, ul, "div.user-card": userCard, "span.badge": badge, button }) => {
         
         // Simulamos una petición fetch que tarda 2 segundos
         await new Promise(resolve => setTimeout(resolve, 2000));
 
-        userCard(({ div }) => {
-            h2("Frank Stein");
+        userCard(() => {
+            h2`Frank Stein`;
             badge({ style: { backgroundColor: "green", color: "white" } }, "Online");
             
             ul(({ li }) => {
-                li("Rol: Desarrollador Frontend");
-                li("Nivel: Dios del DOM");
+                li`Rol: Desarrollador Frontend`;
+                li`Nivel: Dios del DOM`;
             });
         });
 
-        const btn = button("Saludar");
-        btn[ELEMENT_UTIL].on("click", () => alert("¡Está vivo!"));
+        const btn = button`Saludar`;
+        btn.addEventListener("click", () => alert("¡Está vivo!"));
 
     }, 
     // Fallback: Lo que el usuario ve mientras la promesa se resuelve
     function fallback({ div, p, i }) {
         div({ className: "loading-skeleton" }, ({ p, i }) => {
-            p( i("Cargando datos del usuario, por favor espera...") );
+            p(i`Cargando datos del usuario, por favor espera...`);
         });
     });
 });
 
 document.body.append(app);
-
 ```
 
 ## ⚡ Reactividad Granular con Signals (KageBunshin)
@@ -85,7 +90,7 @@ El corazón reactivo de **Frank J. Stein** está potenciado por su propia librer
 ### Ejemplo: Un Contador Reactivo Simple
 
 ```javascript
-import { TuJsHtml, ELEMENT_UTIL, createSignal } from "frankjstein";
+import { TuJsHtml, ELEMENT_UTIL as $, createSignal } from "frankjstein";
 
 const app = new TuJsHtml(function (tags) {
     const { div, h3, p, button, span } = tags;
@@ -94,16 +99,16 @@ const app = new TuJsHtml(function (tags) {
     const contador = createSignal(0);
 
     div({ style: { padding: "15px", border: "1px solid #ddd", borderRadius: "8px" } }, () => {
-        h3("Prueba de Reactividad KageBunshin");
+        h3`Prueba de Reactividad KageBunshin`;
         
-        // 2. Pasamos el signal directamente al nodo.
+        // 2. Pasamos el signal directamente interpolado en literales.
         // El DOM se actualizará solo aquí cuando el valor cambie.
-        p("Has hecho clic ", span({ style: { fontWeight: "bold", color: "blue" } }, contador), " veces.");
+        p`Has hecho clic ${span({ style: { fontWeight: "bold", color: "blue" } }, contador)} veces.`;
 
         // 3. Mutamos el valor desde un evento
-        const btnIncrementar = button("Incrementar +1");
+        const btnIncrementar = button`Incrementar +1`;
         
-        btnIncrementar[ELEMENT_UTIL].on("click", () => {
+        btnIncrementar[$].on("click", () => {
             // El framework detecta la mutación y actualiza solo el 'span'
             contador.value = contador.value + 1; 
         });
@@ -111,8 +116,37 @@ const app = new TuJsHtml(function (tags) {
 });
 
 document.body.append(app);
-
 ```
+
+## 🧠 Filosofía y Buenas Prácticas
+
+FrankJStein te da un poder absoluto sobre el DOM, pero un gran poder requiere responsabilidad. Para evitar caer en "Pyramids of Doom" o en errores de Scope, te recomendamos adoptar estas prácticas:
+
+### 1. Usa Template Literals
+En lugar de pasar strings como argumentos formales `h1("Hola")`, las etiquetas de FrankJStein soportan funciones de literales. **Usa \`strings\` directamente**: `h1\`Hola\``. 
+También puedes interpolar nodos y signals limpiamente: `h1\`Conteo: ${tags.i(signal)}\``.
+
+### 2. Mini-componentes y JSDoc (Separación de Dominios)
+Cuando la UI empieza a crecer, extrae porciones de la interfaz a funciones puras. Utiliza el tipo `TuJsHtml.Types.Tags` a través de JSDoc para que tu editor mantenga el auto-completado nativo en todo lugar.
+
+```javascript
+/**
+ * @param {TuJsHtml.Types.Tags} tags 
+ * @param {number} id 
+ */
+function renderProductCard({ "div.card": card, img, p, b }, id) {
+    card(() => {
+        img({ src: `https://picsum.photos/200?random=${id}` });
+        b(`Producto #${id}`);
+        p`Precio: $${(id * 15.5).toFixed(2)}`;
+    });
+}
+```
+
+### 3. El Gotcha del "Contexto Asíncrono"
+El motor inyecta nodos de forma secuencial síncrona mediante un "cursor" interno. Si cruzas un `await` en un fragmento asíncrono e intentas utilizar una etiqueta desestructurada *antes* de ese await (en el scope global), perderás el contexto y se inyectará en la raíz del documento. 
+
+**Solución**: Siempre que uses `$fragment`, desestructura los recursos visuales utilizando el objeto inyectado **dentro del callback asíncrono**. No declares componentes visuales por fuera de su scope temporal si planeas cruzarlos mediante asincronías.
 
 ## 🤝 Contribuir
 
