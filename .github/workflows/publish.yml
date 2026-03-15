@@ -101,7 +101,7 @@ jobs:
 
             - name: 🚀 Publicar en NPM
               run: |
-                  # Crear .npmrc localmente
-                  echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+                  # Crear .npmrc localmente                 
+                  npm config set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
                   # Forzamos la publicación. Si es la primera vez, a veces ayuda usar --access public
                   npm publish --tag ${{ env.NPM_TAG }} --provenance --access public
