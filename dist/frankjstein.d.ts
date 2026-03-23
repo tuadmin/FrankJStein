@@ -1303,30 +1303,52 @@ type ExecuteAfterRender = () => void;
  */
 type TuJsHtml_Tags = {
   /**
-   * Propiedad especial que, cuando se desestructura en un callback de tag,
-   * proporciona un objeto de almacenamiento local para el elemento actual.
-   * Por defecto, usa un Symbol como clave interna para el padre44.
-   *
-   * @example sdada
+   * Proporciona acceso a un objeto de almacenamiento local persistente vinculado al elemento.
+   * El almacén se inicializa como un objeto puro (`Object.create(null)`), lo que garantiza 
+   * que no existan propiedades heredadas del prototipo que puedan colisionar con tus datos.
+   * Los datos en el `$store` sobreviven a los ciclos de re-renderizado del bloque o fragmento,
+   * permitiendo mantener el estado interno (contadores, flags, caches) de forma privada.
+   * @returns {StoreObject} Un objeto JavaScript plano vinculado internamente al elemento mediante un Symbol.
+   * @example 
    * tags.div(({p, $store}) => { $store.count = 0; p`${$store.count}`; });
    * const root = tags.div(({p, "$store:__customVar":vars}) => { vars.count = 0; p`${root.__customVars.count}`; });
+   * 
+   * @example 
+   * // Uso básico: $store comparte el almacenamiento por defecto del elemento.
+   * tags.div(({p, $store}) => { 
+   * $store.count ??= 0; // Inicialización persistente
+   * tags.button({ onclick: () => $store.count++ }, "Incrementar");
+   * p`Contador local: ${$store.count}`; 
+   * });
+   * @example
+   * // Uso avanzado con prefijos: permite separar diferentes contextos de datos (Namespacing).
+   * tags.div(({p, "$store:config": conf, "$store:stats": stats}) => { 
+   * conf.theme = 'dark';
+   * stats.views = (stats.views || 0) + 1;
+   * p`Vistas de este nodo: ${stats.views}`;
+   * });
+   * @example
+   * // Uso con espacios de nombres (Namespacing) para organizar múltiples estados.
+   * tags.section(({ "$store:ui": ui, "$store:data": data }) => { 
+   * ui.collapsed = true;
+   * data.items = [...];
+   * });
    */
   $store: StoreProperty;
   /**
-   * Propiedad especial que, cuando se desestructura en un callback de tag,
-   * proporciona un objeto de almacenamiento local para el elemento actual.
-   * Por defecto, usa un Symbol como clave interna para el padre.
-   *
-   * @example sdada
+   * Acceso dinámico a almacenes con nombre específico.
+   * Permite segmentar la lógica de persistencia dentro de un mismo elemento.
+   * @example 
    * tags.div(({p, $store}) => { $store.count = 0; p`${$store.count}`; });
    * const root = tags.div(({p, "$store:__customVar":vars}) => { vars.count = 0; p`${root.__customVars.count}`; });
    */
   [key: `$store:${string}`]: StoreProperty;
 
   /**
-   * Observa un objeto para detectar cambios y ejecuta un callback de renderizado dinámico.
+   * Crea un fragmento reactivo con soporte para renderizado asíncrono.
+   * Ideal para envolver lógica que requiere `await` (como peticiones Fetch).
    * 
-   * @param {(tags: TuJsHtml_Tags) => void} callbackRender - Función que define el contenido a renderizar.
+   * @param {(tags: TuJsHtml_Tags) => (void | Promise<void>)} callbackRender - Función que define el contenido a renderizar.
    *        Recibe como argumento el conjunto de etiquetas extendidas (`tags`).
    * @param {(tags: TuJsHtml_Tags)=> void|ExecuteAfterRender} callbackRenderFallback - Función que define el contenido a renderizar.
    *        Recibe como argumento el conjunto de etiquetas extendidas (`tags`).
@@ -1344,15 +1366,15 @@ type TuJsHtml_Tags = {
    * 
    */
   $fragment: (
-    callbackRender: (tags: TuJsHtml_Tags) => void,
+    callbackRender: (tags: TuJsHtml_Tags) => (void | Promise<void>),
     callbackRenderFallback?: (tags: TuJsHtml_Tags) => void | ExecuteAfterRender
   ) => TuJsHtml;
   /**
-   * Alias .$fragment
+   * Alias de {@link $fragment}
+   * Crea un fragmento reactivo con soporte para renderizado asíncrono.
+   * Ideal para envolver lógica que requiere `await` (como peticiones Fetch).
    * 
-   * Observa un objeto para detectar cambios y ejecuta un callback de renderizado dinámico.
-   * 
-   * @param {(tags: TuJsHtml_Tags) => void} callbackRender - Función que define el contenido a renderizar.
+   * @param {(tags: TuJsHtml_Tags) => (void | Promise<void>)} callbackRender - Función que define el contenido a renderizar.
    *        Recibe como argumento el conjunto de etiquetas extendidas (`tags`).
    * @param {(tags: TuJsHtml_Tags)=> void|ExecuteAfterRender} callbackRenderFallback - Función que define el contenido a renderizar.
    *        Recibe como argumento el conjunto de etiquetas extendidas (`tags`).
@@ -1370,12 +1392,13 @@ type TuJsHtml_Tags = {
    * 
    */
   $f: (
-    callbackRender: (tags: TuJsHtml_Tags) => void,
+    callbackRender: (tags: TuJsHtml_Tags) => (void | Promise<void>),
     callbackRenderFallback?: (tags: TuJsHtml_Tags) => void | ExecuteAfterRender
   ) => TuJsHtml;
 
   /**
-   * Observa un objeto para detectar cambios y ejecuta un callback de renderizado dinámico.
+   * Crea un bloque de renderizado vinculado a la reactividad de un objeto o Signal.
+   * El contenido se re-renderiza automáticamente cuando las propiedades del objeto cambian.
    * 
    * @param {object} variable - El objeto que será observado para detectar cambios.
    * @param {(tags: TuJsHtml_Tags) => void} callbackRender - Función que define el contenido a renderizar.
@@ -1405,6 +1428,22 @@ type TuJsHtml_Tags = {
     callbackRender: (tags: TuJsHtml_Tags) => void,
     callbackRenderFallback?: (tags: TuJsHtml_Tags) => void | ExecuteAfterRender
   ) => TuJsHtml;
+  /**
+   * 
+   * Genera una plantilla estática en un DocumentFragment independiente.
+   * A diferencia de `$block` o `$fragment`, este contenido no se enlaza al ciclo de vida reactivo del root; 
+   * simplemente devuelve los nodos para ser insertados manualmente.
+   * @param {(tags: TuJsHtml_Tags) => void} callbackRender - Función que define el contenido a renderizar.
+   * @returns {DocumentFragment} Un fragmento de DOM nativo y estático (ligero).
+   * @example 
+   * const miMolde = tags.$tpl( ({h1}) => {
+   *     h1`Elemento de plantilla estático`;
+   * });
+   * document.body.appendChild(miMolde);
+   */
+  $tpl: (
+    callbackRender: (tags: TuJsHtml_Tags) => void
+  ) => DocumentFragment;
   //$block: (variable: object, callbackRender: (tags: TuJsHtml_Tags) => void) => () => void;
 
   /**
@@ -1414,7 +1453,7 @@ type TuJsHtml_Tags = {
    */
 
   //[key: string]: RecursiveTag | Function;
-  /**
+  /* *
    * Este es un documentFragment y su contenido no se agregar automaticamente, sino que devolver el documentFragment para ser insertado en otro Elemento
    * @deprecated use TuJsHtml.$block or document.createDocumentFragment()[ELEMENT_UTIL].append((...args:RecursiveNode[]) => void)
    * @example
@@ -1423,7 +1462,7 @@ type TuJsHtml_Tags = {
    *     p`This is inside a div`;
    * });
    */
-  fragment: (...args: RecursiveNode$1[]) => DocumentFragment;
+  //fragment: (...args: RecursiveNode[]) => DocumentFragment;
 
   /**
    * Representa una etiqueta `<div>`. Las etiquetas div son contenedores de bloque
