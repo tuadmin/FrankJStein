@@ -1114,7 +1114,7 @@ interface DialogController{
 /// <reference lib="dom" />
 
 // --- TuJsHtml.d.ts ---
-type EventOff = ()=>void;
+type EventOff = () => void;
 // Solo declaraciones de la clase y sus métodos (sin implementación)
 // export declare class TuadminHtmlElement extends HTMLElement {
 //   // Definir la firma del método `on`
@@ -1137,13 +1137,13 @@ declare class ElementUtil$<TBaseElement extends HTMLElement = HTMLElement> {
 
   // Definir la firma del método `off`
   off(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => any): this;
-  configure(configureObject:ConfigureAttributes<TBaseElement>):this;
-  tags:TuJsHtml_Tags;
+  configure(configureObject: ConfigureAttributes<TBaseElement>): this;
+  tags: TuJsHtml_Tags;
 }
-declare global{
+declare global {
   interface SuperElementProperties {
-      [ELEMENT_UTIL]: ElementUtil$;
-      // ... cualquier otra cosa que añada tu framework a cada elemento
+    [ELEMENT_UTIL]: ElementUtil$;
+    // ... cualquier otra cosa que añada tu framework a cada elemento
   }
 }
 
@@ -1169,19 +1169,19 @@ type SuperElementClass<TBaseElement extends HTMLElement> = TBaseElement & SuperE
  * Esto ayuda a TypeScript a discriminar.
  */
 interface FunctionLike {
-    call(...args: any[]): any;
-    apply(thisArg: any, args?: any): any;
-    (...args: any[]): any; // Para que sea llamable
+  call(...args: any[]): any;
+  apply(thisArg: any, args?: any): any;
+  (...args: any[]): any; // Para que sea llamable
 }
 /**
  * Tipo que representa un objeto que estructuralmente se parece a un Node
  * por tener propiedades como 'nodeType' y 'childNodes'.
  */
 interface InstanceNode {
-    readonly ATTRIBUTE_NODE: number;
-    //readonly childNodes: NodeListOf<Node>;
-    // Puedes añadir más propiedades distintivas aquí si lo necesitas,
-    // ej: 'ownerDocument', 'tagName', 'parentElement'
+  readonly ATTRIBUTE_NODE: number;
+  //readonly childNodes: NodeListOf<Node>;
+  // Puedes añadir más propiedades distintivas aquí si lo necesitas,
+  // ej: 'ownerDocument', 'tagName', 'parentElement'
 }
 
 
@@ -1191,7 +1191,7 @@ interface InstanceNode {
  * Tipo que define los nodos posibles que pueden ser pasados a las funciones de tags.
  * Pueden ser elementos HTML, nodos de texto, o funciones.
  */
-type RecursiveNode$1 = Node | Function  | TuJsHtml_Callback | SuperElementClass<HTMLElement>|string|number;
+type RecursiveNode$1 = Node | Function | TuJsHtml_Callback | SuperElementClass<HTMLElement> | string | number;
 //export type RecursiveNode = Node | Function  | TuJsHtml_Callback | SuperElementClass<HTMLElement>;
 //el object impide o hace confundir 
 //export type RecursiveNode = Node | Function | Object | TuJsHtml_Callback | SuperElementClass<HTMLElement>;
@@ -1226,14 +1226,14 @@ type RecursiveNode$1 = Node | Function  | TuJsHtml_Callback | SuperElementClass<
 //     (SuperElementClassArg: SuperElementClass<HTMLElement>,...args: RecursiveNode[]): SuperElementClass<TElement>;
 //     //(firstArg: ConfigureAttributes<TElement>): SuperElementClass<TElement>;
 // }
-declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(configArg:ConfigureAttributes<TElement>, ...args: RecursiveNode$1[]):SuperElementClass<TElement>;
-declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(tuJsHtmlInstance?:TuJsHtml_Callback<TElement>, ...args: RecursiveNode$1[]):SuperElementClass<TElement>;
-declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(element?:SuperElementClass<HTMLElement> , ...args: RecursiveNode$1[]):SuperElementClass<TElement>;
-declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(nodeElement?:InstanceNode , ...args: RecursiveNode$1[]):SuperElementClass<TElement>;
-declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(callback?:FunctionLike , ...args: RecursiveNode$1[]):SuperElementClass<TElement>;
-declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(templateStringLiteral: TemplateStringsArray , ...args: RecursiveNode$1[]):SuperElementClass<TElement>;
-declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(configArg:ConfigureAttributes<TElement>):SuperElementClass<TElement>;
-declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(firstArg?:string|number, ...args: RecursiveNode$1[]):SuperElementClass<TElement>;
+declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(configArg: ConfigureAttributes<TElement>, ...args: RecursiveNode$1[]): SuperElementClass<TElement>;
+declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(tuJsHtmlInstance?: TuJsHtml_Callback<TElement>, ...args: RecursiveNode$1[]): SuperElementClass<TElement>;
+declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(element?: SuperElementClass<HTMLElement>, ...args: RecursiveNode$1[]): SuperElementClass<TElement>;
+declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(nodeElement?: InstanceNode, ...args: RecursiveNode$1[]): SuperElementClass<TElement>;
+declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(callback?: FunctionLike, ...args: RecursiveNode$1[]): SuperElementClass<TElement>;
+declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(templateStringLiteral: TemplateStringsArray, ...args: RecursiveNode$1[]): SuperElementClass<TElement>;
+declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(configArg: ConfigureAttributes<TElement>): SuperElementClass<TElement>;
+declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(firstArg?: string | number, ...args: RecursiveNode$1[]): SuperElementClass<TElement>;
 
 
 type RecursiveTagFunction<TElement extends HTMLElement> = typeof RecursiveTag$1<TElement>;
@@ -1258,7 +1258,7 @@ interface StoreObject {
    *             => { vars.count = 0; p`${root.__customVars.count}`; 
    * });
    */
-  [key: string ]: any;
+  [key: string]: any;
 }
 // export type RecursiveTag<TElement extends HTMLElement = HTMLElement> =
 //     (firstArg: ConfigureAttributes<TElement> | RecursiveNode, ...args: RecursiveNode[]) => SuperElementClass<TElement>;
@@ -1283,19 +1283,19 @@ type StoreProperty = StoreObject;
 type SelectorPrefix = '.' | '#' | '[' | '{';
 // inspirado en Emmet
 type DynamicTagPatterns_emmet = {
-    [key: `input${SelectorPrefix}${string}`]:RecursiveTagFunction<HTMLInputElementExtended>;
+  [key: `input${SelectorPrefix}${string}`]: RecursiveTagFunction<HTMLInputElementExtended>;
 }
-&{
+  & {
   // K es la clave final generada (por ejemplo, 'div.clase', 'a#id')
-  [Tag in keyof HTMLElementTagNameMap as 
-    // Itera sobre el nombre del tag (P)
-    Tag extends Tag ? // Truco para forzar la distribución de la unión de claves
-      // Genera las claves de patrón: TagName + Prefix + string
-      `${Tag}${SelectorPrefix}${string}`
-    : never
+  [Tag in keyof HTMLElementTagNameMap as
+  // Itera sobre el nombre del tag (P)
+  Tag extends Tag ? // Truco para forzar la distribución de la unión de claves
+  // Genera las claves de patrón: TagName + Prefix + string
+  `${Tag}${SelectorPrefix}${string}`
+  : never
   ]: RecursiveTagFunction<HTMLElementTagNameMap[Tag]>;
 }
-type ExecuteAfterRender = ()=>void;
+type ExecuteAfterRender = () => void;
 /**
  * Interfaz para representar las etiquetas HTML5 extendidas.
  * Esta interfaz incluye etiquetas HTML5 comunes, como div, p, h1, pre, code, etc.,
@@ -1322,7 +1322,7 @@ type TuJsHtml_Tags = {
    * const root = tags.div(({p, "$store:__customVar":vars}) => { vars.count = 0; p`${root.__customVars.count}`; });
    */
   [key: `$store:${string}`]: StoreProperty;
-  
+
   /**
    * Observa un objeto para detectar cambios y ejecuta un callback de renderizado dinámico.
    * 
@@ -1343,19 +1343,35 @@ type TuJsHtml_Tags = {
    * });
    * 
    */
-  $fragment: ( 
+  $fragment: (
     callbackRender: (tags: TuJsHtml_Tags) => void,
-    callbackRenderFallback?: (tags: TuJsHtml_Tags) => void|ExecuteAfterRender
+    callbackRenderFallback?: (tags: TuJsHtml_Tags) => void | ExecuteAfterRender
   ) => TuJsHtml;
   /**
    * Alias .$fragment
-   * @param callbackRender 
-   * @param callbackRenderFallback? 
-   * @returns 
+   * 
+   * Observa un objeto para detectar cambios y ejecuta un callback de renderizado dinámico.
+   * 
+   * @param {(tags: TuJsHtml_Tags) => void} callbackRender - Función que define el contenido a renderizar.
+   *        Recibe como argumento el conjunto de etiquetas extendidas (`tags`).
+   * @param {(tags: TuJsHtml_Tags)=> void|ExecuteAfterRender} callbackRenderFallback - Función que define el contenido a renderizar.
+   *        Recibe como argumento el conjunto de etiquetas extendidas (`tags`).
+   * 
+   * @returns {TuJsHtml}
+   * 
+   * @example
+   * const bloque = tags.$fragment(async  function (tags) {
+   *     tags.h3`Ejemplo de título dinámico`;
+   *     await new Promise(finish=>setTimeout(finish,1000))
+   *     tags.p`Contenido dinámico: ${new Date()}`;
+   * },function fallbackView(tags){
+   *    tags.h3`Esperando....`;
+   * });
+   * 
    */
-  $f: ( 
+  $f: (
     callbackRender: (tags: TuJsHtml_Tags) => void,
-    callbackRenderFallback?: (tags: TuJsHtml_Tags) => void|ExecuteAfterRender
+    callbackRenderFallback?: (tags: TuJsHtml_Tags) => void | ExecuteAfterRender
   ) => TuJsHtml;
 
   /**
@@ -1385,29 +1401,29 @@ type TuJsHtml_Tags = {
    *     variable.title = 'Nuevo título dinámico';
    * }, 2000);
    */
-  $block: (variable: object|null, 
+  $block: (variable: object | null,
     callbackRender: (tags: TuJsHtml_Tags) => void,
-    callbackRenderFallback?: (tags: TuJsHtml_Tags) => void|ExecuteAfterRender
-  ) => TuJsHtml;  
+    callbackRenderFallback?: (tags: TuJsHtml_Tags) => void | ExecuteAfterRender
+  ) => TuJsHtml;
   //$block: (variable: object, callbackRender: (tags: TuJsHtml_Tags) => void) => () => void;
-  
+
   /**
    * Representa cualquier etiqueta o nodo genérico que pueda ser usado
    * dentro de la función recursiva. Puede aceptar cualquier tipo de argumento.
    * Esta es la etiqueta genérica y flexible.
    */
-  
+
   //[key: string]: RecursiveTag | Function;
   /**
    * Este es un documentFragment y su contenido no se agregar automaticamente, sino que devolver el documentFragment para ser insertado en otro Elemento
-   * 
+   * @deprecated use TuJsHtml.$block or document.createDocumentFragment()[ELEMENT_UTIL].append((...args:RecursiveNode[]) => void)
    * @example
    * const tpl = fragment( function({p,h1}) {
    *     h1`Template`
    *     p`This is inside a div`;
    * });
    */
-  fragment:(...args: RecursiveNode$1[])=>DocumentFragment;
+  fragment: (...args: RecursiveNode$1[]) => DocumentFragment;
 
   /**
    * Representa una etiqueta `<div>`. Las etiquetas div son contenedores de bloque
@@ -1419,7 +1435,7 @@ type TuJsHtml_Tags = {
    *     p`This is inside a div`;
    * });
    */
-  div:RecursiveTagFunction<HTMLDivElement>;
+  div: RecursiveTagFunction<HTMLDivElement>;
 
   /**
    * Representa una etiqueta `<p>`. Las etiquetas `p` se usan para crear párrafos
@@ -1429,7 +1445,7 @@ type TuJsHtml_Tags = {
    * @example
    * p`This is a paragraph with some text.`;
    */
-  p:RecursiveTagFunction<HTMLParagraphElement>;
+  p: RecursiveTagFunction<HTMLParagraphElement>;
   /**
    * Representa una etiqueta `<h1>`. Las etiquetas `h1` son utilizadas para crear
    * encabezados principales en una página. Son elementos de bloque y suelen tener
@@ -1438,7 +1454,7 @@ type TuJsHtml_Tags = {
    * @example
    * h1`Main Header`;
    */
-  h1:RecursiveTagFunction<HTMLHeadingElement>;
+  h1: RecursiveTagFunction<HTMLHeadingElement>;
 
   /**
    * Representa una etiqueta `<h2>`. Las etiquetas `h2` se usan para crear subtítulos
@@ -1447,35 +1463,35 @@ type TuJsHtml_Tags = {
    * @example
    * h2`Sub Header`;
    */
-  h2:RecursiveTagFunction<HTMLHeadingElement>;
+  h2: RecursiveTagFunction<HTMLHeadingElement>;
   /**
    * Representa una etiqueta `<h3>`. Similar a `h2`, pero de menor importancia y tamaño.
    * 
    * @example
    * h3`Sub-sub Header`;
    */
-  h3:RecursiveTagFunction<HTMLHeadingElement>;
+  h3: RecursiveTagFunction<HTMLHeadingElement>;
   /**
    * Representa una etiqueta `<h4>`. Similar a `h3`, pero de menor importancia y tamaño.
    * 
    * @example
    * h4`Sub-sub Header`;
    */
-  h4:RecursiveTagFunction<HTMLHeadingElement>;
+  h4: RecursiveTagFunction<HTMLHeadingElement>;
   /**
    * Representa una etiqueta `<h5>`. Similar a `h4`, pero de menor importancia y tamaño.
    * 
    * @example
    * h5`Sub-sub Header`;
    */
-  h5:RecursiveTagFunction<HTMLHeadingElement>;
+  h5: RecursiveTagFunction<HTMLHeadingElement>;
   /**
    * Representa una etiqueta `<h6>`. Similar a `h5`, pero de menor importancia y tamaño.
    * 
    * @example
    * h6`Sub-sub Header`;
    */
-  h6:RecursiveTagFunction<HTMLHeadingElement>;
+  h6: RecursiveTagFunction<HTMLHeadingElement>;
   /**
    * Representa una etiqueta `<pre>`. Las etiquetas `pre` se utilizan para representar texto
    * preformateado. El texto dentro de `pre` se muestra con un formato de fuente monoespaciado
@@ -1484,7 +1500,7 @@ type TuJsHtml_Tags = {
    * @example
    * pre`This is preformatted text.   Spaces and\nnew lines are preserved.`;
    */
-  pre:RecursiveTagFunction<HTMLPreElement>;
+  pre: RecursiveTagFunction<HTMLPreElement>;
 
   /**
    * Representa una etiqueta `<code>`. Las etiquetas `code` se usan para representar fragmentos
@@ -1493,7 +1509,7 @@ type TuJsHtml_Tags = {
    * @example
    * code`console.log('Hello World');`;
    */
-  code:RecursiveTagFunction<HTMLElementExtended>;
+  code: RecursiveTagFunction<HTMLElementExtended>;
 
   /**
    * Representa una etiqueta `<ul>`. Las etiquetas `ul` crean listas no ordenadas,
@@ -1505,7 +1521,7 @@ type TuJsHtml_Tags = {
    *   li`Item 2`;
    * });
    */
-  ul:RecursiveTagFunction<HTMLUListElement>;
+  ul: RecursiveTagFunction<HTMLUListElement>;
 
   /**
    * Representa una etiqueta `<ol>`. Las etiquetas `ol` crean listas ordenadas,
@@ -1517,7 +1533,7 @@ type TuJsHtml_Tags = {
    *   li`Item 2`;
    * });
    */
-  ol:RecursiveTagFunction<HTMLOListElement>;
+  ol: RecursiveTagFunction<HTMLOListElement>;
 
   /**
    * Representa una etiqueta `<li>`. Las etiquetas `li` son elementos de lista que
@@ -1526,7 +1542,7 @@ type TuJsHtml_Tags = {
    * @example
    * li`Item in a list`;
    */
-  li:RecursiveTagFunction<HTMLLIElement>;
+  li: RecursiveTagFunction<HTMLLIElement>;
 
   /**
    * Representa una etiqueta `<a>`. Las etiquetas `a` se usan para definir enlaces de
@@ -1536,7 +1552,7 @@ type TuJsHtml_Tags = {
    * @example
    * a({ href: 'https://www.example.com' })`Go to Example`;
    */
-  a:RecursiveTagFunction<HTMLAnchorElement>;
+  a: RecursiveTagFunction<HTMLAnchorElement>;
 
   /**
    * Representa una etiqueta `<img>`. Las etiquetas `img` se usan para insertar imágenes
@@ -1546,7 +1562,7 @@ type TuJsHtml_Tags = {
    * @example
    * img({ src: 'image.jpg', alt: 'An image' });
    */
-  img:RecursiveTagFunction<HTMLImageElement>;
+  img: RecursiveTagFunction<HTMLImageElement>;
 
   /**
    * Representa una etiqueta `<button>`. Las etiquetas `button` se utilizan para crear botones
@@ -1555,7 +1571,7 @@ type TuJsHtml_Tags = {
    * @example
    * button`Click Me!`;
    */
-  button:RecursiveTagFunction<HTMLButtonElement>;
+  button: RecursiveTagFunction<HTMLButtonElement>;
 
   /**
    * Representa una etiqueta `<form>`. Las etiquetas `form` se utilizan para definir formularios
@@ -1568,7 +1584,7 @@ type TuJsHtml_Tags = {
    *   button`Submit`;
    * });
    */
-  form:RecursiveTagFunction<HTMLFormElement>;
+  form: RecursiveTagFunction<HTMLFormElement>;
 
   /**
    * Representa una etiqueta `<input>`. Las etiquetas `input` se usan para crear campos de
@@ -1577,7 +1593,7 @@ type TuJsHtml_Tags = {
    * @example
    * input({ type: 'text', placeholder: 'Enter text' });
    */
-  input:RecursiveTagFunction<HTMLInputElementExtended>;
+  input: RecursiveTagFunction<HTMLInputElementExtended>;
   //input:RecursiveTagFunction<HTMLInputElement>;
 
   /**
@@ -1590,7 +1606,7 @@ type TuJsHtml_Tags = {
    *   option({ value: '2' })`Option 2`;
    * });
    */
-  select:RecursiveTagFunction<HTMLSelectElement>;
+  select: RecursiveTagFunction<HTMLSelectElement>;
 
   /**
    * Representa una etiqueta `<textarea>`. Las etiquetas `textarea` se usan para crear áreas
@@ -1599,7 +1615,7 @@ type TuJsHtml_Tags = {
    * @example
    * textarea`Enter multi-line text here.`;
    */
-  textarea:RecursiveTagFunction<HTMLTextAreaElement>;
+  textarea: RecursiveTagFunction<HTMLTextAreaElement>;
 
   /**
    * Representa una etiqueta `<span>`. Las etiquetas `span` se usan para agrupar elementos
@@ -1608,41 +1624,41 @@ type TuJsHtml_Tags = {
    * @example
    * span`Inline text`;
    */
-  span:RecursiveTagFunction<HTMLSpanElement>;
-  b:RecursiveTagFunction<HTMLElementExtended>;
-  i:RecursiveTagFunction<HTMLElementExtended>;
-  u:RecursiveTagFunction<HTMLElementExtended>;
-  strike:RecursiveTagFunction<HTMLElementExtended>;
-  blockquote:RecursiveTagFunction<HTMLElementExtended>;
-  br:RecursiveTagFunction<HTMLElementExtended>;
-  hr:RecursiveTagFunction<HTMLElementExtended>;
-  dialog:RecursiveTagFunction<HTMLDialogElement>;
-  details:RecursiveTagFunction<HTMLDetailsElement>;
-  summary:RecursiveTagFunction<HTMLElementExtended>;
-  table:RecursiveTagFunction<HTMLTableElement>;
-  tbody:RecursiveTagFunction<HTMLElementExtended>;
-  tr:RecursiveTagFunction<HTMLTableRowElement>;
-  td:RecursiveTagFunction<HTMLTableCellElement>;
-  th:RecursiveTagFunction<HTMLTableCellElement>;
-  thead:RecursiveTagFunction<HTMLElementExtended>;
-  tfoot:RecursiveTagFunction<HTMLElementExtended>;
-  colgroup:RecursiveTagFunction<HTMLElementExtended>;
-  col:RecursiveTagFunction<HTMLElementExtended>;
-  legend:RecursiveTagFunction<HTMLLegendElement>;
-  fieldset:RecursiveTagFunction<HTMLFieldSetElement>;
-  label:RecursiveTagFunction<HTMLLabelElement>;  
-  option:RecursiveTagFunction<HTMLOptionElement>;
-  link:RecursiveTagFunction<HTMLLinkElement>;
-  script:RecursiveTagFunction<HTMLScriptElement>;
-  style:RecursiveTagFunction<HTMLStyleElement>;
-  main:RecursiveTagFunction<HTMLElement>;
-  header:RecursiveTagFunction<HTMLElement>;
-  footer:RecursiveTagFunction<HTMLElement>;
-  article:RecursiveTagFunction<HTMLElement>;
-  section:RecursiveTagFunction<HTMLElement>;
-  aside:RecursiveTagFunction<HTMLElement>;
-  nav:RecursiveTagFunction<HTMLElement>;
-  
+  span: RecursiveTagFunction<HTMLSpanElement>;
+  b: RecursiveTagFunction<HTMLElementExtended>;
+  i: RecursiveTagFunction<HTMLElementExtended>;
+  u: RecursiveTagFunction<HTMLElementExtended>;
+  strike: RecursiveTagFunction<HTMLElementExtended>;
+  blockquote: RecursiveTagFunction<HTMLElementExtended>;
+  br: RecursiveTagFunction<HTMLElementExtended>;
+  hr: RecursiveTagFunction<HTMLElementExtended>;
+  dialog: RecursiveTagFunction<HTMLDialogElement>;
+  details: RecursiveTagFunction<HTMLDetailsElement>;
+  summary: RecursiveTagFunction<HTMLElementExtended>;
+  table: RecursiveTagFunction<HTMLTableElement>;
+  tbody: RecursiveTagFunction<HTMLElementExtended>;
+  tr: RecursiveTagFunction<HTMLTableRowElement>;
+  td: RecursiveTagFunction<HTMLTableCellElement>;
+  th: RecursiveTagFunction<HTMLTableCellElement>;
+  thead: RecursiveTagFunction<HTMLElementExtended>;
+  tfoot: RecursiveTagFunction<HTMLElementExtended>;
+  colgroup: RecursiveTagFunction<HTMLElementExtended>;
+  col: RecursiveTagFunction<HTMLElementExtended>;
+  legend: RecursiveTagFunction<HTMLLegendElement>;
+  fieldset: RecursiveTagFunction<HTMLFieldSetElement>;
+  label: RecursiveTagFunction<HTMLLabelElement>;
+  option: RecursiveTagFunction<HTMLOptionElement>;
+  link: RecursiveTagFunction<HTMLLinkElement>;
+  script: RecursiveTagFunction<HTMLScriptElement>;
+  style: RecursiveTagFunction<HTMLStyleElement>;
+  main: RecursiveTagFunction<HTMLElement>;
+  header: RecursiveTagFunction<HTMLElement>;
+  footer: RecursiveTagFunction<HTMLElement>;
+  article: RecursiveTagFunction<HTMLElement>;
+  section: RecursiveTagFunction<HTMLElement>;
+  aside: RecursiveTagFunction<HTMLElement>;
+  nav: RecursiveTagFunction<HTMLElement>;
+
   /**
    * Representa una etiqueta `<webview>`. Las etiquetas `webview` se usan para incrustar
    * contenido web dentro de una página. Aceptan atributos como `src` para la URL de la webview.
@@ -1650,25 +1666,25 @@ type TuJsHtml_Tags = {
    * @example
    * webview({ src: 'https://www.example.com' });
    */
-  webview:RecursiveTagFunction<ChromeWebViewElement>;
+  webview: RecursiveTagFunction<ChromeWebViewElement>;
   //webview:RecursiveTagFunction;
   //webview<TElement extends HTMLElement = HTMLElement>:RecursiveTagFunction<TElement>;
-} 
-// & {
-//   // El '?' hace que estas propiedades no sean obligatorias.
-//   // La clave es que SI existen, su tipo DEBE ser 'never'.
-//   [K in ForbiddenKeys]?: never;
-// }
+}
+  // & {
+  //   // El '?' hace que estas propiedades no sean obligatorias.
+  //   // La clave es que SI existen, su tipo DEBE ser 'never'.
+  //   [K in ForbiddenKeys]?: never;
+  // }
 
-  &{
+  & {
   [Tag in keyof HTMLElementTagNameMap]: RecursiveTagFunction<HTMLElementTagNameMap[Tag]>;
 }
-& DynamicTagPatterns_emmet
-&{  
-  //[K in SelectorPrefix as `${TagName}${K}${string}`]: RecursiveTagFunction<HTMLElementTagNameMap[TagName]>;
-  [key: string]:RecursiveTagFunction<HTMLElementExtended>;
-}
-;
+  & DynamicTagPatterns_emmet
+  & {
+    //[K in SelectorPrefix as `${TagName}${K}${string}`]: RecursiveTagFunction<HTMLElementTagNameMap[TagName]>;
+    [key: string]: RecursiveTagFunction<HTMLElementExtended>;
+  }
+  ;
 
 
 
@@ -1692,8 +1708,8 @@ type TuJsHtml_Tags = {
 *   tags["DIV#id.clase1.clase2[title=Es tes algo simple]"]`Contendo`;
 * });
 */
-type TuJsHtml_Callback<TElement extends HTMLElement = HTMLElement> ={
-  (tags: TuJsHtml_Tags,currentElement?: SuperElementClass<TElement>) : SuperElementClass<TElement> |void ;
+type TuJsHtml_Callback<TElement extends HTMLElement = HTMLElement> = {
+  (tags: TuJsHtml_Tags, currentElement?: SuperElementClass<TElement>): SuperElementClass<TElement> | void;
   //(tags: TuJsHtml_Tags) : SuperElementClass<TElement> | void;
 }
 //export type TuJsHtml_Callback = (tags: TuJsHtml_Tags, currentElement: SuperElementClass) => SuperElementClass | void;
@@ -1708,26 +1724,41 @@ type TuJsHtml_CallbackExtended = (tags: TuJsHtml_Tags, currentElement: HTMLEleme
  */
 declare function AnyNode(strings: TemplateStringsArray, ...values: any[]): DocumentFragment;
 
-
-declare class TuJsHtml extends DocumentFragment{
-    /** @type {TuJsHtml_Tags} */
-    static TYPE_TAGS: TuJsHtml_Tags;
-    /**
-     * 
-     * @param callback 
-     * @param callbackFallback Only works if callback== AsyncFunction
-     */
-    constructor(callback: TuJsHtml_Callback,callbackFallback?:TuJsHtml_Callback);
-    /**
-     * @deprecated
-     * @param name 
-     * @param callback 
-     */    
-    set(name: string, callback: TuJsHtml_CallbackExtended): this;
-    /**
-     * Restablece el estado del objeto TuJsHtml, igual a reRender.
-     */
-    reset():void;
+/**
+ * @version 4.0.1
+ */
+declare class TuJsHtml extends DocumentFragment {
+  /** @type {TuJsHtml_Tags} */
+  static TYPE_TAGS: TuJsHtml_Tags;
+  /**
+   * 
+   * @param callback 
+   * @param callbackFallback Only works if callback== AsyncFunction
+   */
+  constructor(callback: TuJsHtml_Callback, callbackFallback?: TuJsHtml_Callback);
+  /**
+   * @deprecated
+   * @param name 
+   * @param callback 
+   */
+  set(name: string, callback: TuJsHtml_CallbackExtended): this;
+  /**
+   * Restablece el estado del objeto TuJsHtml, igual a reRender.
+   */
+  reset(): void;
+  /**
+   * elimina todo el contenido dom 
+   */
+  remove(): void;
+  /**
+   * Re-renderiza el contenido dom
+   */
+  get tag():TuJsHtml_Tags;
+  /**
+   * verifica si es parte del DOM
+   */
+  get isConnected(): boolean;
+  
 }
 
 // /**
@@ -1748,13 +1779,13 @@ declare class TuJsHtml extends DocumentFragment{
 // export function TextNode(arg1: any|SignalOr<string>): Node;
 
 declare namespace TuJsHtml {
-  export namespace Types{
+  export namespace Types {
     export type Tags = TuJsHtml_Tags;
     export type Element<TElement extends HTMLElement = HTMLElement> = SuperElementClass<TElement>;
-    export type CustomTag<TElement extends HTMLElement = HTMLElement> = typeof RecursiveTag$1<TElement>; 
+    export type CustomTag<TElement extends HTMLElement = HTMLElement> = typeof RecursiveTag$1<TElement>;
     export type Callback<TElement extends HTMLElement = HTMLElement> = (tags: TuJsHtml_Tags, currentElement?: SuperElementClass<TElement>) => SuperElementClass<TElement> | void;
   }
-    
+
 }
 
 declare class TuTemplateHtml {
