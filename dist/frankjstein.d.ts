@@ -93,6 +93,263 @@ declare class TUtils {
     * @param {function} getterFn - La función que retorna el valor final de la propiedad.
     */
     static defineLazyPropertyGetter(obj:object, key:string, getterFn:()=>any):void ;
+    /**
+     * Crea una pausa asíncrona que puede ser cancelada inmediatamente mediante un AbortSignal.
+     * @param {number} ms - Tiempo de espera en milisegundos.
+     * @param {AbortSignal} [signal] - Señal opcional para abortar la espera.
+     * @returns {Promise<void>} Se resuelve cuando el tiempo expira o se rechaza si se aborta.
+     * @throws {DOMException} Rechaza con un "AbortError" si la señal se dispara.
+     * @example
+     * // Uso básico
+     * await sleepAsync(1000);
+     * @example
+     * // Uso con cancelación (se detiene a los 500ms)
+     * const controller = new AbortController();
+     * setTimeout(() => controller.abort(), 500);
+     * try {
+     *     await sleepAsync(2000, controller.signal);
+     * } catch (e) {
+     *     console.log("Espera cancelada");
+     * }
+     */
+    static sleepAsync(ms: number, signal?: AbortSignal): Promise<void>;
+    /**
+     * Convierte cualquier Promesa en una tupla [error, data].
+     */
+    static safe<T, E = any>(
+        promise: Promise<T>
+    ): Promise<[E, null] | [null, T]>;
+}
+
+/**
+ * El objeto enriquecido que devuelve un constructor de plantillas tipadas.
+ * @template TSlotMap El tipo del mapa de slots, usado para tipar la propiedad `slots`.
+ */
+type TypedTemplate<TSlotMap extends Record<string, string>> = {
+    root: HTMLElement | DocumentFragment;
+    /** Un objeto con referencias directas a los elementos marcados como slots. */
+    slots: { [K in keyof TSlotMap]: HTMLElement };
+};
+interface ForEachAsyncResult {
+    /** Cantidad de elementos procesados. */
+    processed: number;
+    /** Total de elementos en la colección original. */
+    total: number;
+    /** True si se procesó toda la lista, false si hubo un `break`. */
+    completed: boolean;
+    /** Tiempo total de ejecución en milisegundos. */
+    elapsedTime: number;
+}
+interface ForEachAsyncOptions<T> {
+    /** 
+     * Es más seguro. Si el usuario procesa 1,000 archivos y el primero falla por falta de permisos, lo más probable es que los otros 999 también fallen. Detenerse ahorra recursos y evita logs infinitos de errores.
+     * @default true 
+     */
+    stopOnError?: boolean;
+    /** * Cantidad de elementos a procesar antes de ceder el hilo al navegador.
+     * @default 10 
+     */
+    batchSize?: number;
+    /** Señal para cancelar la ejecución de forma externa. */
+    signal?: AbortSignal;
+    /** Callback que se dispara al finalizar cada lote, ideal para barras de progreso. */
+    onBatchComplete?: (index: number, total: number, percentage: number) => void;
+    /** Se ejecuta cada vez que un ítem falla, permitiendo auditoría o logs. */
+    onItemError?: (error: any, item: T, index: number) => void;
+    /** * Si es true, utiliza `requestIdleCallback` para procesar solo cuando el navegador esté libre.
+     * @default false 
+     */
+    useIdle?: boolean;
+}
+/**
+ * Error enriquecido que contiene el estado de la iteración en el momento del fallo.
+ */
+declare class ForEachAsyncError extends Error {
+    /** El estado capturado justo antes de lanzar la excepción. */
+    state: ForEachAsyncResult;
+    /** El error original que causó la interrupción. */
+    cause?: any;
+    constructor(message: string, state: ForEachAsyncResult, cause?: any);
+}
+
+/**
+ * Tupla de retorno para el patrón Safe (Error-First).
+ * Si hay error, el segundo elemento es null. Si hay éxito, el primero es null.
+ */
+type SafeForEachAsyncResult =
+    | [null, ForEachAsyncResult]
+    | [ForEachAsyncError, null];
+
+
+/**
+ * Función procesadora para cada ítem de la colección.
+ * Puede ser síncrona o asíncrona.
+ * @returns Opcionalmente una función de "limpieza" o "efecto" que se ejecutará 
+ * en el siguiente frame de renderizado (requestAnimationFrame).
+ * - `void`: Continúa con el siguiente elemento.
+ * - `false`: Detiene la ejecución de la colección inmediatamente (Break).
+ * - `() => void`: Función de efecto/limpieza que se ejecutará en el siguiente `requestAnimationFrame`. 
+ */
+type ItemProcessor<T> = (
+    item: T,
+    index: number
+) => void | false | Promise<void | false> | (() => void) | Promise<(() => void)>;
+
+
+/**
+ * Opciones para el comportamiento del estrangulamiento (throttle).
+ */
+interface ThrottleOptions {
+    /** * Ejecutar la función inmediatamente en el primer disparo.
+     * @default true 
+     */
+    leading?: boolean;
+    /** * Ejecutar una última vez tras el último disparo si el delay ya pasó.
+     * @default true 
+     */
+    trailing?: boolean;
+}
+
+declare namespace TuWebUtils {
+    /**
+     * Observa un elemento HTML hasta que sea visible por primera vez.
+     * Devuelve una Promise que se resuelve cuando el elemento es montado y visible.
+     * @param {HTMLElement} element El elemento a observar.
+     * @returns {Promise<HTMLElement>}
+     */
+    function whenVisibleAsync(element: HTMLElement): Promise<HTMLElement>;
+    /**
+     * Compila un string de HTML en un constructor de plantillas de alto rendimiento,
+     * proporcionando seguridad de tipos y validación para los slots definidos.
+     *
+     * @template TSlotMap Un tipo que extiende un objeto de strings.
+     * @param slotMap Un objeto que define el contrato de los slots.
+     * La clave es el nombre que se usará en JS, el valor es el nombre en `data-slot`.
+     * @param htmlString La estructura HTML a usar como plantilla.
+     * @returns {() => TypedTemplate<TSlotMap>} Una función constructora tipada.
+     */
+    function createTemplate<TSlotMap extends Record<string, string>>(
+        slotMap: TSlotMap,
+        htmlString: string
+    ): () => TypedTemplate<TSlotMap>;
+    /**
+     * Extrae los datos de un formulario a un objeto JSON,
+     * respetando el formato de array (name="campo[]").
+     * Antes de serializar, fuerza la validación nativa del formulario.
+     * @param {HTMLFormElement} formElement El elemento del formulario a serializar.
+     * @returns {object | null} El objeto JSON con los datos del formulario, o null si la validación falla.
+     */
+    function formToObject<T extends object>(formElement: HTMLFormElement, storeIn?: T): T | null;
+
+    /**
+     * Procesa colecciones masivas mediante Time Slicing sin bloquear la UI.
+     * Soporta cualquier iterable (Array, Set, Map) o ArrayLike.
+     * @throws {ForEachAsyncError}
+     * @example
+     * // Sobrecarga 1: Uso estándar (Ideal para lógica corta)
+     * await forEachAsync(myItems, (item, i) => {
+     *    console.log(`Procesando ${item.id}`);
+     * }, { batchSize: 50 });
+     * 
+     * @example
+     * // Sobrecarga 3: Uso de Idle (Ideal para tareas de fondo no urgentes)
+     * // Úsalo para procesar logs, analíticas o pre-cargar datos sin afectar el scroll o animaciones.
+     * await forEachAsync(hugeCollection, (data) => {
+     *    backgroundProcess(data);
+     *    if(data.id==='id5') return false;
+     * }, { 
+     *    useIdle: true, 
+     *    batchSize: 500 
+     * });
+     */
+    function forEachAsync<T>(
+        collection: Iterable<T> | ArrayLike<T>,
+        callback: ItemProcessor<T>,
+        options?: ForEachAsyncOptions<T>
+    ): Promise<ForEachAsyncResult>;
+
+    /**
+     * Procesa colecciones masivas mediante Time Slicing sin bloquear la UI (Firma invertida).
+     * Soporta cualquier iterable (Array, Set, Map) o ArrayLike.
+     * @throws {ForEachAsyncError}
+     * @example
+     * // Sobrecarga 2: Configuración primero (Ideal para callbacks extensos)
+     * await forEachAsync(myItems, { batchSize: 100, signal }, async (item) => {
+     * const extraData = await fetch(`./api/${item.id}`);
+     *     renderRow(item, extraData);
+     * });
+     */
+    function forEachAsync<T>(
+        collection: Iterable<T> | ArrayLike<T>,
+        options: ForEachAsyncOptions<T>,
+        callback: ItemProcessor<T>
+    ): Promise<ForEachAsyncResult>;
+
+    /**
+     * Ejecuta forEachAsync garantizando que no lanzará excepciones.
+     * @see forEachAsync - Para ver la documentación detallada de los parámetros.
+     */
+    function safeForEachAsync<T>(
+        collection: Iterable<T> | ArrayLike<T>,
+        callback: ItemProcessor<T>,
+        options?: ForEachAsyncOptions<T>
+    ): Promise<SafeForEachAsyncResult>;
+
+    function safeForEachAsync<T>(
+        collection: Iterable<T> | ArrayLike<T>,
+        options: ForEachAsyncOptions<T>,
+        callback: ItemProcessor<T>
+    ): Promise<SafeForEachAsyncResult>;
+    /**
+     * Crea una versión de la función que, al ser invocada repetidamente, 
+     * solo ejecuta la original como máximo una vez cada 'wait' milisegundos.
+     * * @example
+     * // Actualizar scroll con alto rendimiento
+     * const onScroll = throttle((e) => {
+     *    console.log("Posición:", window.scrollY);
+     * }, 100);
+     * window.addEventListener('scroll', onScroll);
+     * @template T - El tipo de la función original.
+     * @param fn - Función a la que se le aplicará el throttle.
+     * @param wait - Tiempo de espera en milisegundos.
+     * @param options - Configuración de leading/trailing.
+     * @returns  Una función con la misma firma que la original.
+     * 
+     */
+    function throttle<T extends (...args: any[]) => any>(
+        fn: T,
+        wait: number,
+        options?: ThrottleOptions
+    ): (...args: Parameters<T>) => void;
+
+
+    /**
+     * Crea una versión de la función que retrasa su ejecución hasta que hayan pasado
+     * 'wait' milisegundos desde la última vez que fue invocada.
+     * * @example
+     * // Filtrar una lista masiva solo cuando el usuario deja de escribir
+     * const search = debounce((query: string) => {
+     *    console.log("Buscando:", query);
+     * }, 300);
+     * input.oninput = (e) => search(e.target.value);
+     * @template T - Tipo de la función original.
+     * @param fn - Función a de-rebotar.
+     * @param wait - Tiempo de espera en milisegundos.
+     * @param immediate - Si es true, dispara la función al inicio de la ráfaga.
+     * @returns Una función con la misma firma que la original pero con lógica de rebote.
+     */
+    function debounce<T extends (...args: any[]) => any>(
+        fn: T,
+        wait: number,
+        immediate?: boolean
+    ): (...args: Parameters<T>) => void;
+
+    /**
+     * Convierte cualquier Promesa en una tupla [error, data].
+     */
+    function safe<T, E = any>(
+        promise: Promise<T>
+    ): Promise<[E, null] | [null, T]>;
 }
 
 /**
@@ -530,6 +787,69 @@ type PluginFunction = PluginFunction$1;
  * div[ELEMENT_UTIL]
  */
 declare const ELEMENT_UTIL : unique symbol;
+
+/**
+ * @fileoverview A function to make an object's property reactive.
+ * This file contains the type declarations for the makeReactive function.
+ */
+
+/**
+ * funcion para hacer una propiedad reactiva en un objeto
+ * @example
+ * // 1. Autocompletado para propiedades existentes:
+ * // Escribe `data.`, y tu editor sugerirá 'name' y 'age'.
+ * const data = { name: 'Alice', age: 30 };
+ * const reactiveData = makeReactive(data, 'name');
+ *
+ * // 2. Autocompletado para nuevas propiedades con valor inicial:
+ * // 'newProperty' ahora es una propiedad válida en el objeto reactiveData
+ * const newData = makeReactive({}, 'newProperty', 'initial value');
+ *
+ * newData.set('Another value');
+ */
+declare function makeReactive<T extends object, K extends keyof T>(
+    obj: T,
+    property: K
+): T & ReactiveProperties<K, T[K]>;
+
+declare function makeReactive<T extends object, K extends string, V>(
+    obj: T,
+    property: K,
+    defaultValue: V
+): T & { [P in K]: V } & ReactiveProperties<K, V>;
+
+// --- Type Definitions ---
+
+/**
+ * The type of the reactive properties added to the object.
+ * @template K The name of the reactive property.
+ * @template V The type of the value.
+ */
+type ReactiveProperties<K extends string | number | symbol, V> = {
+    /**
+     * A getter function to retrieve the current value of the reactive property.
+     * @returns The current value.
+     */
+    get: () => V;
+    /**
+     * A setter function to update the value of the reactive property.
+     * Subscribers will be notified of the change.
+     * @param value The new value to set.
+     * @returns A boolean indicating success.
+     */
+    set: (value: V) => boolean;
+    /**
+     * A function to subscribe to changes in the reactive property.
+     * @param callback A function to be called with the new value on each change.
+     * @returns A function to unsubscribe.
+     */
+    subscribe: (callback: (value: V) => void) => () => void;
+} & (K extends 'value' ? {} : {
+    /**
+     * A convenient getter/setter for the reactive property, providing direct access to its value.
+     */
+    value: V;
+});
 
 // importante para forzar los tipos del DOM 
 /// <reference lib="dom" />
@@ -1191,20 +1511,52 @@ interface InstanceNode {
  * Tipo que define los nodos posibles que pueden ser pasados a las funciones de tags.
  * Pueden ser elementos HTML, nodos de texto, o funciones.
  */
-type RecursiveNode$1 = Node | Function | TuJsHtml_Callback | SuperElementClass<HTMLElement> | string | number;
-//export type RecursiveNode = Node | Function  | TuJsHtml_Callback | SuperElementClass<HTMLElement>;
-//el object impide o hace confundir 
-//export type RecursiveNode = Node | Function | Object | TuJsHtml_Callback | SuperElementClass<HTMLElement>;
+type RecursiveNode$1 = Node | Function | TuJsHtml_Callback | SuperElementClass<HTMLElement> | string | number;                                      // Fallback genérico
+
+
+
+// type MapToDOMNode<T> = 
+//     T extends SuperElementClass<infer E> ? E : 
+//     T extends (...args: any[]) => any ? DynamicNodes : // Si es callback, advertimos que son varios
+//     T extends Node ? T :
+//     T extends string | number ? Text :
+//     Node;
+type DynamicNodes = ChildNode[];
+/**
+ * El motor de aplanamiento (Flatten).
+ * Recorre la tupla T y si un elemento es un array, lo expande.
+ */
+type Flatten<T extends any[]> = T extends [infer First, ...infer Rest]
+    ? First extends any[] 
+        ? [...First, ...Flatten<Rest>] // Si es array (como DynamicNodes), lo esparcimos
+        : [MapToDOMNode<First>, ...Flatten<Rest>] // Si es simple, lo mapeamos y seguimos
+    : [];
 
 /**
- * Función recursiva que puede ser utilizada para crear etiquetas HTML.
- * Puede tomar nodos o funciones y devolver más funciones recursivas.
+ * Mapeo base (el mismo que ya tenías)
  */
-// export interface RecursiveTag {
-//   (firstArg:ReactiveAttributes | RecursiveNode ,...args: RecursiveNode[]): TuadminHtmlElement;
-//   //(): HTMLElement; // Para finalizar y devolver un elemento HTML
+type MapToDOMNode<T> = 
+    T extends SuperElementClass<infer E> ? E : 
+    T extends (...args: any[]) => any ? DynamicNodes : // Marcamos los callbacks como arrays
+    T extends Node ? T :
+    T extends string | number ? Text :
+    Node;
+/**
+ * Interfaz para tu clase que contiene el método $insert
+ */
+// export interface MyClassInstance {
+//     /**
+//      * Inserta elementos y devuelve una tupla con los tipos exactos procesados.
+//      * @param args Elementos, strings o instancias de SuperElementClass.
+//      */
+//     $insert<T extends any[]>(
+//         ...args: T
+//     ): { [K in keyof T]: MapToDOMNode<T[K]> };
 // }
-//export type RecursiveTag = (firstArg:ReactiveAttributes | RecursiveNode ,...args: RecursiveNode[]) => SuperElementClass;
+
+// // Ejemplo de cómo declararías tu variable global o instancia
+// export const _: MyClassInstance;
+
 
 /**
  * Función recursiva que puede ser utilizada para crear etiquetas HTML.
@@ -1237,6 +1589,17 @@ declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(firs
 
 
 type RecursiveTagFunction<TElement extends HTMLElement> = typeof RecursiveTag$1<TElement>;
+
+
+//export function RecursiveTagArray<TElement extends HTMLElement = HTMLElement>(tuJsHtmlInstance?: TuJsHtml_Callback<TElement>, ...args: RecursiveNode[]): Node[];
+// export function RecursiveTagArray<TElement extends Node = Node>(firstArg?: TElement): TElement[];
+// export function RecursiveTagArray<TElement extends Node = Node>(element?: SuperElementClass<HTMLElement>, ...args: RecursiveNode[]): Node[];
+// export function RecursiveTagArray<TElement extends Node = Node>(nodeElement?: InstanceNode, ...args: RecursiveNode[]): Node[];
+// export function RecursiveTagArray<TElement extends Node = Node>(callback?: FunctionLike, ...args: RecursiveNode[]): Node[];
+// export function RecursiveTagArray<TElement extends Node = Node>(firstArg?: Node, ...args: RecursiveNode[]): Node[];
+
+// type RecursiveTagFunctionArray<TElement extends Node> = typeof RecursiveTagArray<TElement>;
+
 
 
 
@@ -1444,8 +1807,17 @@ type TuJsHtml_Tags = {
   $tpl: (
     callbackRender: (tags: TuJsHtml_Tags) => void
   ) => DocumentFragment;
-  //$block: (variable: object, callbackRender: (tags: TuJsHtml_Tags) => void) => () => void;
-
+  
+  /**
+     * Inserta elementos y devuelve una tupla con los tipos exactos procesados.
+     * @param args Elementos, strings o instancias de SuperElementClass.
+     */
+  $insert<T extends any[]>(
+        ...args: T
+    ): Flatten<T>;
+  // $insert<T extends any[]>(
+  //     ...args: T
+  // ): { [K in keyof T]: MapToDOMNode<T[K]> };
   /**
    * Representa cualquier etiqueta o nodo genérico que pueda ser usado
    * dentro de la función recursiva. Puede aceptar cualquier tipo de argumento.
@@ -2003,4 +2375,4 @@ declare function createTemplateHtml<T>(
     clone<N extends string = 'refs'>(modifierFn?:(refs: T) => void,nameOfProp?: N): HtmlElementOrFragmentWithProp<T, N>;
 };
 
-export { AnyNode, ELEMENT_UTIL, ObservableDraft, ReactiveDraft, TUtils, TuJsHtml, TuTemplateHtml, createComputedSignal, createKageBunshinObject, createSignal, createTemplateHtml, debounce, debounceEvents, textSize, textSizeEvents, trim };
+export { AnyNode, ELEMENT_UTIL, ObservableDraft, ReactiveDraft, TUtils, TuJsHtml, TuTemplateHtml, TuWebUtils, createComputedSignal, createKageBunshinObject, createSignal, createTemplateHtml, debounce, debounceEvents, makeReactive, textSize, textSizeEvents, trim };
