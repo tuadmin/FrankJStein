@@ -690,7 +690,7 @@ declare namespace MySignal {
      * Obtiene el valor actual del Signal.
      * @returns {T} El valor actual.
      */
-    value: T;    
+    value: T;
     /**
      * Establece un nuevo valor para el Signal. Las notificaciones a los listeners
      * se agrupan y se ejecutan en un microtask.
@@ -713,9 +713,9 @@ declare namespace MySignal {
     /**
      * Proporciona una tupla inmutable [getter, setter] para una desestructuración
      * ergonómica, similar a los hooks de React.
+     * 
      */
-    readonly asTuple: readonly [() => T, (newValue: T) => void];
-
+    readonly asTuple: readonly [() => T, (newValue: T) => void] & { (): never };
     /**
      * Permite la coerción de tipo del Signal a un primitivo, devolviendo su valor actual.
      */
@@ -1591,6 +1591,32 @@ declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(firs
 type RecursiveTagFunction<TElement extends HTMLElement> = typeof RecursiveTag$1<TElement>;
 
 
+// export function RecursiveTagAppend<TElement extends HTMLElement = HTMLElement>(tuJsHtmlInstance?: TuJsHtml_Callback<TElement>, ...args: RecursiveNode[]): HTMLElement|DocumentFragment;
+// export function RecursiveTagAppend<TElement extends HTMLElement = HTMLElement>(element?: SuperElementClass<HTMLElement>, ...args: RecursiveNode[]): HTMLElement|DocumentFragment;
+// export function RecursiveTagAppend<TElement extends HTMLElement = HTMLElement>(nodeElement?: InstanceNode, ...args: RecursiveNode[]): HTMLElement|DocumentFragment;
+// export function RecursiveTagAppend<TElement extends HTMLElement = HTMLElement>(callback?: FunctionLike, ...args: RecursiveNode[]): HTMLElement|DocumentFragment;
+// export function RecursiveTagAppend<TElement extends HTMLElement = HTMLElement>(templateStringLiteral: TemplateStringsArray, ...args: RecursiveNode[]): HTMLElement|DocumentFragment;
+// export function RecursiveTagAppend<TElement extends HTMLElement = HTMLElement>(firstArg?: string | number, ...args: RecursiveNode[]): HTMLElement|DocumentFragment;
+
+// Declaras una sola función con sobrecargas
+/**
+ * Appends content to the current TuJsHtml root element and returns the root
+ * where the tag chain was originally defined (e.g. the container passed to `html(...)`).
+ *
+ * When used as:
+ *   html(...args) → returns the root container where `html` was created.
+ *
+ * @param arg - Optional callback, element class, instance node, function, template string, or string/number.
+ * @param args - Child nodes or strings to append.
+ * @returns The root HTMLElement or DocumentFragment where this tag chain is defined.
+ */
+declare function RecursiveTagAppend<TElement extends HTMLElement = HTMLElement>(
+  arg?: TuJsHtml_Callback<TElement> | SuperElementClass<HTMLElement> | InstanceNode | FunctionLike | TemplateStringsArray | string | number,
+  ...args: RecursiveNode$1[]
+): HTMLElement | DocumentFragment;
+
+type RecursiveTagAppendFunction = typeof RecursiveTagAppend<HTMLElement>;
+
 //export function RecursiveTagArray<TElement extends HTMLElement = HTMLElement>(tuJsHtmlInstance?: TuJsHtml_Callback<TElement>, ...args: RecursiveNode[]): Node[];
 // export function RecursiveTagArray<TElement extends Node = Node>(firstArg?: TElement): TElement[];
 // export function RecursiveTagArray<TElement extends Node = Node>(element?: SuperElementClass<HTMLElement>, ...args: RecursiveNode[]): Node[];
@@ -1665,6 +1691,10 @@ type ExecuteAfterRender = () => void;
  * con descripciones sobre sus características y comportamiento.
  */
 type TuJsHtml_Tags = {
+  /**
+   * @returns The root HTMLElement or DocumentFragment where this tag chain is defined.
+   */
+  (...args: Parameters<RecursiveTagAppendFunction>):ReturnType<RecursiveTagAppendFunction>;
   /**
    * Proporciona acceso a un objeto de almacenamiento local persistente vinculado al elemento.
    * El almacén se inicializa como un objeto puro (`Object.create(null)`), lo que garantiza 
@@ -2188,7 +2218,11 @@ declare class TuJsHtml extends DocumentFragment {
 //  * TextNode(signalVar);
 //  */
 // export function TextNode(arg1: any|SignalOr<string>): Node;
-
+/**
+ * @version 4.0.1
+ * @namespace TuJsHtml
+ * @description Espacio de nombres que contiene los tipos relacionados con la clase `TuJsHtml`, incluyendo las etiquetas HTML extendidas, el callback de renderizado y otros tipos auxiliares.
+ */
 declare namespace TuJsHtml {
   export namespace Types {
     export type Tags = TuJsHtml_Tags;
