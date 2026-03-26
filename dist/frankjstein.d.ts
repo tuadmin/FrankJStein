@@ -22,103 +22,103 @@
  * Es una función que, al ser llamada, se devuelve a sí misma.
  * @internal - Este tipo es un detalle de implementación y no debe ser usado directamente.
  */
-type Repeatable<F extends (...args: any[]) => any> = {
+type Repeatable<F extends (...args: unknown[]) => unknown> = {
   (...args: Parameters<F>): Repeatable<F>;
 };
 /**
  * @version 1.0.0
  */
 declare class TUtils {
-    /**
-     * Creates a cached async function that executes only once, returning the same result on subsequent calls.
-     * Ideal for lazy-loading resources (dynamic imports, fetch calls, etc.) that should be singleton-like.
-     *
-     * @template T - The type of the resolved promise value
-     * @param {(...args: any[]) => Promise<T>} asyncFn - The async function to cache
-     * @returns {(...args: any[]) => Promise<T>} A function with the same signature that caches the result
-     *
-     * @example // Dynamic import
-     * //// @ type {(id: string) => Promise<{ name: string }>}
-     * const loadLib = TUtils.cachedAsync(() => import('heavy-library'));
-     * const lib = await loadLib(); // Executes once
-     *
-     * @example // API Fetch
-     * const fetchData = TUtils.cachedAsync(() => fetch('/data').then(r => r.json()));
-     */
-    static cachedAsync<T>(asyncFn: (...args: any[]) => Promise<T>): (...args: any[]) => Promise<T>;
-    /**
-     * Creates a cached async function that stores results by argument signature.
-     *
-     * @template T - Return type of the async function
-     * @template {any[]} Args - Array type for the arguments (must be array-like)
-     * @param {(...args: Args) => Promise<T>} asyncFn - Async function to cache
-     * @param {(...args: any[]) => string} [keyFn] - Optional function to generate cache keys
-     * @returns {(...args: Args) => Promise<T>} Memoized function
-     * @example
-     *
-     * const fetchPokemon = TUtils.cachedAsyncByArgs(
-     *   ////@ type {(id: number) => Promise<{ name: string }>}
-     *   (id) => fetch(`https://pokeapi.co/api/v2/pokemon/${id}`).then((r) => r.json()),
-     *   ([id]) => `pokemon_${id}` // Cache key basada en el ID
-     *   );
+  /**
+   * Creates a cached async function that executes only once, returning the same result on subsequent calls.
+   * Ideal for lazy-loading resources (dynamic imports, fetch calls, etc.) that should be singleton-like.
+   *
+   * @template T - The type of the resolved promise value
+   * @param {(...args: unknown[]) => Promise<T>} asyncFn - The async function to cache
+   * @returns {(...args: unknown[]) => Promise<T>} A function with the same signature that caches the result
+   *
+   * @example // Dynamic import
+   * //// @ type {(id: string) => Promise<{ name: string }>}
+   * const loadLib = TUtils.cachedAsync(() => import('heavy-library'));
+   * const lib = await loadLib(); // Executes once
+   *
+   * @example // API Fetch
+   * const fetchData = TUtils.cachedAsync(() => fetch('/data').then(r => r.json()));
+   */
+  static cachedAsync<T>(asyncFn: (...args: unknown[]) => Promise<T>): (...args: unknown[]) => Promise<T>;
+  /**
+   * Creates a cached async function that stores results by argument signature.
+   *
+   * @template T - Return type of the async function
+   * @template {unknown[]} Args - Array type for the arguments (must be array-like)
+   * @param {(...args: Args) => Promise<T>} asyncFn - Async function to cache
+   * @param {(...args: unknown[]) => string} [keyFn] - Optional function to generate cache keys
+   * @returns {(...args: Args) => Promise<T>} Memoized function
+   * @example
+   *
+   * const fetchPokemon = TUtils.cachedAsyncByArgs(
+   *   ////@ type {(id: number) => Promise<{ name: string }>}
+   *   (id) => fetch(`https://pokeapi.co/api/v2/pokemon/${id}`).then((r) => r.json()),
+   *   ([id]) => `pokemon_${id}` // Cache key basada en el ID
+   *   );
 
-     *   // Solo una llamada real por ID
-     *   const pikachu = await fetchPokemon(25);
-     *   const pikachuCached = await fetchPokemon(25); // ⚡ Usa caché
-     */
-    static cachedAsyncByArgs<T, Args extends any[]>(asyncFn: (...args: Args) => Promise<T>, keyFn?: (...args: any[]) => string): (...args: Args) => Promise<T>;
-    /**
-     * Ejecuta un callback de forma asíncrona, priorizando microtareas.
-     *
-     * @param {Function} callback - La función que se desea ejecutar.
-     * @param {boolean} [isMacroTask] - use true to force a macrotask(setTimeout) instead queueMicrotask
-     * una macrotarea (setTimeout) en lugar de una microtarea (queueMicrotask).
-     * Útil para tareas de baja prioridad que no deben bloquear el renderizado.
-     */
-    static scheduleTask(callback: () => void, isMacroTask?: boolean): void;
-    /**
-     * Transforma una función en una versión que puede ser llamada consecutivamente.
-     * Cada llamada ejecuta la función original y devuelve a sí misma para permitir la siguiente invocación.
-     *
-     * @template F El tipo de la función que se va a hacer repetible.
-     * @param fn La función a ejecutar en cada llamada.
-     * @returns Una nueva función que puede ser llamada en cadena.
-     */
-    static repeatCall<F extends (...args: any[]) => any>(fn: F): Repeatable<F>;
+   *   // Solo una llamada real por ID
+   *   const pikachu = await fetchPokemon(25);
+   *   const pikachuCached = await fetchPokemon(25); // ⚡ Usa caché
+   */
+  static cachedAsyncByArgs<T, Args extends unknown[]>(asyncFn: (...args: Args) => Promise<T>, keyFn?: (...args: unknown[]) => string): (...args: Args) => Promise<T>;
+  /**
+   * Ejecuta un callback de forma asíncrona, priorizando microtareas.
+   *
+   * @param {Function} callback - La función que se desea ejecutar.
+   * @param {boolean} [isMacroTask] - use true to force a macrotask(setTimeout) instead queueMicrotask
+   * una macrotarea (setTimeout) en lugar de una microtarea (queueMicrotask).
+   * Útil para tareas de baja prioridad que no deben bloquear el renderizado.
+   */
+  static scheduleTask(callback: () => void, isMacroTask?: boolean): void;
+  /**
+   * Transforma una función en una versión que puede ser llamada consecutivamente.
+   * Cada llamada ejecuta la función original y devuelve a sí misma para permitir la siguiente invocación.
+   *
+   * @template F El tipo de la función que se va a hacer repetible.
+   * @param fn La función a ejecutar en cada llamada.
+   * @returns Una nueva función que puede ser llamada en cadena.
+   */
+  static repeatCall<F extends (...args: unknown[]) => unknown>(fn: F): Repeatable<F>;
 
-    /**
-    * Define una propiedad 'lazy' en un objeto. Su valor es calculado solo al ser accedido por primera vez.
-    * @param {object} obj - El objeto en el que se definirá la propiedad.
-    * @param {string} key - El nombre de la propiedad.
-    * @param {function} getterFn - La función que retorna el valor final de la propiedad.
-    */
-    static defineLazyPropertyGetter(obj:object, key:string, getterFn:()=>any):void ;
-    /**
-     * Crea una pausa asíncrona que puede ser cancelada inmediatamente mediante un AbortSignal.
-     * @param {number} ms - Tiempo de espera en milisegundos.
-     * @param {AbortSignal} [signal] - Señal opcional para abortar la espera.
-     * @returns {Promise<void>} Se resuelve cuando el tiempo expira o se rechaza si se aborta.
-     * @throws {DOMException} Rechaza con un "AbortError" si la señal se dispara.
-     * @example
-     * // Uso básico
-     * await sleepAsync(1000);
-     * @example
-     * // Uso con cancelación (se detiene a los 500ms)
-     * const controller = new AbortController();
-     * setTimeout(() => controller.abort(), 500);
-     * try {
-     *     await sleepAsync(2000, controller.signal);
-     * } catch (e) {
-     *     console.log("Espera cancelada");
-     * }
-     */
-    static sleepAsync(ms: number, signal?: AbortSignal): Promise<void>;
-    /**
-     * Convierte cualquier Promesa en una tupla [error, data].
-     */
-    static safe<T, E = any>(
-        promise: Promise<T>
-    ): Promise<[E, null] | [null, T]>;
+  /**
+  * Define una propiedad 'lazy' en un objeto. Su valor es calculado solo al ser accedido por primera vez.
+  * @param {object} obj - El objeto en el que se definirá la propiedad.
+  * @param {string} key - El nombre de la propiedad.
+  * @param {function} getterFn - La función que retorna el valor final de la propiedad.
+  */
+  static defineLazyPropertyGetter(obj: object, key: string, getterFn: () => unknown): void;
+  /**
+   * Crea una pausa asíncrona que puede ser cancelada inmediatamente mediante un AbortSignal.
+   * @param {number} ms - Tiempo de espera en milisegundos.
+   * @param {AbortSignal} [signal] - Señal opcional para abortar la espera.
+   * @returns {Promise<void>} Se resuelve cuando el tiempo expira o se rechaza si se aborta.
+   * @throws {DOMException} Rechaza con un "AbortError" si la señal se dispara.
+   * @example
+   * // Uso básico
+   * await sleepAsync(1000);
+   * @example
+   * // Uso con cancelación (se detiene a los 500ms)
+   * const controller = new AbortController();
+   * setTimeout(() => controller.abort(), 500);
+   * try {
+   *     await sleepAsync(2000, controller.signal);
+   * } catch (e) {
+   *     console.log("Espera cancelada");
+   * }
+   */
+  static sleepAsync(ms: number, signal?: AbortSignal): Promise<void>;
+  /**
+   * Convierte cualquier Promesa en una tupla [error, data].
+   */
+  static safe<T, E = unknown>(
+    promise: Promise<T>
+  ): Promise<[E, null] | [null, T]>;
 }
 
 /**
@@ -155,7 +155,7 @@ interface ForEachAsyncOptions<T> {
     /** Callback que se dispara al finalizar cada lote, ideal para barras de progreso. */
     onBatchComplete?: (index: number, total: number, percentage: number) => void;
     /** Se ejecuta cada vez que un ítem falla, permitiendo auditoría o logs. */
-    onItemError?: (error: any, item: T, index: number) => void;
+    onItemError?: (error: unknown, item: T, index: number) => void;
     /** * Si es true, utiliza `requestIdleCallback` para procesar solo cuando el navegador esté libre.
      * @default false 
      */
@@ -168,8 +168,8 @@ declare class ForEachAsyncError extends Error {
     /** El estado capturado justo antes de lanzar la excepción. */
     state: ForEachAsyncResult;
     /** El error original que causó la interrupción. */
-    cause?: any;
-    constructor(message: string, state: ForEachAsyncResult, cause?: any);
+    cause?: unknown;
+    constructor(message: string, state: ForEachAsyncResult, cause?: unknown);
 }
 
 /**
@@ -316,7 +316,7 @@ declare namespace TuWebUtils {
      * @returns  Una función con la misma firma que la original.
      * 
      */
-    function throttle<T extends (...args: any[]) => any>(
+    function throttle<T extends (...args: unknown[]) => unknown>(
         fn: T,
         wait: number,
         options?: ThrottleOptions
@@ -338,7 +338,7 @@ declare namespace TuWebUtils {
      * @param immediate - Si es true, dispara la función al inicio de la ráfaga.
      * @returns Una función con la misma firma que la original pero con lógica de rebote.
      */
-    function debounce<T extends (...args: any[]) => any>(
+    function debounce<T extends (...args: unknown[]) => unknown>(
         fn: T,
         wait: number,
         immediate?: boolean
@@ -347,20 +347,35 @@ declare namespace TuWebUtils {
     /**
      * Convierte cualquier Promesa en una tupla [error, data].
      */
-    function safe<T, E = any>(
+    function safe<T, E = unknown>(
         promise: Promise<T>
     ): Promise<[E, null] | [null, T]>;
 }
 
+// === Utility Types ===
+type FunctionGeneric$4 = (...args: unknown[]) => unknown
+type ObjectGeneric$2 = { [key: string]: unknown };
+/**
+ * Represents a function that can be called to cancel a subscription.
+ */
+type UnsubscribeFunction$1 = () => void;
+
+/**
+ * A utility type that extracts the keys of T whose values are not functions.
+ */
+type KeysWithoutFunctions$2<T> = {
+  [K in keyof T]: T[K] extends FunctionGeneric$4 ? never : K
+}[keyof T];
+
 /**
  * Obtiene una unión de todas las claves de un tipo `T` cuyas propiedades NO son una función.
  */
-type KeysWithoutFunctions$2<T> = {
-    [K in keyof T]: T[K] extends Function ? never : K
+type KeysWithoutFunctions$1<T> = {
+    [K in keyof T]: T[K] extends FunctionGeneric$4 ? never : K
 }[keyof T];
 declare namespace KageBunshin {
     export type IsAliveCallback = () => boolean;
-    export type ListenerCallback = (...args: any[]) => void
+    export type ListenerCallback = (...args: unknown[]) => void
     export type UnsubscribeFunction = () => void;
     export type SubscriberAPI = {
         /**
@@ -384,11 +399,12 @@ declare namespace KageBunshin {
         // [K in keyof T & string as `$${K}`]: (
         //     callback: (newValue: T[K], oldValue: T[K]) => void
         // ) => UnsubscribeFunction;
-        [K in KeysWithoutFunctions$2<T> & string as `$${K}`]: ((
-            callback: (newValue: T[K], oldValue: T[K]) => void,            
-        ) => UnsubscribeFunction )& {
-            subscribe: (callback: (newValue: T[K], oldValue: T[K]) => void, ) => UnsubscribeFunction;
-            once: (callback: (newValue: T[K], oldValue: T[K]) => void, ) => UnsubscribeFunction};
+        [K in KeysWithoutFunctions$1<T> & string as `$${K}`]: ((
+            callback: (newValue: T[K], oldValue: T[K]) => void,
+        ) => UnsubscribeFunction) & {
+            subscribe: (callback: (newValue: T[K], oldValue: T[K]) => void,) => UnsubscribeFunction;
+            once: (callback: (newValue: T[K], oldValue: T[K]) => void,) => UnsubscribeFunction
+        };
     } & T & {
         (callback: (data: T) => void, isOneTime?: boolean): UnsubscribeFunction;
     } & Ninjutso<T>
@@ -400,13 +416,13 @@ declare const createKageBunshinObject: KageBunshin.createKageBunshinObject;
 /**
  * A utility function to be called to unsubscribe from a property's changes.
  */
-type UnsubscribeFunction$1 = () => void;
-
+type UnsubscribeFunction = () => void;
+type FunctionGeneric$3 = (...args: unknown[]) => unknown;
 /**
  * A utility type that extracts the keys of T whose values are not functions.
  */
-type KeysWithoutFunctions$1<T> = {
-  [K in keyof T]: T[K] extends Function ? never : K
+type KeysWithoutFunctions<T> = {
+  [K in keyof T]: T[K] extends FunctionGeneric$3 ? never : K
 }[keyof T];
 
 /**
@@ -420,15 +436,15 @@ type ReactiveProperty<V> = {
    * @param callback The function to call when the value changes.
    * @returns A function to call to unsubscribe.
    */
-  (callback: (newValue: V, oldValue: V) => void): UnsubscribeFunction$1;
+  (callback: (newValue: V, oldValue: V) => void): UnsubscribeFunction;
 
   /**
    * Subscribes to changes for this specific property.
    * @param callback The function to call when the value changes.
    * @returns A function to call to unsubscribe.
    */
-  subscribe(callback: (newValue: V, oldValue: V) => void): UnsubscribeFunction$1;
-  
+  subscribe(callback: (newValue: V, oldValue: V) => void): UnsubscribeFunction;
+
   /**
    * Subscribes to only the next change for this property.
    * The subscription is automatically removed after the first call.
@@ -442,10 +458,10 @@ type ReactiveProperty<V> = {
  * It includes the original data properties of T, plus a special `$`-prefixed
  * property for each data property to handle reactivity.
  */
-type ReactiveDraftProps<T extends object> = 
-  Pick<T, KeysWithoutFunctions$1<T>> & 
+type ReactiveDraftProps<T extends object> =
+  Pick<T, KeysWithoutFunctions<T>> &
   {
-    [K in KeysWithoutFunctions$1<T> & string as `$${K}`]: ReactiveProperty<T[K]>;
+    [K in KeysWithoutFunctions<T> & string as `$${K}`]: ReactiveProperty<T[K]>;
   };
 
 /**
@@ -512,19 +528,6 @@ declare class ReactiveDraft<T extends object> {
 
 // === Utility Types ===
 
-/**
- * Represents a function that can be called to cancel a subscription.
- */
-type UnsubscribeFunction = () => void;
-
-/**
- * A utility type that extracts the keys of T whose values are not functions.
- */
-type KeysWithoutFunctions<T> = {
-  [K in keyof T]: T[K] extends Function ? never : K
-}[keyof T];
-
-// === Utility Types ===
 
 
 
@@ -535,8 +538,8 @@ type KeysWithoutFunctions<T> = {
  */
 interface PluginContext$1<T extends object = object> {
     key: keyof T;
-    oldValue: any;
-    newValue: any;
+    oldValue: unknown;
+    newValue: unknown;
     draft: ObservableDraft<T>;
 }
 
@@ -552,7 +555,7 @@ type PluginFunction$1<T extends object = object> = (context: PluginContext$1<T>,
 interface ObservableDraftEventMap<T extends object> {
     'dirtychange': (isDirty: boolean) => void;
     'stalechange': (isStale: boolean) => void;
-    'change': (payload: { key: keyof T, value: any }) => void;
+    'change': (payload: { key: keyof T, value: unknown }) => void;
     'commit': () => void;
     'rollback': () => void;
     'pull': () => void;
@@ -564,18 +567,18 @@ interface ObservableDraftEventMap<T extends object> {
  */
 type PropertyTools<V> = {
     /** Subscribes to changes for this property. */
-    subscribe(callback: (newValue: V) => void): UnsubscribeFunction;
+    subscribe(callback: (newValue: V) => void): UnsubscribeFunction$1;
     /** Subscribes to the next change for this property. */
-    once(callback: (newValue: V) => void): UnsubscribeFunction;
+    once(callback: (newValue: V) => void): UnsubscribeFunction$1;
 };
 /**
  * A central map of all built-in events and their callback signatures.
  * This interface can be augmented via declaration merging to add custom middleware events.
  */
 type ObservableDraftProps<T extends object> =
-    Pick<T, KeysWithoutFunctions<T>> &
+    Pick<T, KeysWithoutFunctions$2<T>> &
     {
-        [K in KeysWithoutFunctions<T> & string as `$${K}`]: PropertyTools<T[K]>;
+        [K in KeysWithoutFunctions$2<T> & string as `$${K}`]: PropertyTools<T[K]>;
     };
 
 // === UNIFIED EVENT MAP (For perfect autocompletion) ===
@@ -583,81 +586,81 @@ type ObservableDraftProps<T extends object> =
  * A comprehensive map of all possible events that an ObservableDraft instance can emit.
  * This combines base events, property-specific events (`$`), and middleware events (`use:`).
  */
-type AllObservableDraftEvents<T extends object> = 
+type AllObservableDraftEvents<T extends object> =
     ObservableDraftEventMap<T> &
-    { [K in KeysWithoutFunctions<T> & string as `$${K}`]: (newValue: T[K]) => void } 
-    // ya no se usan los use por que eso ya depende de los PLUGINS
-    //& { [K in KeysWithoutFunctions<T> & string as `use:${K}`]: (payload: MiddlewareEventPayload) => void };
+    { [K in KeysWithoutFunctions$2<T> & string as `$${K}`]: (newValue: T[K]) => void }
+// ya no se usan los use por que eso ya depende de los PLUGINS
+//& { [K in KeysWithoutFunctions<T> & string as `use:${K}`]: (payload: MiddlewareEventPayload) => void };
 
 
 // === Main Class Definition ===
 
-declare class ObservableDraft<T extends object, E extends object = {}> {
-  /**
-   * The reactive properties of the draft.
-   * This type is simplified here; the real magic is in the event autocompletion.
-   */
-  public props: ObservableDraftProps<T>; 
+declare class ObservableDraft<T extends object, E extends object = ObjectGeneric$2> {
+    /**
+     * The reactive properties of the draft.
+     * This type is simplified here; the real magic is in the event autocompletion.
+     */
+    public props: ObservableDraftProps<T>;
 
-  constructor(originalObject: T, commitTrigger?: string, scheduler?: { asap: (cb: () => void) => void; defer: (cb: () => void) => number; cancelDefer: (handle: number) => void; });
+    constructor(originalObject: T, commitTrigger?: string, scheduler?: { asap: (cb: () => void) => void; defer: (cb: () => void) => number; cancelDefer: (handle: number) => void; });
 
-  static create<T extends object>(originalObject: T, commitTrigger?: string, scheduler?: any): ObservableDraft<T>;
+    static create<T extends object>(originalObject: T, commitTrigger?: string, scheduler?: unknown): ObservableDraft<T>;
 
-  public readonly isDirty: boolean;
+    public readonly isDirty: boolean;
 
-  public readonly isStale: boolean;
+    public readonly isStale: boolean;
 
-  /**
-   * Subscribes to an event. Provides strong typing and autocomplete for all known events.
-   */
-  public on<K extends keyof (AllObservableDraftEvents<T> & E)>(
-      event: K, 
-      callback: (AllObservableDraftEvents<T> & E)[K]
-  ): UnsubscribeFunction;
-  
-  /**
-   * Subscribes to an event for a single emission.
-   */
-  public once<K extends keyof (AllObservableDraftEvents<T> & E)>(
-      event: K, 
-      callback: (AllObservableDraftEvents<T> & E)[K]
-  ): UnsubscribeFunction;
-  
-  /**
-   * Registers middleware functions for a specific property.
-   */
-  //public use<K extends KeysWithoutFunctions<T> & string>(key: K, ...middlewares: MiddlewareFunction<T>[]): this;
+    /**
+     * Subscribes to an event. Provides strong typing and autocomplete for all known events.
+     */
+    public on<K extends keyof (AllObservableDraftEvents<T> & E)>(
+        event: K,
+        callback: (AllObservableDraftEvents<T> & E)[K]
+    ): UnsubscribeFunction$1;
+
+    /**
+     * Subscribes to an event for a single emission.
+     */
+    public once<K extends keyof (AllObservableDraftEvents<T> & E)>(
+        event: K,
+        callback: (AllObservableDraftEvents<T> & E)[K]
+    ): UnsubscribeFunction$1;
+
+    /**
+     * Registers middleware functions for a specific property.
+     */
+    //public use<K extends KeysWithoutFunctions<T> & string>(key: K, ...middlewares: MiddlewareFunction<T>[]): this;
 
     /**
    * Registers plugin functions for a specific property.
    */
-  public usePlugins<K extends KeysWithoutFunctions<T> & string>(key: K, ...plugins: PluginFunction$1<T>[]): this;
+    public usePlugins<K extends KeysWithoutFunctions$2<T> & string>(key: K, ...plugins: PluginFunction$1<T>[]): this;
 
-  /**
-   * Checks the stale status and emits a `stalechange` event if the status has changed.
-   */
-  public checkStale(): void;
+    /**
+     * Checks the stale status and emits a `stalechange` event if the status has changed.
+     */
+    public checkStale(): void;
 
-  /**
-   * Commits the changes from the draft back to the original object.
-   */
-  public commit(): boolean;
+    /**
+     * Commits the changes from the draft back to the original object.
+     */
+    public commit(): boolean;
 
-  /**
-   * Reverts all changes in the draft back to the state when it was first created.
-   */
-  public rollback(): void;
+    /**
+     * Reverts all changes in the draft back to the state when it was first created.
+     */
+    public rollback(): void;
 
-  /**
-   * Discards all local changes and updates the draft with the latest values from the original object.
-   */
-  public pull(): void;
+    /**
+     * Discards all local changes and updates the draft with the latest values from the original object.
+     */
+    public pull(): void;
 
-  /**
-   * Cleans up all subscriptions and internal references to prevent memory leaks.
-   */
-  public destroy(): void;
-  public emit(event: string, payload: any): void;
+    /**
+     * Cleans up all subscriptions and internal references to prevent memory leaks.
+     */
+    public destroy(): void;
+    public emit(event: string, payload: unknown): void;
 }
 
 // signal.d.ts
@@ -792,7 +795,7 @@ declare const ELEMENT_UTIL : unique symbol;
  * @fileoverview A function to make an object's property reactive.
  * This file contains the type declarations for the makeReactive function.
  */
-
+type ObjectGeneric$1 = { [key: string]: unknown };
 /**
  * funcion para hacer una propiedad reactiva en un objeto
  * @example
@@ -844,7 +847,7 @@ type ReactiveProperties<K extends string | number | symbol, V> = {
      * @returns A function to unsubscribe.
      */
     subscribe: (callback: (value: V) => void) => () => void;
-} & (K extends 'value' ? {} : {
+} & (K extends 'value' ? ObjectGeneric$1 : {
     /**
      * A convenient getter/setter for the reactive property, providing direct access to its value.
      */
@@ -964,6 +967,7 @@ declare namespace TuSignal{
 //export declare const IS_CONFIG_OBJECT : unique symbol;
 
 // --- TIPO DE AYUDA GENÉRICO ---
+type FunctionGeneric$2 = (...args: unknown[]) => unknown;
 interface Subscribable<T> {
   subscribe(onValue: (value: T) => void): void;
   subscribe(onValue: (value: T, oldValue: T) => void): void;
@@ -1027,8 +1031,8 @@ interface GlobalSetAttributes {
 
   // === Index Signature para data-* y Atributos Personalizados ===
   // Permite que cualquier otro atributo, como 'data-nombre' o 'custom-attr', sea válido.
-  [attribute: string]: SignalOr<any> | undefined;
-  //[key: string]: SignalOr<any>;
+  [attribute: string]: SignalOr<unknown> | undefined;
+  //[key: string]: SignalOr<unknown>;
 }
 /**
  * Un objeto JavaScript estándar que representa los datos de un formulario.
@@ -1036,7 +1040,7 @@ interface GlobalSetAttributes {
  * los valores de dichos campos. Puede contener arrays para campos múltiples.
  */
 type FormStateObject = {
-  [key: string]: any; // O más estrictamente: FormDataEntryValue | FormDataEntryValue[]
+  [key: string]: unknown; // O más estrictamente: FormDataEntryValue | FormDataEntryValue[]
 };
 
 // --- GRUPO 2: DIRECTIVAS REACTIVAS ESPECIALES (`@`) ---
@@ -1063,7 +1067,7 @@ type DirectiveAttributes = {
   "@bind:checked"?: SignalOr<boolean>;
   "@innerHTML"?: SignalOr<string>;
   "@attrs"?: GlobalSetAttributes & {
-    [key: string]: SignalOr<any> | undefined;
+    [key: string]: SignalOr<unknown> | undefined;
   };
   /**
    * [DIRECTIVA] Captura los datos de un formulario en el evento de envío,
@@ -1111,7 +1115,7 @@ type SpecialExclusionsPropsInHtmlElement =
 //     Partial<ConfigureAttributes<TElement>> & HasAnyPropertyFromKeys<ConfigureAttributes<TElement>, keyof ConfigureAttributes<TElement>>;
 // 1. Tipo Auxiliar: Selecciona solo las claves de las propiedades que NO son funciones
 type DataPropertyKeys<T> = {
-  [K in keyof T]: T[K] extends Function ? never : K;
+  [K in keyof T]: T[K] extends FunctionGeneric$2 ? never : K;
 }[keyof T];
 // 2. Definición Modificada de SignalifyProperties
 /**
@@ -1126,7 +1130,7 @@ type SignalifyDataProperties<T> = {
   [K in DataPropertyKeys<T>]?: SignalOr<T[K]>;
 };
 type SignalifyProperties<T> = {
-  [K in keyof T]: T[K] extends Function // Si es una función (manejador de eventos), no lo Signalifiques
+  [K in keyof T]: T[K] extends FunctionGeneric$2 // Si es una función (manejador de eventos), no lo Signalifiques
   ? T[K]
   : SignalOr<T[K]>; // De lo contrario, hazlo SignalOr<OriginalType>
 };
@@ -1181,14 +1185,18 @@ type ConfigureAttributes<TElement extends HTMLElement = HTMLElement> =
  * Definición de TypeScript para la etiqueta <webview> en Chrome Apps.
  * Proporciona tipado completo para propiedades, métodos y eventos.
  */
-
-declare global {
-    export interface Window {
-        chrome?: {
-            webview?: WebViewElement;
-        };
-    }
+interface Window {
+    chrome?: {
+        webview?: WebViewElement;
+    };
 }
+// declare global {
+//     export interface Window {
+//         chrome?: {
+//             webview?: WebViewElement;
+//         };
+//     }
+// }
 //export type ChromeWebViewElement = ChromeWebViewElement;
 /**
  * Interfaz principal para el elemento <webview>
@@ -1226,7 +1234,7 @@ interface WebViewElement extends HTMLElement {
     canGoBack(): boolean;
     canGoForward(): boolean;
     clearData(options: ClearDataOptions, types: ClearDataTypeSet, callback: () => void): void;
-    executeScript(details: InjectDetails, callback?: (results: any[]) => void): void;
+    executeScript(details: InjectDetails, callback?: (results: unknown[]) => void): void;
     find(searchText: string, options?: FindOptions, callback?: (result: FindCallbackResults) => void): void;
     forward(callback?: () => void): void;
     getProcessId(): number;
@@ -1252,27 +1260,27 @@ interface WebViewElement extends HTMLElement {
     /**
      * Eventos
      */
-    addEventListener(type: 'close', listener: (this: WebViewElement, ev: Event) => any, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'consolemessage', listener: (this: WebViewElement, ev: AppendEvent<ConsoleMessageEvent>) => any, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'contentload', listener: (this: WebViewElement, ev: Event) => any, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'dialog', listener: (this: WebViewElement, ev: AppendEvent<DialogController>) => any, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'exit', listener: (this: WebViewElement, ev: AppendEvent<ExitEvent>) => any, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'findupdate', listener: (this: WebViewElement, ev: AppendEvent<FindCallbackResults>) => any, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'loadabort', listener: (this: WebViewElement, ev: AppendEvent<LoadAbortEvent>) => any, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'loadcommit', listener: (this: WebViewElement, ev: AppendEvent<LoadCommitEvent>) => any, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'loadredirect', listener: (this: WebViewElement, ev: AppendEvent<LoadRedirectEvent>) => any, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'loadstart', listener: (this: WebViewElement, ev: AppendEvent<LoadStartEvent>) => any, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: 'close', listener: (this: WebViewElement, ev: Event) => unknown, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: 'consolemessage', listener: (this: WebViewElement, ev: AppendEvent<ConsoleMessageEvent>) => unknown, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: 'contentload', listener: (this: WebViewElement, ev: Event) => unknown, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: 'dialog', listener: (this: WebViewElement, ev: AppendEvent<DialogController>) => unknown, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: 'exit', listener: (this: WebViewElement, ev: AppendEvent<ExitEvent>) => unknown, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: 'findupdate', listener: (this: WebViewElement, ev: AppendEvent<FindCallbackResults>) => unknown, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: 'loadabort', listener: (this: WebViewElement, ev: AppendEvent<LoadAbortEvent>) => unknown, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: 'loadcommit', listener: (this: WebViewElement, ev: AppendEvent<LoadCommitEvent>) => unknown, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: 'loadredirect', listener: (this: WebViewElement, ev: AppendEvent<LoadRedirectEvent>) => unknown, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: 'loadstart', listener: (this: WebViewElement, ev: AppendEvent<LoadStartEvent>) => unknown, options?: boolean | AddEventListenerOptions): void;
     /**
      * Se activa cuando se completan todas las cargas a nivel del fotograma en una página secundaria (incluidos todos sus subfotogramas). Esto incluye la navegación dentro del documento actual y las cargas a nivel del documento de subframes, pero no incluye las cargas de recursos asíncronas. Este evento se activa cada vez que la cantidad de cargas a nivel del documento pasa de una (o más) a cero. Por ejemplo, si una página ya terminó de cargarse (es decir, loadstop ya se activó una vez) crea un iframe nuevo que carga una página y, luego, se activará un segundo loadstop cuando se complete la carga de la página del iframe. Este patrón se observa comúnmente en las páginas que cargan anuncios.
      * Nota: Cuando se anula una carga confirmada, un evento loadstop seguirá a un evento loadabort, incluso si se anularon todas las cargas confirmadas desde el último evento loadstop (si hubo alguno).
      */
-    addEventListener(type: 'loadstop', listener: (this: WebViewElement, ev: Event) => any, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'newwindow', listener: (this: WebViewElement, ev: AppendEvent<NewWindow>) => any, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'permissionrequest', listener: (this: WebViewElement, ev: AppendEvent<PermissionRequest>) => any, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'responsive', listener: (this: WebViewElement, ev: Event) => any, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'sizechanged', listener: (this: WebViewElement, ev: AppendEvent<SizeChangedEvent>) => any, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'unresponsive', listener: (this: WebViewElement, ev: Event) => any, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'zoomchange', listener: (this: WebViewElement, ev: AppendEvent<ZoomChange>) => any, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: 'loadstop', listener: (this: WebViewElement, ev: Event) => unknown, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: 'newwindow', listener: (this: WebViewElement, ev: AppendEvent<NewWindow>) => unknown, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: 'permissionrequest', listener: (this: WebViewElement, ev: AppendEvent<PermissionRequest>) => unknown, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: 'responsive', listener: (this: WebViewElement, ev: Event) => unknown, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: 'sizechanged', listener: (this: WebViewElement, ev: AppendEvent<SizeChangedEvent>) => unknown, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: 'unresponsive', listener: (this: WebViewElement, ev: Event) => unknown, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: 'zoomchange', listener: (this: WebViewElement, ev: AppendEvent<ZoomChange>) => unknown, options?: boolean | AddEventListenerOptions): void;
     addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
 }
 interface ChromeWebViewElement extends WebViewElement {
@@ -1288,6 +1296,7 @@ interface ContentWindow extends Window {
 
 interface WebRequestEventInterface {
     // Interfaz para eventos de red
+    [key: string]: unknown;
 }
 
 interface ContextMenus {
@@ -1333,7 +1342,7 @@ interface ContextMenuCreateProperties {
     documentUrlPatterns?: string[];
     targetUrlPatterns?: string[];
     visible?: boolean;
-    onclick?: (info: any, tab: any) => void;
+    onclick?: (info: unknown, tab: unknown) => void;
 }
 
 interface ContextMenuUpdateProperties {
@@ -1383,7 +1392,7 @@ interface PermissionRequest {
 interface LoadAbortEvent {
     url: string;
     isTopLevel: boolean;
-    reason: "ERR_ABORTED"|"ERR_INVALID_URL"|"ERR_DISALLOWED_URL_SCHEME"|"ERR_BLOCKED_BY_CLIENT"|"ERR_ADDRESS_UNREACHABLE"|"ERR_EMPTY_RESPONSE"|"ERR_FILE_NOT_FOUND"|"ERR_UNKNOWN_URL_SCHEME"|string;
+    reason: "ERR_ABORTED" | "ERR_INVALID_URL" | "ERR_DISALLOWED_URL_SCHEME" | "ERR_BLOCKED_BY_CLIENT" | "ERR_ADDRESS_UNREACHABLE" | "ERR_EMPTY_RESPONSE" | "ERR_FILE_NOT_FOUND" | "ERR_UNKNOWN_URL_SCHEME" | string;
 }
 interface LoadStartEvent {
     url: string;
@@ -1418,15 +1427,15 @@ interface ZoomChange {
 
 type ZoomMode = 'per-origin' | 'per-view';
 
-interface ConsoleMessageEvent{
+interface ConsoleMessageEvent {
     level: number;
     message: string;
     line: number;
     sourceId: string;
 }
-interface DialogController{
-    cancel():void;
-    ok(response?:string):void;
+interface DialogController {
+    cancel(): void;
+    ok(response?: string): void;
 }
 
 //import './overloadGlobal.d.ts';
@@ -1435,28 +1444,29 @@ interface DialogController{
 
 // --- TuJsHtml.d.ts ---
 type EventOff = () => void;
+type FunctionGeneric$1 = (...args: unknown[]) => unknown;
 // Solo declaraciones de la clase y sus métodos (sin implementación)
 // export declare class TuadminHtmlElement extends HTMLElement {
 //   // Definir la firma del método `on`
-//   on(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => any): EventOff;
+//   on(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => unknown): EventOff;
 
 //   // Definir la firma del método `one`
-//   one(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => any): EventOff;
+//   one(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => unknown): EventOff;
 
 //   // Definir la firma del método `off`
-//   off(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => any): this;
+//   off(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => unknown): this;
 // }
 
 
 declare class ElementUtil$<TBaseElement extends HTMLElement = HTMLElement> {
   // Definir la firma del método `on`
-  on(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => any): EventOff;
+  on(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => unknown): EventOff;
 
   // Definir la firma del método `one`
-  one(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => any): EventOff;
+  one(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => unknown): EventOff;
 
   // Definir la firma del método `off`
-  off(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => any): this;
+  off(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => unknown): this;
   configure(configureObject: ConfigureAttributes<TBaseElement>): this;
   tags: TuJsHtml_Tags;
 }
@@ -1489,9 +1499,9 @@ type SuperElementClass<TBaseElement extends HTMLElement> = TBaseElement & SuperE
  * Esto ayuda a TypeScript a discriminar.
  */
 interface FunctionLike {
-  call(...args: any[]): any;
-  apply(thisArg: any, args?: any): any;
-  (...args: any[]): any; // Para que sea llamable
+  call(...args: unknown[]): unknown;
+  apply(thisArg: unknown, args?: unknown): unknown;
+  (...args: unknown[]): unknown; // Para que sea llamable
 }
 /**
  * Tipo que representa un objeto que estructuralmente se parece a un Node
@@ -1511,13 +1521,13 @@ interface InstanceNode {
  * Tipo que define los nodos posibles que pueden ser pasados a las funciones de tags.
  * Pueden ser elementos HTML, nodos de texto, o funciones.
  */
-type RecursiveNode$1 = Node | Function | TuJsHtml_Callback | SuperElementClass<HTMLElement> | string | number;                                      // Fallback genérico
+type RecursiveNode$1 = Node | FunctionGeneric$1 | TuJsHtml_Callback | SuperElementClass<HTMLElement> | string | number;                                      // Fallback genérico
 
 
 
 // type MapToDOMNode<T> = 
 //     T extends SuperElementClass<infer E> ? E : 
-//     T extends (...args: any[]) => any ? DynamicNodes : // Si es callback, advertimos que son varios
+//     T extends (...args: unknown[]) => unknown ? DynamicNodes : // Si es callback, advertimos que son varios
 //     T extends Node ? T :
 //     T extends string | number ? Text :
 //     Node;
@@ -1526,21 +1536,21 @@ type DynamicNodes = ChildNode[];
  * El motor de aplanamiento (Flatten).
  * Recorre la tupla T y si un elemento es un array, lo expande.
  */
-type Flatten<T extends any[]> = T extends [infer First, ...infer Rest]
-    ? First extends any[] 
-        ? [...First, ...Flatten<Rest>] // Si es array (como DynamicNodes), lo esparcimos
-        : [MapToDOMNode<First>, ...Flatten<Rest>] // Si es simple, lo mapeamos y seguimos
-    : [];
+type Flatten<T extends unknown[]> = T extends [infer First, ...infer Rest]
+  ? First extends unknown[]
+  ? [...First, ...Flatten<Rest>] // Si es array (como DynamicNodes), lo esparcimos
+  : [MapToDOMNode<First>, ...Flatten<Rest>] // Si es simple, lo mapeamos y seguimos
+  : [];
 
 /**
  * Mapeo base (el mismo que ya tenías)
  */
-type MapToDOMNode<T> = 
-    T extends SuperElementClass<infer E> ? E : 
-    T extends (...args: any[]) => any ? DynamicNodes : // Marcamos los callbacks como arrays
-    T extends Node ? T :
-    T extends string | number ? Text :
-    Node;
+type MapToDOMNode<T> =
+  T extends SuperElementClass<infer E> ? E :
+  T extends (...args: unknown[]) => unknown ? DynamicNodes : // Marcamos los callbacks como arrays
+  T extends Node ? T :
+  T extends string | number ? Text :
+  Node;
 /**
  * Interfaz para tu clase que contiene el método $insert
  */
@@ -1549,7 +1559,7 @@ type MapToDOMNode<T> =
 //      * Inserta elementos y devuelve una tupla con los tipos exactos procesados.
 //      * @param args Elementos, strings o instancias de SuperElementClass.
 //      */
-//     $insert<T extends any[]>(
+//     $insert<T extends unknown[]>(
 //         ...args: T
 //     ): { [K in keyof T]: MapToDOMNode<T[K]> };
 // }
@@ -1647,7 +1657,7 @@ interface StoreObject {
    *             => { vars.count = 0; p`${root.__customVars.count}`; 
    * });
    */
-  [key: string]: any;
+  [key: string]: unknown;
 }
 // export type RecursiveTag<TElement extends HTMLElement = HTMLElement> =
 //     (firstArg: ConfigureAttributes<TElement> | RecursiveNode, ...args: RecursiveNode[]) => SuperElementClass<TElement>;
@@ -1694,7 +1704,7 @@ type TuJsHtml_Tags = {
   /**
    * @returns The root HTMLElement or DocumentFragment where this tag chain is defined.
    */
-  (...args: Parameters<RecursiveTagAppendFunction>):ReturnType<RecursiveTagAppendFunction>;
+  (...args: Parameters<RecursiveTagAppendFunction>): ReturnType<RecursiveTagAppendFunction>;
   /**
    * Proporciona acceso a un objeto de almacenamiento local persistente vinculado al elemento.
    * El almacén se inicializa como un objeto puro (`Object.create(null)`), lo que garantiza 
@@ -1837,15 +1847,15 @@ type TuJsHtml_Tags = {
   $tpl: (
     callbackRender: (tags: TuJsHtml_Tags) => void
   ) => DocumentFragment;
-  
+
   /**
      * Inserta elementos y devuelve una tupla con los tipos exactos procesados.
      * @param args Elementos, strings o instancias de SuperElementClass.
      */
-  $insert<T extends any[]>(
-        ...args: T
-    ): Flatten<T>;
-  // $insert<T extends any[]>(
+  $insert<T extends unknown[]>(
+    ...args: T
+  ): Flatten<T>;
+  // $insert<T extends unknown[]>(
   //     ...args: T
   // ): { [K in keyof T]: MapToDOMNode<T[K]> };
   /**
@@ -2163,7 +2173,7 @@ type TuJsHtml_CallbackExtended = (tags: TuJsHtml_Tags, currentElement: HTMLEleme
  * AnyNode`hola ${mundo}`;
  * AnyNode`hola ${signalVar}`;
  */
-declare function AnyNode(strings: TemplateStringsArray, ...values: any[]): DocumentFragment;
+declare function AnyNode(strings: TemplateStringsArray, ...values: unknown[]): DocumentFragment;
 
 /**
  * @version 4.0.1
@@ -2194,12 +2204,12 @@ declare class TuJsHtml extends DocumentFragment {
   /**
    * Re-renderiza el contenido dom
    */
-  get tag():TuJsHtml_Tags;
+  get tag(): TuJsHtml_Tags;
   /**
    * verifica si es parte del DOM
    */
   get isConnected(): boolean;
-  
+
 }
 
 // /**
@@ -2209,7 +2219,7 @@ declare class TuJsHtml extends DocumentFragment {
 //  * TextNode("hellow", "world");
 //  * TextNode("hellow", signalVar);
 //  */
-//export function TextNode(arg1: any, arg2: any, ...rest: any[]): DocumentFragment;
+//export function TextNode(arg1: unknown, arg2: unknown, ...rest: unknown[]): DocumentFragment;
 
 // /**
 //  * 
@@ -2217,7 +2227,7 @@ declare class TuJsHtml extends DocumentFragment {
 //  * TextNode("hellow");
 //  * TextNode(signalVar);
 //  */
-// export function TextNode(arg1: any|SignalOr<string>): Node;
+// export function TextNode(arg1: unknown|SignalOr<string>): Node;
 /**
  * @version 4.0.1
  * @namespace TuJsHtml
@@ -2258,6 +2268,12 @@ declare class TuTemplateHtml {
 
 // importante para forzar los tipos del DOM 
 /// <reference lib="dom" />
+
+type FunctionGeneric = (...args: unknown[]) => unknown;
+interface ObjectGeneric {
+    // aquí tus propiedades mínimas
+    [key: string]: unknown;
+}
 // Global Attributes
 type GlobalAttributes = {
     id?: string;
@@ -2323,7 +2339,7 @@ type HtmlAttributes = GlobalAttributes & EventAttributes & FormAttributes & Aria
  * Tipo que define los nodos posibles que pueden ser pasados a las funciones de tags.
  * Pueden ser elementos HTML, nodos de texto, o funciones.
  */
-type RecursiveNode = Node | Function | Object | Builder_Callback ;
+type RecursiveNode = Node | FunctionGeneric | ObjectGeneric | Builder_Callback;
 //export type RecursiveNode = Node | Function | Object | Builder_Callback | TuadminHtmlElement;
 
 /**
@@ -2334,21 +2350,21 @@ type RecursiveNode = Node | Function | Object | Builder_Callback ;
 //   (firstArg:ReactiveAttributes | RecursiveNode ,...args: RecursiveNode[]): TuadminHtmlElement;
 //   //(): HTMLElement; // Para finalizar y devolver un elemento HTML
 // }
-type RecursiveTag = (firstArg:HtmlAttributes | RecursiveNode ,...args: RecursiveNode[]) => HTMLElement;
-type Builder_Callback = (tags: Builder_Tags,currentTag:HTMLElement) => HTMLElement | void;
+type RecursiveTag = (firstArg: HtmlAttributes | RecursiveNode, ...args: RecursiveNode[]) => HTMLElement;
+type Builder_Callback = (tags: Builder_Tags, currentTag: HTMLElement) => HTMLElement | void;
 type CustomTagPattern = `${string}-${string}`;
 type CustomTagPattern2 = `${string}`;
 type AllElementTags = keyof HTMLElementTagNameMap | CustomTagPattern | CustomTagPattern2;
 
 type Builder_Tags = {
-    [K in AllElementTags]:RecursiveTag;
+    [K in AllElementTags]: RecursiveTag;
     //[key: string]: RecursiveTag;
 }
 type BuilderTemplate = {
     (element: HTMLElement): HTMLElement;
-    (strings: TemplateStringsArray, ...values: any[]): HTMLElement | DocumentFragment;
+    (strings: TemplateStringsArray, ...values: unknown[]): HTMLElement | DocumentFragment;
     (defineRoot: HTMLElement | string): HTMLElement | DocumentFragment;
-    (builder: Builder_Callback ): HTMLElement | DocumentFragment;
+    (builder: Builder_Callback): HTMLElement | DocumentFragment;
 };
 // Define un tipo que extienda HTMLElement con una propiedad dinámica.
 type HtmlElementOrFragmentWithProp<T, K extends string> = (HTMLElement | DocumentFragment) & {
@@ -2395,18 +2411,18 @@ declare function createTemplateHtml<T>(
      */
     builderFn: (rootBuilder: BuilderTemplate) => T
 ): {
-    
+
     /**
      * Modifies the original template's exposed nodes.
      * @param modifierFn A function that receives an object with references to the original template's exposed nodes.
      */
-    cloneAsTuple(modifierFn: (refs: T) => void): [HTMLElement|DocumentFragment, T];
+    cloneAsTuple(modifierFn: (refs: T) => void): [HTMLElement | DocumentFragment, T];
     /**
      * Clones the template and adds the references as a property to the cloned element.
      * @param nameOfProp The name of the property to add to the cloned element. Defaults to 'refs'.
      * @returns {HtmlElementOrFragmentWithProp<T, N>} The cloned root element with a new property containing the references.
      */
-    clone<N extends string = 'refs'>(modifierFn?:(refs: T) => void,nameOfProp?: N): HtmlElementOrFragmentWithProp<T, N>;
+    clone<N extends string = 'refs'>(modifierFn?: (refs: T) => void, nameOfProp?: N): HtmlElementOrFragmentWithProp<T, N>;
 };
 
 export { AnyNode, ELEMENT_UTIL, ObservableDraft, ReactiveDraft, TUtils, TuJsHtml, TuTemplateHtml, TuWebUtils, createComputedSignal, createKageBunshinObject, createSignal, createTemplateHtml, debounce, debounceEvents, makeReactive, textSize, textSizeEvents, trim };
