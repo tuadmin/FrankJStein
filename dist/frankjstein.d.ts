@@ -1521,7 +1521,7 @@ interface InstanceNode {
  * Tipo que define los nodos posibles que pueden ser pasados a las funciones de tags.
  * Pueden ser elementos HTML, nodos de texto, o funciones.
  */
-type RecursiveNode$1 = Node | FunctionGeneric$1 | TuJsHtml_Callback | SuperElementClass<HTMLElement> | string | number;                                      // Fallback genérico
+type RecursiveNode$1 = Node | SuperElementClass<HTMLElement> | TuJsHtml_Callback<HTMLElement> | string | number | FunctionGeneric$1;                                      // Fallback genérico
 
 
 
@@ -1588,7 +1588,9 @@ type MapToDOMNode<T> =
 //     (SuperElementClassArg: SuperElementClass<HTMLElement>,...args: RecursiveNode[]): SuperElementClass<TElement>;
 //     //(firstArg: ConfigureAttributes<TElement>): SuperElementClass<TElement>;
 // }
-declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(configArg: ConfigureAttributes<TElement>, ...args: RecursiveNode$1[]): SuperElementClass<TElement>;
+
+declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(configArg: ConfigureAttributes<TElement>, ...args: (string | number | Node | TuJsHtml_Callback<HTMLElement>)[]): SuperElementClass<TElement>;
+declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(...args: (string | number | Node | TuJsHtml_Callback<HTMLElement>)[]): SuperElementClass<TElement>;
 declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(tuJsHtmlInstance?: TuJsHtml_Callback<TElement>, ...args: RecursiveNode$1[]): SuperElementClass<TElement>;
 declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(element?: SuperElementClass<HTMLElement>, ...args: RecursiveNode$1[]): SuperElementClass<TElement>;
 declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(nodeElement?: InstanceNode, ...args: RecursiveNode$1[]): SuperElementClass<TElement>;
@@ -1624,7 +1626,9 @@ declare function RecursiveTagAppend<TElement extends HTMLElement = HTMLElement>(
   arg?: TuJsHtml_Callback<TElement> | SuperElementClass<HTMLElement> | InstanceNode | FunctionLike | TemplateStringsArray | string | number,
   ...args: RecursiveNode$1[]
 ): HTMLElement | DocumentFragment;
-
+declare function RecursiveTagAppend<TElement extends HTMLElement = HTMLElement>(
+  ...args: (string | number | Node | TuJsHtml_Callback<HTMLElement>)[]
+): HTMLElement | DocumentFragment;
 type RecursiveTagAppendFunction = typeof RecursiveTagAppend<HTMLElement>;
 
 //export function RecursiveTagArray<TElement extends HTMLElement = HTMLElement>(tuJsHtmlInstance?: TuJsHtml_Callback<TElement>, ...args: RecursiveNode[]): Node[];
@@ -1696,12 +1700,77 @@ type DynamicTagPatterns_emmet = {
 }
 type ExecuteAfterRender = () => void;
 /**
+ * **Fábrica de elementos HTML fluida** - Parte del sistema `TuJsHtml`.
  * Interfaz para representar las etiquetas HTML5 extendidas.
  * Esta interfaz incluye etiquetas HTML5 comunes, como div, p, h1, pre, code, etc.,
- * con descripciones sobre sus características y comportamiento.
+ * ### 1. **Creación + Contexto**
+ * ```ts
+ * tags.p("Texto ", ctx => { ctx.b("negrita"); }); // HTMLParagraphElement
+ * ```
+ * ## Comportamientos mágicos
+ * 
+ * ### 1. **Creación + Contexto**
+ * ```ts
+ * tags.p("Texto ", ctx => { ctx.b("negrita"); }); // HTMLParagraphElement
+ * ```
+ * 
+ * ### 2. **Template literals** (contexto activo)
+ * ```ts
+ * const ctx = tags.div(); // HTMLDivElement + contexto
+ * ctx`Hola ${ctx.span("inline")}`; // Añade al div
+ * ```
+ * 
+ * ### 3. **Callback mágico** - Se auto-activa como contexto
+ * ```ts
+ * tags.div("Inicio", tags.p`Párrafo dinámico`); // tags.p actúa como contexto
+ * ```
+ * 
+ * ### 4. **Chaining con tipos exactos**
+ * ```ts
+ * tags.button("Click").style.background = "blue"; // HTMLButtonElement
+ * ```
+ * 
+ * ## Flujo completo
+ * ```ts
+ * const demo = new TuJsHtml(tags => {
+ *   const main = tags.main(ctx => {
+ *     ctx.h1("Título").className = "title";           // HTMLHeadingElement
+ *     ctx.section(tags.article`Contenido`);           // Callback mágico
+ *   }); // HTMLMainElement
+ *   main.style.padding = "20px";
+ * });
+ * ```
+ * 
+ * **Tipado preciso**: Cada función retorna **su HTMLElement específico** + activa **contexto fluido**.
+ * 
  */
 type TuJsHtml_Tags = {
   /**
+   * Crea una **API fluida de etiquetas HTML** que trabaja en el **contexto activo actual**.
+   * El `contexto` es un **proxy mágico** que:
+   * - Permite **template literals** HTML: `` `texto ${ctx.b("negrita")}` ``
+   * - **Añade contenido** al elemento padre sin romper el chaining
+   * - Retorna **siempre el mismo contexto** para fluidez total
+   * **Flujo paso a paso**:
+   * 1. `tags.div("hola ")` ← Crea `<div>hola </div>` + **contexto activo = div**
+   * 2. `divContext(" texto ", ctx=>...)` ← **Añade** " texto " + sub-contexto
+   * 3. `ctx.i´cursiva´` ← **Dentro** del sub-contexto crea `<i>cursiva</i>`
+   * 4. `divContext´texto ${...}´` ← **Vuelve** al div principal, añade más
+   * 5. `.style.color` ← **Estiliza** el elemento raíz del contexto
+   * 
+   * @example
+   * ```js
+   * const demo = new TuJsHtml( tags=> {
+   *  tags.div("hola ",divContext=>{
+   *      divContext(" texto ",ctx=> { ctx.i`cursiva`;});
+   *      divContext` texto ${divContext.b("negrita")}`.style.color="red" 
+   *  });
+   * });
+   * // <div style="color: red">hola texto <i>cursiva</i> texto <b>negrita</b></div>
+   * ```
+   * ```html
+   * <div style="color: red">hola texto <i>cursiva</i> texto <b>negrita</b></div>
+   * ```
    * @returns The root HTMLElement or DocumentFragment where this tag chain is defined.
    */
   (...args: Parameters<RecursiveTagAppendFunction>): ReturnType<RecursiveTagAppendFunction>;
@@ -2176,7 +2245,26 @@ type TuJsHtml_CallbackExtended = (tags: TuJsHtml_Tags, currentElement: HTMLEleme
 declare function AnyNode(strings: TemplateStringsArray, ...values: unknown[]): DocumentFragment;
 
 /**
- * @version 4.0.1
+ * **Fábrica de elementos HTML fluida**
+ * Lienzo donde se dibuja el html
+ * @version 4.0.2
+ * @example
+ * ```js
+ * const demo = new TuJsHtml(tags => {
+ *   const {h1,h2,p} = tags;
+ *   const main = tags.main(ctx => {
+ *     h1`Titulo 1`;
+ *     ctx.h3("Título 3").className = "title";           // HTMLHeadingElement
+ *     ctx.section(
+ *        tags.article`Contenido`
+ *     );           // Callback mágico
+ *     ctx.ul( ({li})=>{
+ *         [1,2,3].forEach(item => li(item));
+ *     })
+ *   }); // HTMLMainElement
+ *   main.style.padding = "20px";
+ * });
+ * ```
  */
 declare class TuJsHtml extends DocumentFragment {
   /** @type {TuJsHtml_Tags} */
@@ -2235,9 +2323,21 @@ declare class TuJsHtml extends DocumentFragment {
  */
 declare namespace TuJsHtml {
   export namespace Types {
+    /**
+     * @see TuJsHtml_Tags
+     */
     export type Tags = TuJsHtml_Tags;
+    /**
+     * @see SuperElementClass
+     */
     export type Element<TElement extends HTMLElement = HTMLElement> = SuperElementClass<TElement>;
+    /**
+     * @see RecursiveTag
+     */
     export type CustomTag<TElement extends HTMLElement = HTMLElement> = typeof RecursiveTag$1<TElement>;
+    /**
+     * @see TuJsHtml_Callback
+     */
     export type Callback<TElement extends HTMLElement = HTMLElement> = (tags: TuJsHtml_Tags, currentElement?: SuperElementClass<TElement>) => SuperElementClass<TElement> | void;
   }
 
