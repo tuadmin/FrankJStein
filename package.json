@@ -1,6 +1,6 @@
 {
     "name": "frankjstein",
-    "version": "0.2.1-alpha.3",
+    "version": "0.3.0-alpha.1",
     "publishConfig": {
         "tag": "alpha",
         "access": "public"
@@ -32,7 +32,9 @@
         "suspense",
         "async",
         "ui",
-        "builder"
+        "builder",
+        "workers",
+        "threads"
     ],
     "author": "Victor Choque",
     "license": "Apache-2.0",

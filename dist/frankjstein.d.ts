@@ -2317,7 +2317,7 @@ declare class TuJsHtml extends DocumentFragment {
 //  */
 // export function TextNode(arg1: unknown|SignalOr<string>): Node;
 /**
- * @version 4.0.1
+ * @version 4.0.3
  * @namespace TuJsHtml
  * @description Espacio de nombres que contiene los tipos relacionados con la clase `TuJsHtml`, incluyendo las etiquetas HTML extendidas, el callback de renderizado y otros tipos auxiliares.
  */
@@ -2480,28 +2480,67 @@ type HtmlElementOrFragmentWithProp<T, K extends string> = (HTMLElement | Documen
  * @example
  * // Example 1: Declarative builder with inferred refs
  * const fabrica1 = createTemplateHtml((root) => {
- * let label; // The root builder will handle DOM creation.
- * root(tags => {
- * // Using tags to build the DOM
- * tags.div(tags.span(node => (label = node.textNode("Hello"))));
- * });
- * return { "data": label }; // The type of 'data' is now inferred
+ *   let label; // The root builder will handle DOM creation.
+ *   root(tags => {
+ *     // Using tags to build the DOM
+ *     tags.div(tags.span(node => (label = node.textNode("Hello"))));
+ *   });
+ *   return { "data": label }; // The type of 'data' is now inferred
  * });
  *
  * // The returned function has autocompletion for `data`
  * const [root1, refs1] = fabrica1();
- * refs1.data.set("New value"); // Autocomplete for 'data' works.
+ * refs1.data.set("New value"); // Autocomplete for 'data' works. 
+ * // The returned function has autocompletion for `data`
+ * const [root1Clon, refsClon] = fabrica1();
+ * refsClon.data.set("New clon value"); // Autocomplete for 'data' works.
+ * document.body.appendChild(root1,root1Clon);
  *
  * @example
  * // Example 2: Tagged template literal with inferred refs
  * const fabrica2 = createTemplateHtml((root) => {
- * const dom = root`<div><span>{label}</span></div>`;
- * return { "label": dom.querySelector('span') }; // 'label' is inferred here
+ *   const dom = root`<div><span>{label}</span></div>`;
+ *   return { "label": dom.querySelector('span') }; // 'label' is inferred here
  * });
  *
  * // The returned function has autocompletion for `label`
  * const [root2, refs2] = fabrica2();
  * refs2.label.textContent = "New text"; // Autocomplete for 'label' works.
+ * @example 3 complex 
+ * ```js
+ * 
+ * const templateLi = createTemplateHtml((root) => {
+ *   const texto = document.createTextNode("texto inicial");
+ *   root(
+ *       ({ li, span, b, i }) =>
+ *           li(_ => {
+ *               i('italic ')
+ *               b(texto)
+ *               span(' span')
+ *           })
+ *   );
+ *   return { texto };
+ * });
+ * const ul = document.createElement("ul");
+ * for (let i = 0; i < 3; i++) {
+ *    //const [li, refs] = templateLi.cloneAsTuple();
+ *    //refs.texto.textContent = `texto ${i}`;
+ *    //ul.appendChild(li);
+ *    const li = templateLi.clone();
+ *    ul.appendChild(li);
+ *    li.refs.texto.textContent = `texto ${i}`;
+ * }
+ * document.body.appendChild(ul);
+ * ul.firstElementChild.nextElementSibling.refs.texto.textContent = `i am middle`;
+ * ```
+ * ## result
+ * ```html
+ * <ul>
+ *    <li><i>italic </i><b>texto 0</b><span> span</span></li>
+ *    <li><i>italic </i><b>i am middle</b><span> span</span></li>
+ *    <li><i>italic </i><b>texto 2</b><span> span</span></li>
+ * </ul>
+ * ```
  */
 declare function createTemplateHtml<T>(
     /**
@@ -2525,4 +2564,267 @@ declare function createTemplateHtml<T>(
     clone<N extends string = 'refs'>(modifierFn?: (refs: T) => void, nameOfProp?: N): HtmlElementOrFragmentWithProp<T, N>;
 };
 
-export { AnyNode, ELEMENT_UTIL, ObservableDraft, ReactiveDraft, TUtils, TuJsHtml, TuTemplateHtml, TuWebUtils, createComputedSignal, createKageBunshinObject, createSignal, createTemplateHtml, debounce, debounceEvents, makeReactive, textSize, textSizeEvents, trim };
+/**
+ * RemoteModuleCore - High-performance Web Worker Bridge
+ * Optimized for Bundled Services, Shared States, and Micro-threads.
+ * @author Victor Choque (tuadmin)
+ * @package Threading
+ * @version 4.1.0
+ */
+
+/** Extracts literal values from an object constants */
+type ValueOf<T> = T[keyof T];
+
+/**
+ * **EN:** Internal management interface for the Remote Module.
+ * Access it via the `$control` property on your linked instance.
+ *
+ * **ES:** Interfaz de gestión interna del Remote Module.
+ * Accédela mediante la propiedad `$control` en tu instancia vinculada.
+ */
+interface RemoteControl<E = undefined> {
+    /**
+     * **EN:** Subscribe to worker-emitted events via Pub/Sub protocol.
+     *
+     * **ES:** Suscríbete a eventos emitidos por el worker mediante el protocolo Pub/Sub.
+     * @param eventName - Value from the exported Events object.
+     * @param callback - Function to handle the payload.
+     */
+    on(eventName: E extends undefined ? string : ValueOf<E>, callback: (payload: unknown) => void): void;
+
+    /**
+     * **EN:** Returns true if the worker is idle and ready for new tasks.
+     *
+     * **ES:** Retorna true si el worker está libre para recibir tareas.
+     */
+    isReady(): boolean;
+
+    /**
+     * **EN:** Returns true if the connection has been finalized (locally or globally).
+     *
+     * **ES:** Retorna true si la conexión ha sido finalizada (local o globalmente).
+     */
+    isClosed(): boolean;
+
+    /**
+     * **EN:** Performs a real-time check (Handshake Pong) to see if the thread is responsive.
+     *
+     * **ES:** Realiza una comprobación en tiempo real (Handshake Pong) para ver si el hilo responde.
+     */
+    isAlive(): Promise<boolean>;
+
+    /**
+     * **EN:** Closes the current connection port.
+     * - In Simple/Local: Terminates the dedicated thread.
+     * - In Shared/Global: Closes only the local port (other tabs remain connected).
+     *
+     * **ES:** Cierra el puerto de conexión actual.
+     * - En Simple/Local: Finaliza el hilo dedicado.
+     * - En Shared/Global: Cierra solo el puerto local (otras pestañas siguen conectadas).
+     */
+    disconnect(): void;
+
+    /**
+     * **EN:** Alias for `disconnect()`. For compatibility with native Worker interface.
+     *
+     * **ES:** Alias de `disconnect()`. Por compatibilidad con la interfaz nativa de Worker.
+     * @deprecated Use disconnect() instead.
+     */
+    terminate(): void;
+
+    /**
+     * **EN:** **DANGEROUS**: Forces the specific service (PID) to stop in the worker.
+     * If it's the last service in the thread, the entire Worker (self) will close,
+     * sending a "death cry" to all other connected tabs.
+     *
+     * **ES:** **PELIGROSO**: Fuerza al servicio específico (PID) a detenerse en el worker.
+     * Si es el último servicio en el hilo, el Worker completo (self) se cerrará,
+     * enviando un "grito de muerte" a todas las demás pestañas conectadas.
+     */
+    kill(): Promise<void>;
+}
+
+interface CrashContext {
+    /** Total crashes detected in the current session. */
+    retryCount: number;
+    /** Error message or stack trace provided by the worker. */
+    msg?: string;
+    /** Whether the crash is terminal (max retries reached). */
+    fatal: boolean;
+    /** Triggers a page reload to attempt restoration of the environment. */
+    reconnect: () => void;
+}
+
+interface ConnectOptions {
+    /**
+     * **EN:** Debug name for the worker thread.
+     *
+     * **ES:** Nombre de depuración para el hilo.
+     */
+    name?: string;
+    /**
+     * **EN:** Enables SharedWorker (multi-tab support).
+     *
+     * **ES:** Habilita SharedWorker (soporte multi-pestaña).
+     */
+    shared?: boolean;
+    /**
+     * **EN:** Reuses same connection for the same URL/Name.
+     * 
+     * **ES:** Reutiliza la misma conexión para la misma URL/Nombre.
+     */
+    singleton?: boolean;
+    /** 
+     * **EN:** Handshake timeout (ms) before triggering a retry.
+     * 
+     * **ES:** Tiempo de espera del handshake (ms) antes de activar un reintento. 
+     * @default 3000 
+     */
+    timeout?: number;
+    /** 
+     * **EN:** Max physical connection retries before failing. 
+     * 
+     * **ES:** Número máximo de reintentos de conexión física antes de fallar. 
+     * 
+     * @default 3 
+     */
+    maxRetries?: number;
+    /** 
+     * **EN:** Disaster recovery callback. 
+     * 
+     * **ES:** Callback de recuperación de errores. 
+     */
+    onCrash?: (ctx: CrashContext) => void;
+    /** 
+     * **EN:** Process ID for routing in bundled workers. 
+     * 
+     * **ES:** ID de proceso para ruteo en workers empaquetados. 
+     */
+    pid?: string;
+}
+
+/**
+ * RemoteModule - High-performance Web Worker Bridge
+ * Optimized for Bundled Services, Shared States, and Micro-threads.
+ * @version 4.1.0
+ * @author Victor Choque (tuadmin)
+ * @package Threading
+ */
+
+
+
+
+
+
+/** 
+ * **EN:** The "Mirror" of the Service in the Client.
+ * Methods become Promises and management is moved to `$control`.
+ * 
+ * **ES:** El "Espejo" del Servicio en el Cliente.
+ * Los métodos se vuelven Promesas y la gestión se mueve a `$control`.
+ */
+type RemoteLink<T, E = undefined> = {
+    // 1. Mapeo de métodos originales (Promisificados)
+    readonly [K in keyof T]: T[K] extends (...args: infer A) => infer R
+    ? (...args: A) => Promise<Awaited<R>>
+    : T[K];
+} & {
+    /**
+     * **EN:** Management property to avoid method collision with your class.
+     * **ES:** Propiedad de gestión para evitar colisiones de métodos con tu clase.
+     */
+    readonly $control: RemoteControl<E>;
+};
+
+/**
+ * ### RemoteModule (Base)
+ * **EN:** Standard Worker bridge. Each `connect()` creates a fresh, isolated instance.
+ * 
+ * **ES:** Puente de Worker estándar. Cada `connect()` crea una instancia nueva y aislada.
+ */
+declare class RemoteModule {
+    /** 
+     * **EN:** Starts hosting the service logic inside the Worker thread.
+     * 
+     * **ES:** Inicia el hosting de la lógica del servicio dentro del hilo del Worker.
+     * @param meta - Pass `import.meta` to automatically detect the worker script URL.
+     */
+    static register(meta: ImportMeta | string): void;
+
+    /**
+     * **EN:** Connects to the Worker and returns a Promisified Proxy.
+     * 
+     * **ES:** Conecta con el Worker y devuelve un Proxy asíncrono.
+     */
+    static connect<T extends typeof RemoteModule, E = undefined>(
+        this: T,
+        options?: ConnectOptions
+    ): Promise<RemoteLink<InstanceType<T>, E>>;
+
+    /** 
+     * **EN:** Sends a private event to the clients of THIS instance.
+     * 
+     * **ES:** Envía un evento privado a los clientes de ESTA instancia.
+     */
+    protected publish(event: string, payload?: unknown): void;
+
+    /**
+     * **EN:** Broadcasts an event to ALL services in this Worker thread.
+     * 
+     * **ES:** Envía un evento a TODOS los servicios en este hilo del Worker.
+     */
+    protected broadcast(event: string, payload?: unknown): void;
+}
+
+/**
+ * ### RemoteLocalModule (Tab Singleton)
+ * **EN:** Shared instance within the CURRENT TAB (SPA).
+ * 
+ * **ES:** Instancia compartida dentro de la PESTAÑA ACTUAL (SPA).
+ */
+declare class RemoteLocalModule extends RemoteModule {
+    static connect<T extends typeof RemoteLocalModule, E = undefined>(
+        this: T,
+        options?: Omit<ConnectOptions, 'singleton'>
+    ): Promise<RemoteLink<InstanceType<T>, E>>;
+}
+
+/**
+ * ### RemoteSharedModule (Multi-Tab / SharedWorker)
+ * **EN:** Shared across multiple tabs/windows via SharedWorker.
+ * 
+ * **ES:** Compartido entre múltiples pestañas/ventanas vía SharedWorker.
+ */
+declare class RemoteSharedModule extends RemoteModule {
+    static connect<T extends typeof RemoteSharedModule, E = undefined>(
+        this: T,
+        options?: Omit<ConnectOptions, 'shared'>
+    ): Promise<RemoteLink<InstanceType<T>, E>>;
+}
+
+/**
+ * ### RemoteGlobalModule (Browser Singleton)
+ * **EN:** One single instance for the entire browser session.
+ * 
+ * **ES:** Una única instancia para toda la sesión del navegador.
+ */
+declare class RemoteGlobalModule extends RemoteModule {
+    static connect<T extends typeof RemoteGlobalModule, E = undefined>(
+        this: T,
+        options?: Omit<ConnectOptions, 'shared' | 'singleton' | 'name'>
+    ): Promise<RemoteLink<InstanceType<T>, E>>;
+}
+
+/**
+ * **EN:** Namespace to access all Remote Module variants.
+ * 
+ * **ES:** Namespace para acceder a todas las variantes de Remote Module.
+ */
+declare const Remote: {
+    readonly Simple: typeof RemoteModule;
+    readonly Local: typeof RemoteLocalModule;
+    readonly Shared: typeof RemoteSharedModule;
+    readonly Global: typeof RemoteGlobalModule;
+};
+
+export { AnyNode, ELEMENT_UTIL, ObservableDraft, ReactiveDraft, Remote, RemoteGlobalModule, RemoteLocalModule, RemoteModule, RemoteSharedModule, TUtils, TuJsHtml, TuTemplateHtml, TuWebUtils, createComputedSignal, createKageBunshinObject, createSignal, createTemplateHtml, debounce, debounceEvents, makeReactive, textSize, textSizeEvents, trim };
