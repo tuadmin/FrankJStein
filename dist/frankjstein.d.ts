@@ -353,7 +353,7 @@ declare namespace TuWebUtils {
 }
 
 // === Utility Types ===
-type FunctionGeneric$4 = (...args: unknown[]) => unknown
+type FunctionGeneric$3 = (...args: unknown[]) => unknown
 type ObjectGeneric$2 = { [key: string]: unknown };
 /**
  * Represents a function that can be called to cancel a subscription.
@@ -364,14 +364,14 @@ type UnsubscribeFunction$1 = () => void;
  * A utility type that extracts the keys of T whose values are not functions.
  */
 type KeysWithoutFunctions$2<T> = {
-  [K in keyof T]: T[K] extends FunctionGeneric$4 ? never : K
+  [K in keyof T]: T[K] extends FunctionGeneric$3 ? never : K
 }[keyof T];
 
 /**
  * Obtiene una unión de todas las claves de un tipo `T` cuyas propiedades NO son una función.
  */
 type KeysWithoutFunctions$1<T> = {
-    [K in keyof T]: T[K] extends FunctionGeneric$4 ? never : K
+    [K in keyof T]: T[K] extends FunctionGeneric$3 ? never : K
 }[keyof T];
 declare namespace KageBunshin {
     export type IsAliveCallback = () => boolean;
@@ -417,12 +417,12 @@ declare const createKageBunshinObject: KageBunshin.createKageBunshinObject;
  * A utility function to be called to unsubscribe from a property's changes.
  */
 type UnsubscribeFunction = () => void;
-type FunctionGeneric$3 = (...args: unknown[]) => unknown;
+type FunctionGeneric$2 = (...args: unknown[]) => unknown;
 /**
  * A utility type that extracts the keys of T whose values are not functions.
  */
 type KeysWithoutFunctions<T> = {
-  [K in keyof T]: T[K] extends FunctionGeneric$3 ? never : K
+  [K in keyof T]: T[K] extends FunctionGeneric$2 ? never : K
 }[keyof T];
 
 /**
@@ -854,6 +854,32 @@ type ReactiveProperties<K extends string | number | symbol, V> = {
     value: V;
 });
 
+// ==========================================
+// --- common.d.ts ---
+// ==========================================
+
+type EventOff = () => void;
+type ExecuteAfterRender = () => void;
+type FunctionGeneric$1 = (...args: unknown[]) => unknown;
+
+
+/**
+ * Genera dinámicamente las firmas para selectores tipo Emmet.
+ * Soporta: 
+ * - Clases: .clase
+ * - IDs: #id
+ * - Atributos: [attr="val"]
+ * - Texto interno: {texto} (Sí, funciona para <text> en SVG y <mi> en Math)
+ * @template TContext El diccionario original (ej. TuJsHtml_Tags, TuJsHtml_MathContext)
+ * @template TKeys Las llaves válidas (ignorando métodos nativos de JS)
+ */
+type CustomEmmetSelectors<TContext, TKeys extends keyof TContext> = {
+    [Tag in TKeys as Tag extends string
+    ? `${Tag}${'.' | '#' | '[' | '{'}${string}` // ¡Añadimos '{' para soportar texto!
+    : never
+    ]: TContext[Tag];
+};
+
 // importante para forzar los tipos del DOM 
 /// <reference lib="dom" />
 type HtmlInputType =
@@ -959,225 +985,1242 @@ declare namespace TuSignal{
 }/*
  */
 
-// importante para forzar los tipos del DOM 
-/// <reference lib="dom" />
+// ============================================================================
+// --- html-attributes.d.ts ---
+// ============================================================================
 
 
-//import type {IS_CONFIG_OBJECT} from "./constantes.d.ts";
-//export declare const IS_CONFIG_OBJECT : unique symbol;
 
-// --- TIPO DE AYUDA GENÉRICO ---
-type FunctionGeneric$2 = (...args: unknown[]) => unknown;
+// ============================================================================
+// 🌐 1. GLOBAL ATTRIBUTES (Available on all HTML tags)
+// ============================================================================
+
+interface GlobalHtmlAttributes {
+    /**
+     * CSS classes of the element. Use standard HTML nomenclature ('class').
+     * @es Clases CSS del elemento. Usa nomenclatura HTML pura ('class', no 'className').
+     * @example class: "flex items-center justify-center"
+     */
+    'class'?: SignalOr<string>;
+
+    /**
+     * Unique identifier for the element.
+     * @es Identificador único del elemento en el DOM.
+     */
+    id?: SignalOr<string>;
+
+    /**
+     * Inline CSS styles. (Prefer the dedicated `style` object from ConfigureAttributes for better DX).
+     * @es Estilos en línea. (Prefiere el objeto `style` del ConfigureAttributes para mejor DX).
+     */
+    style?: SignalOr<string>;
+
+    /**
+     * Indicates if the element is hidden.
+     * - `hidden` (boolean): Hides the element entirely.
+     * - `"until-found"`: Hidden but accessible to find-in-page features.
+     * @es Indica si el elemento está oculto.
+     * - `hidden` (booleano): Oculta el elemento por completo.
+     * - `"until-found"`: Oculto pero accesible para la búsqueda en página (Ctrl+F).
+     */
+    hidden?: SignalOr<boolean | 'until-found' | string>;
+
+    tabindex?: SignalOr<number | string>;
+    contenteditable?: SignalOr<boolean | 'true' | 'false'>;
+    draggable?: SignalOr<boolean | 'true' | 'false'>;
+    translate?: SignalOr<'yes' | 'no'>;
+    spellcheck?: SignalOr<'true' | 'false'>;
+    dir?: SignalOr<'ltr' | 'rtl' | 'auto'>;
+    lang?: SignalOr<string>;
+    title?: SignalOr<string>;
+}
+
+// ============================================================================
+// 🔗 2. SPECIFIC ATTRIBUTES
+// ============================================================================
+
+/** * <a>, <area>
+ */
+interface AnchorAttributes {
+    /**
+     * Forces the browser to download the linked resource instead of navigating.
+     * If a string is provided, it acts as the default filename.
+     * @es 📥 Fuerza la descarga del recurso en lugar de navegar hacia él.
+     * Si pasas un string, será el nombre sugerido del archivo.
+     * @example download: "report_2026.pdf"
+     */
+    download?: SignalOr<string | boolean>;
+
+    href?: SignalOr<string>;
+
+    /**
+     * Browsing context for the linked resource.
+     * - `_blank`: Opens in a new tab/window.
+     * - `_self`: Opens in the current frame (default).
+     * - `_parent`: Opens in the parent frame.
+     * - `_top`: Opens in the top-level frame.
+     * @es Dónde abrir el recurso enlazado.
+     */
+    target?: SignalOr<'_blank' | '_self' | '_parent' | '_top' | string>;
+
+    rel?: SignalOr<string>;
+}
+
+/** * <img>
+ */
+interface ImageAttributes {
+    src?: SignalOr<string>;
+    alt?: SignalOr<string>;
+
+    /**
+     * Native image loading strategy.
+     * - `lazy`: Defers loading until it reaches a calculated distance from the viewport.
+     * - `eager`: Loads the image immediately.
+     * @es 🚀 Estrategia de carga nativa de la imagen.
+     * - `lazy`: Retrasa la carga hasta que el usuario hace scroll cerca de la imagen (Mejora el rendimiento).
+     * - `eager`: Carga la imagen inmediatamente.
+     */
+    loading?: SignalOr<'lazy' | 'eager'>;
+
+    /**
+     * Provides a hint of the relative priority to fetch the image.
+     * - `high`: You consider this image vital (e.g., LCP image).
+     * - `low`: You consider this image low priority.
+     * @es ⚡ Sugiere al navegador la prioridad de descarga.
+     * - `high`: Úsalo para la imagen principal visible arriba del pliegue (LCP).
+     */
+    fetchpriority?: SignalOr<'high' | 'low' | 'auto'>;
+
+    decoding?: SignalOr<'sync' | 'async' | 'auto'>;
+}
+
+/** * <script>
+ */
+interface ScriptAttributes {
+    src?: SignalOr<string>;
+
+    /**
+     * Represents the type of the script.
+     * - `module`: The script is an ES module (allows import/export).
+     * - `importmap`: Defines a JSON map for bare module specifiers.
+     * - `text/javascript`: Default legacy script.
+     * @es Define la naturaleza del script.
+     * - `module`: El script es un módulo moderno (permite import/export).
+     * - `importmap`: Permite definir un mapa JSON para resolver importaciones como `import Vue from 'vue'`.
+     */
+    type?: SignalOr<'module' | 'importmap' | 'text/javascript' | string>;
+
+    /**
+     * If true, the browser will download the script asynchronously without blocking the HTML parser.
+     * @es Si es true, descarga el script sin bloquear la construcción del DOM.
+     */
+    async?: SignalOr<boolean>;
+
+    /**
+     * If true, delays the execution of the script until the HTML parser has finished.
+     * @es Si es true, retrasa la ejecución hasta que el HTML termine de cargar.
+     */
+    defer?: SignalOr<boolean>;
+
+    crossorigin?: SignalOr<'anonymous' | 'use-credentials' | ''>;
+}
+
+/** * <input>
+ */
+interface InputAttributes {
+    /**
+     * Type of form control.
+     * @es Tipo de control de formulario.
+     */
+    type?: SignalOr<'text' | 'password' | 'email' | 'number' | 'checkbox' | 'radio' | 'file' | 'date' | 'color' | 'range' | 'hidden' | string>;
+
+    value?: SignalOr<string | number>;
+    checked?: SignalOr<boolean>;
+    placeholder?: SignalOr<string>;
+    disabled?: SignalOr<boolean>;
+    readonly?: SignalOr<boolean>;
+    required?: SignalOr<boolean>;
+
+    /**
+     * Form element ID that owns this input.
+     * @es ID del `<form>` al que pertenece, permitiendo que el input esté fuera de la etiqueta form.
+     */
+    form?: SignalOr<string>;
+
+    name?: SignalOr<string>;
+    min?: SignalOr<string | number>;
+    max?: SignalOr<string | number>;
+    step?: SignalOr<string | number>;
+    maxlength?: SignalOr<number>;
+    autocomplete?: SignalOr<'on' | 'off' | 'new-password' | 'current-password' | 'email' | 'username' | string>;
+}
+
+/** * <button>
+ */
+interface ButtonAttributes {
+    /**
+     * Default behavior of the button.
+     * - `submit`: Submits the form data to the server (Default in HTML).
+     * - `button`: Has no default behavior. Ideal for custom JS actions.
+     * - `reset`: Resets all the controls to their initial values.
+     * @es Comportamiento del botón.
+     * - `submit`: Envía el formulario (Es el valor por defecto si no se especifica).
+     * - `button`: No hace nada por defecto. Úsalo cuando el botón solo dispara eventos JS.
+     */
+    type?: SignalOr<'submit' | 'button' | 'reset'>;
+
+    disabled?: SignalOr<boolean>;
+    form?: SignalOr<string>;
+    name?: SignalOr<string>;
+    value?: SignalOr<string | number>;
+}
+
+/** * <label>, <output>
+ */
+interface LabelAttributes {
+    /**
+     * The ID of the input element that this label is bound to.
+     * @es El ID del `<input>` al que está vinculado este label (reemplaza a `htmlFor` de JS).
+     */
+    for?: SignalOr<string>;
+}
+
+/** * <form>
+ */
+interface FormAttributes$1 {
+    action?: SignalOr<string>;
+
+    /**
+     * HTTP method to submit the form.
+     * - `dialog`: Special value for `<dialog>` tags to close the modal.
+     * @es Método HTTP.
+     * - `dialog`: Cierra un `<dialog>` padre nativamente sin JS.
+     */
+    method?: SignalOr<'GET' | 'POST' | 'dialog' | string>;
+
+    enctype?: SignalOr<'application/x-www-form-urlencoded' | 'multipart/form-data' | 'text/plain'>;
+    target?: SignalOr<string>;
+    novalidate?: SignalOr<boolean>;
+}
+
+/** * <video>, <audio>
+ */
+interface MediaAttributes$1 {
+    src?: SignalOr<string>;
+    controls?: SignalOr<boolean>;
+    autoplay?: SignalOr<boolean>;
+    loop?: SignalOr<boolean>;
+    muted?: SignalOr<boolean>;
+
+    /**
+     * Optimization hint for buffering.
+     * - `none`: Don't load anything until play.
+     * - `metadata`: Load only duration and dimensions.
+     * - `auto`: Load the whole file.
+     * @es Sugerencia de precarga.
+     * - `metadata`: Ideal para ahorrar datos, solo carga la duración.
+     */
+    preload?: SignalOr<'none' | 'metadata' | 'auto'>;
+
+    /** @es (Solo Video) URL de la imagen de portada antes de reproducir. */
+    poster?: SignalOr<string>;
+}
+
+/**
+ * <iframe>
+ */
+interface IframeAttributes {
+    src?: SignalOr<string>;
+
+    /**
+     * Raw HTML to embed, overriding the `src` attribute.
+     * @es HTML crudo a renderizar, tiene prioridad sobre `src`.
+     * @example srcdoc: "<h1>Hola Mundo</h1>"
+     */
+    srcdoc?: SignalOr<string>;
+
+    loading?: SignalOr<'lazy' | 'eager'>;
+    allow?: SignalOr<string>;
+    allowfullscreen?: SignalOr<boolean>;
+
+    /**
+     * Security restrictions for the iframe content.
+     * @es Restricciones de seguridad (ej. 'allow-scripts allow-same-origin').
+     */
+    sandbox?: SignalOr<string>;
+}
+
+/**
+ * <meta>
+ */
+interface MetaAttributes {
+    name?: SignalOr<string>;
+    content?: SignalOr<string>;
+    charset?: SignalOr<string>;
+    'http-equiv'?: SignalOr<string>;
+}
+
+/**
+ * <link>
+ */
+interface LinkAttributes$1 {
+    href?: SignalOr<string>;
+    rel?: SignalOr<string>;
+    type?: SignalOr<string>;
+
+    /**
+     * Defines when a preloaded resource should be fetched.
+     * @es Define qué tipo de recurso se va a precargar para optimizar la red.
+     */
+    as?: SignalOr<'fetch' | 'font' | 'image' | 'script' | 'style' | 'track' | string>;
+    crossorigin?: SignalOr<'anonymous' | 'use-credentials' | ''>;
+}
+
+// ============================================================================
+// 🚀 3. THE SMART ROUTER (O(1) Performance)
+// ============================================================================
+
+/**
+ * Directs the correct specific attributes based on the exact DOM Element.
+ * @es Asigna los atributos correctos según el elemento exacto.
+ */
+type SpecificHtmlAttributes<TElement> =
+    TElement extends HTMLAnchorElement ? AnchorAttributes :
+    TElement extends HTMLImageElement ? ImageAttributes :
+    TElement extends HTMLScriptElement ? ScriptAttributes :
+    TElement extends HTMLInputElement ? InputAttributes :
+    TElement extends HTMLButtonElement ? ButtonAttributes :
+    TElement extends HTMLLabelElement | HTMLOutputElement ? LabelAttributes :
+    TElement extends HTMLFormElement ? FormAttributes$1 :
+    TElement extends HTMLVideoElement | HTMLAudioElement ? MediaAttributes$1 :
+    TElement extends HTMLIFrameElement ? IframeAttributes :
+    TElement extends HTMLMetaElement ? MetaAttributes :
+    TElement extends HTMLLinkElement ? LinkAttributes$1 :
+    {}; // Fallback for <div>, <span>, <section>, etc.
+
+// ============================================================================
+// 📦 4. FINAL EXPORT (@attrs payload)
+// ============================================================================
+
+/**
+ * The final composition for HTML tags in `@attrs`.
+ * @es La composición final que se inyectará en `@attrs` para elementos HTML.
+ */
+type GetHtmlRawAttributes<TElement> =
+    GlobalHtmlAttributes &
+    SpecificHtmlAttributes<TElement>;
+
+// ============================================================================
+// --- svg-attributes.d.ts ---
+// ============================================================================
+
+
+
+// ============================================================================
+// 🌐 1. GLOBAL & PRESENTATION ATTRIBUTES (The Core)
+// ============================================================================
+
+interface GlobalSvgAttributes {
+    /**
+     * Standard CSS classes.
+     * @es Clases CSS estándar.
+     */
+    'class'?: SignalOr<string>;
+
+    /**
+     * Unique identifier for the element.
+     * @es Identificador único del elemento.
+     */
+    id?: SignalOr<string>;
+
+    style?: SignalOr<string>;
+    tabindex?: SignalOr<number | string>;
+    lang?: SignalOr<string>;
+}
+/**
+ * <use>
+ * Reutiliza elementos SVG existentes.
+ */
+interface SvgUseAttributes {
+    href?: SignalOr<string>;
+    x?: SignalOr<string | number>;
+    y?: SignalOr<string | number>;
+    width?: SignalOr<string | number>;
+    height?: SignalOr<string | number>;
+}
+
+/** 
+ * <foreignObject>
+ * Permite incrustar HTML normal (como un <div> o <p>) dentro de un SVG.
+ */
+interface ForeignObjectAttributes {
+    x?: SignalOr<string | number>;
+    y?: SignalOr<string | number>;
+    width?: SignalOr<string | number>;
+    height?: SignalOr<string | number>;
+}
+
+// ============================================================================
+// 📐 2. SPECIFIC GEOMETRY ATTRIBUTES
+// ============================================================================
+
+/** * <svg> (Root Container)
+ */
+interface SvgRootAttributes {
+    /**
+     * The displayed width of the SVG canvas.
+     * @es El ancho visual del lienzo SVG.
+     */
+    width?: SignalOr<string | number>;
+
+    /**
+     * The displayed height of the SVG canvas.
+     * @es El alto visual del lienzo SVG.
+     */
+    height?: SignalOr<string | number>;
+
+    /**
+     * Defines the internal coordinate system and aspect ratio.
+     * Format: "min-x min-y width height"
+     * @es Define el sistema de coordenadas interno (El lienzo).
+     * Formato: "x-min y-min ancho alto"
+     * @example viewBox: "0 0 100 100"
+     */
+    viewBox?: SignalOr<string>;
+
+    /**
+     * Indicates how an image should be scaled if aspect ratios don't match.
+     * @es Indica cómo debe encajar el SVG si su `viewBox` no coincide con su `width`/`height`.
+     */
+    preserveAspectRatio?: SignalOr<'none' | 'xMidYMid meet' | 'xMinYMin slice' | string>;
+
+    xmlns?: SignalOr<string>;
+}
+
+/** * <circle>
+ */
+interface CircleAttributes {
+    /**
+     * The X-coordinate of the center of the circle.
+     * @es Coordenada X del centro del círculo.
+     */
+    cx?: SignalOr<string | number>;
+
+    /**
+     * The Y-coordinate of the center of the circle.
+     * @es Coordenada Y del centro del círculo.
+     */
+    cy?: SignalOr<string | number>;
+
+    /**
+     * The radius of the circle.
+     * @es Radio del círculo.
+     */
+    r?: SignalOr<string | number>;
+}
+
+/** * <ellipse>
+ */
+interface EllipseAttributes {
+    /**
+     * The X-coordinate of the center of the ellipse.
+     * @es Coordenada X del centro de la elipse.
+     */
+    cx?: SignalOr<string | number>;
+
+    /**
+     * The Y-coordinate of the center of the ellipse.
+     * @es Coordenada Y del centro de la elipse.
+     */
+    cy?: SignalOr<string | number>;
+
+    /**
+     * The horizontal radius of the ellipse.
+     * @es Radio horizontal de la elipse.
+     */
+    rx?: SignalOr<string | number>;
+
+    /**
+     * The vertical radius of the ellipse.
+     * @es Radio vertical de la elipse.
+     */
+    ry?: SignalOr<string | number>;
+}
+
+/** * <rect>
+ */
+interface RectAttributes {
+    /**
+     * The X-coordinate of the top-left corner of the rectangle.
+     * @es Coordenada X de la esquina superior izquierda del rectángulo.
+     */
+    x?: SignalOr<string | number>;
+
+    /**
+     * The Y-coordinate of the top-left corner of the rectangle.
+     * @es Coordenada Y de la esquina superior izquierda del rectángulo.
+     */
+    y?: SignalOr<string | number>;
+
+    /**
+     * The width of the rectangle.
+     * @es El ancho del rectángulo.
+     */
+    width?: SignalOr<string | number>;
+
+    /**
+     * The height of the rectangle.
+     * @es El alto del rectángulo.
+     */
+    height?: SignalOr<string | number>;
+
+    /**
+     * The horizontal corner radius (for rounded rectangles).
+     * @es Radio de curvatura horizontal (para esquinas redondeadas).
+     */
+    rx?: SignalOr<string | number>;
+
+    /**
+     * The vertical corner radius (for rounded rectangles).
+     * @es Radio de curvatura vertical (para esquinas redondeadas).
+     */
+    ry?: SignalOr<string | number>;
+}
+
+/** * <line>
+ */
+interface LineAttributes {
+    /**
+     * The X-coordinate of the starting point.
+     * @es Coordenada X del punto de inicio.
+     */
+    x1?: SignalOr<string | number>;
+
+    /**
+     * The Y-coordinate of the starting point.
+     * @es Coordenada Y del punto de inicio.
+     */
+    y1?: SignalOr<string | number>;
+
+    /**
+     * The X-coordinate of the ending point.
+     * @es Coordenada X del punto final.
+     */
+    x2?: SignalOr<string | number>;
+
+    /**
+     * The Y-coordinate of the ending point.
+     * @es Coordenada Y del punto final.
+     */
+    y2?: SignalOr<string | number>;
+}
+
+/** * <polygon>, <polyline>
+ */
+interface PolyAttributes {
+    /**
+     * List of points to draw the shape.
+     * @es Lista de coordenadas (x,y) separadas por comas o espacios.
+     * @example points: "0,100 50,25 50,75 100,0"
+     */
+    points?: SignalOr<string>;
+}
+
+/** * <path>
+ */
+interface PathAttributes {
+    /**
+     * The definition of the outline of a shape. (M = Move, L = Line, C = Curve, Z = Close).
+     * @es La ruta matemática que dibuja la figura geométrica compleja.
+     * @example d: "M 10 10 L 90 90 V 10 H 50 Z"
+     */
+    d?: SignalOr<string>;
+
+    /**
+     * Lets the author specify the total length for the path, useful for CSS dash animations.
+     * @es Permite forzar la longitud total de la ruta (ideal para animaciones de dibujo).
+     */
+    pathLength?: SignalOr<string | number>;
+}
+
+/** * <text>, <tspan>
+ */
+interface TextAttributes {
+    /**
+     * The X-coordinate for the text position.
+     * @es Coordenada X para la posición del texto.
+     */
+    x?: SignalOr<string | number>;
+
+    /**
+     * The Y-coordinate for the text position.
+     * @es Coordenada Y para la posición del texto.
+     */
+    y?: SignalOr<string | number>;
+
+    /**
+     * Shifts the text position horizontally from its current position.
+     * @es Desplaza la posición del texto horizontalmente desde su punto actual.
+     */
+    dx?: SignalOr<string | number>;
+
+    /**
+     * Shifts the text position vertically from its current position.
+     * @es Desplaza la posición del texto verticalmente desde su punto actual.
+     */
+    dy?: SignalOr<string | number>;
+
+    /**
+     * Determines the alignment of the text relative to the X coordinate.
+     * @es Alineación del texto respecto a su coordenada X.
+     */
+    'text-anchor'?: SignalOr<'start' | 'middle' | 'end' | string>;
+
+    /**
+     * Determines the vertical alignment of the text.
+     * @es Alineación vertical (ideal para centrar texto verticalmente).
+     */
+    'dominant-baseline'?: SignalOr<'auto' | 'middle' | 'central' | 'hanging' | string>;
+
+    'font-family'?: SignalOr<string>;
+    'font-size'?: SignalOr<string | number>;
+    'font-weight'?: SignalOr<'normal' | 'bold' | 'bolder' | 'lighter' | number | string>;
+}
+
+/** * <image> (Inside SVG)
+ */
+interface SvgImageAttributes {
+    x?: SignalOr<string | number>;
+    y?: SignalOr<string | number>;
+    width?: SignalOr<string | number>;
+    height?: SignalOr<string | number>;
+    href?: SignalOr<string>;
+    preserveAspectRatio?: SignalOr<string>;
+}
+
+// ============================================================================
+// 🚀 3. THE SMART ROUTER (O(1) Performance)
+// ============================================================================
+
+/**
+ * Directs the correct specific geometry attributes based on the exact SVG Element.
+ * @es Asigna los atributos geométricos correctos según la figura.
+ */
+type SpecificSvgAttributes<TElement> =
+    TElement extends SVGSVGElement ? SvgRootAttributes :
+    TElement extends SVGCircleElement ? CircleAttributes :
+    TElement extends SVGEllipseElement ? EllipseAttributes :
+    TElement extends SVGRectElement ? RectAttributes :
+    TElement extends SVGLineElement ? LineAttributes :
+    TElement extends SVGPolygonElement | SVGPolylineElement ? PolyAttributes :
+    TElement extends SVGPathElement ? PathAttributes :
+    TElement extends SVGTextElement | SVGTSpanElement ? TextAttributes :
+    TElement extends SVGImageElement ? SvgImageAttributes :
+    TElement extends SVGUseElement ? SvgUseAttributes :
+    TElement extends SVGForeignObjectElement ? ForeignObjectAttributes :
+    {}; // Fallback for <g>, <defs>, etc.
+
+// ============================================================================
+// 📦 4. FINAL EXPORT (@attrs payload)
+// ============================================================================
+
+/**
+ * The final composition for SVG tags in `@attrs`.
+ * Combines Global, Presentation (colors/strokes), and Specific Geometry.
+ * @es La composición final que se inyectará en `@attrs` para elementos SVG.
+ */
+type GetSvgRawAttributes<TElement> =
+    GlobalSvgAttributes &
+    //SvgPresentationAttributes &
+    SpecificSvgAttributes<TElement>;
+
+// ============================================================================
+// --- math-attributes.d.ts ---
+// ============================================================================
+
+
+
+// ============================================================================
+// 🌐 1. GLOBAL MATH ATTRIBUTES (Available on all MathML tags)
+// ============================================================================
+
+interface GlobalMathAttributes {
+    /**
+     * Standard CSS classes.
+     * @es Clases CSS estándar.
+     * @example class: "math-formula highlight"
+     */
+    'class'?: SignalOr<string>;
+
+    /**
+     * Unique identifier for the element.
+     * @es Identificador único del elemento.
+     */
+    id?: SignalOr<string>;
+
+    style?: SignalOr<string>;
+    dir?: SignalOr<'ltr' | 'rtl'>;
+    href?: SignalOr<string>;
+
+    /**
+     * The text color of the mathematical element.
+     * @es El color del texto de la fórmula o elemento.
+     * @example mathcolor: "#FF0000"
+     */
+    mathcolor?: SignalOr<string>;
+
+    /**
+     * The background color of the mathematical element.
+     * @es El color de fondo del elemento.
+     * @example mathbackground: "rgba(255, 255, 0, 0.3)"
+     */
+    mathbackground?: SignalOr<string>;
+
+    /**
+     * Specifies the size of the mathematical element.
+     * @es Tamaño de la fuente matemática.
+     * @example mathsize: "1.5em"
+     */
+    mathsize?: SignalOr<'small' | 'normal' | 'big' | string>;
+}
+
+// ============================================================================
+// 📐 2. SPECIFIC PRESENTATION & SEMANTIC ATTRIBUTES
+// ============================================================================
+
+interface SpecificMathAttributes {
+    // --- <math> (Root Element) ---
+    /**
+     * How the math should be rendered.
+     * - `block`: Displayed in its own block, usually centered.
+     * - `inline`: Displayed inside the current line of text.
+     * @es Cómo se debe renderizar la ecuación.
+     * - `block`: En su propio bloque (como un párrafo centrado).
+     * - `inline`: En línea con el texto actual.
+     */
+    display?: SignalOr<'block' | 'inline'>;
+    /**
+     * Overrides the display style. If true, forces block-style rendering (larger operators, vertical limits).
+     * @es Fuerza el estilo de renderizado. Si es 'true', las fracciones y sumatorias se dibujan en formato grande.
+     * @example displaystyle: "true"
+     */
+    displaystyle?: SignalOr<'true' | 'false' | boolean>;
+
+    /**
+     * Controls the font size implicitly by setting the script level. 
+     * Higher levels mean smaller text (like inside a fraction of a fraction).
+     * @es Controla el nivel de anidamiento matemático (afecta el tamaño de fuente).
+     * @example scriptlevel: "+1" // Reduce el tamaño de fuente un nivel
+     */
+    scriptlevel?: SignalOr<string | number>;
+    // --- <mi>, <mn>, <mo>, <mtext> (Tokens) ---
+    /**
+     * The typographic style of the text.
+     * @es Estilo tipográfico matemático. Útil para vectores (bold) o conjuntos (double-struck).
+     * @example mathvariant: "double-struck" // For Real Numbers symbol (ℝ)
+     */
+    mathvariant?: SignalOr<
+        | 'normal'
+        | 'italic'
+        | 'bold'
+        | 'bold-italic'
+        | 'double-struck'
+        | 'script'
+        | 'fraktur'
+        | 'sans-serif'
+        | string
+    >;
+
+    // --- <mo> (Operators) ---
+    /**
+     * Indicates the role of the operator.
+     * - `prefix`: Operator before the operand (e.g., -x).
+     * - `infix`: Operator between operands (e.g., x + y).
+     * - `postfix`: Operator after the operand (e.g., x!).
+     * @es Indica el rol o posición del operador.
+     */
+    form?: SignalOr<'prefix' | 'infix' | 'postfix'>;
+
+    /**
+     * Space added before the operator.
+     * @es Espacio visual añadido antes del operador.
+     * @example lspace: "thickmathspace" // Or "0.27em"
+     */
+    lspace?: SignalOr<string | number>;
+
+    /**
+     * Space added after the operator.
+     * @es Espacio visual añadido después del operador.
+     * @example rspace: "0.27em"
+     */
+    rspace?: SignalOr<string | number>;
+
+    /**
+     * If true, the operator stretches to the size of adjacent elements (e.g., large brackets).
+     * @es Si es 'true', el operador (como un paréntesis o llave) se estirará para cubrir a sus hermanos.
+     */
+    stretchy?: SignalOr<'true' | 'false' | boolean>;
+
+    /**
+     * If true, the operator is drawn larger when in display="block" mode (like Integrals or Sums).
+     * @es Si es 'true', el operador (como ∑ o ∫) se dibujará más grande en modo bloque.
+     */
+    largeop?: SignalOr<'true' | 'false' | boolean>;
+
+    /**
+     * If true, attached scripts are moved to under/over positions in display mode.
+     * @es Mueve los subíndices y superíndices arriba y abajo del operador (ej. límites de suma).
+     */
+    movablelimits?: SignalOr<'true' | 'false' | boolean>;
+
+    /**
+     * Whether the operator should be vertically symmetric around the math axis.
+     * @es Si el operador debe ser verticalmente simétrico respecto al eje matemático.
+     */
+    symmetric?: SignalOr<'true' | 'false' | boolean>;
+
+    /**
+     * Indicates if the operator is a fence (such as parentheses).
+     * @es Indica si el operador actúa como un delimitador (ej. paréntesis).
+     */
+    fence?: SignalOr<'true' | 'false' | boolean>;
+
+    /**
+     * Indicates if the operator is a separator (such as a comma).
+     * @es Indica si el operador actúa como un separador (ej. coma).
+     */
+    separator?: SignalOr<'true' | 'false' | boolean>;
+
+    /**
+     * Indicates if the operator should be treated as an accent (drawn closer to the base).
+     * @es Indica si el operador se comporta como un acento (se dibuja más cerca de la base).
+     */
+    accent?: SignalOr<'true' | 'false' | boolean>;
+
+    /**
+     * The maximum size a stretchy operator is allowed to grow to.
+     * @es El tamaño máximo al que puede crecer un operador estirable.
+     * @example maxsize: "3em"
+     */
+    maxsize?: SignalOr<string | number>;
+
+    /**
+     * The minimum size a stretchy operator is allowed to shrink to.
+     * @es El tamaño mínimo al que puede reducirse un operador estirable.
+     * @example minsize: "1.2em"
+     */
+    minsize?: SignalOr<string | number>;
+
+    // --- <mspace> (Space) ---
+    /**
+     * The width of the space.
+     * @es Ancho del espacio en blanco.
+     * @example width: "2em"
+     */
+    width?: SignalOr<string | number>;
+
+    /**
+     * The height of the space above the baseline.
+     * @es Altura del espacio sobre la línea base.
+     */
+    height?: SignalOr<string | number>;
+
+    /**
+     * The depth of the space below the baseline.
+     * @es Profundidad del espacio por debajo de la línea base.
+     */
+    depth?: SignalOr<string | number>;
+
+    // --- <mfrac> (Fractions) ---
+    /**
+     * The thickness of the fraction line.
+     * - `0`: No line (useful for binomial coefficients).
+     * @es Grosor de la línea fraccionaria. Usa `0` para ocultarla (ej. combinatoria).
+     * @example linethickness: "2px" // Or "0" for binomials
+     */
+    linethickness?: SignalOr<string | number>;
+
+    // --- <menclose> (Enclosures) ---
+    /**
+     * The type of notation to enclose the element with.
+     * @es El tipo de notación para encerrar el elemento (ej. división larga, tachado).
+     * @example notation: "longdiv" // Also: "actuarial", "radical", "box", "strike"
+     */
+    notation?: SignalOr<
+        | 'longdiv'
+        | 'actuarial'
+        | 'radical'
+        | 'box'
+        | 'roundedbox'
+        | 'circle'
+        | 'left'
+        | 'right'
+        | 'top'
+        | 'bottom'
+        | 'updiagonalstrike'
+        | 'downdiagonalstrike'
+        | 'verticalstrike'
+        | 'horizontalstrike'
+        | string
+    >;
+
+    // --- <mfenced> (Fenced - Deprecated but common) ---
+    /**
+     * The opening delimiter string.
+     * @es Carácter o cadena de apertura.
+     * @example open: "["
+     */
+    open?: SignalOr<string>;
+
+    /**
+     * The closing delimiter string.
+     * @es Carácter o cadena de cierre.
+     * @example close: "]"
+     */
+    close?: SignalOr<string>;
+
+    /**
+     * The characters used to separate the children elements.
+     * @es Caracteres separadores entre los elementos hijos.
+     * @example separators: ",;"
+     */
+    separators?: SignalOr<string>;
+
+    // --- <mtable>, <mtr>, <mtd> (Matrices & Tables) ---
+    /**
+     * Horizontal alignment of the cells.
+     * @es Alineación horizontal de las celdas.
+     * @example columnalign: "center"
+     */
+    columnalign?: SignalOr<'left' | 'center' | 'right' | string>;
+
+    /**
+     * Vertical alignment of the cells.
+     * @es Alineación vertical de las celdas.
+     * @example rowalign: "baseline"
+     */
+    rowalign?: SignalOr<'top' | 'bottom' | 'center' | 'baseline' | 'axis' | string>;
+
+    /**
+     * Border lines between columns.
+     * @es Líneas de borde entre columnas.
+     */
+    columnlines?: SignalOr<'none' | 'solid' | 'dashed' | string>;
+
+    /**
+     * Border lines between rows.
+     * @es Líneas de borde entre filas.
+     */
+    rowlines?: SignalOr<'none' | 'solid' | 'dashed' | string>;
+
+    /**
+     * Border frame around the entire table.
+     * @es Marco exterior alrededor de la matriz/tabla.
+     * @example frame: "solid"
+     */
+    frame?: SignalOr<'none' | 'solid' | 'dashed' | string>;
+
+    /**
+     * Space between the frame and the table.
+     * @es Espaciado entre el marco y el contenido de la tabla.
+     * @example framespacing: "0.4em 0.5ex"
+     */
+    framespacing?: SignalOr<string>;
+
+    /**
+     * Number of columns the cell spans across.
+     * @es Número de columnas que abarca la celda (equivalente a colspan en HTML).
+     * @example columnspan: 2
+     */
+    columnspan?: SignalOr<number | string>;
+
+    /**
+     * Number of rows the cell spans across.
+     * @es Número de filas que abarca la celda (equivalente a rowspan en HTML).
+     * @example rowspan: 2
+     */
+    rowspan?: SignalOr<number | string>;
+
+    // --- <munderover>, <munder> ---
+    /**
+     * Specifies if the underscript should be treated as an accent (drawn closer to the base expression).
+     * @es Especifica si el texto inferior debe tratarse como un acento (dibujado más cerca de la base).
+     */
+    accentunder?: SignalOr<'true' | 'false' | boolean>;
+}
+
+// ============================================================================
+// 📦 3. FINAL EXPORT (@attrs payload)
+// ============================================================================
+
+/**
+ * The final composition for MathML tags in `@attrs`.
+ * Since TypeScript's DOM library uses a generic `MathMLElement` for all tags,
+ * we provide a unified dictionary of all possible MathML attributes.
+ * @es La composición final que se inyectará en `@attrs` para MathML.
+ * Al no existir interfaces específicas en TS (como MathMLFractionElement),
+ * unificamos todos los atributos en un solo diccionario ultra-rápido de O(1).
+ */
+type GetMathRawAttributes<TElement> =
+    GlobalMathAttributes &
+    SpecificMathAttributes;
+
+// ==========================================
+// --- attributes.d.ts ---
+// ==========================================
+
+
+//type AnyFunction = Function | { (...args: any[]): any } | { new(...args: any[]): any };
+
 interface Subscribable<T> {
   subscribe(onValue: (value: T) => void): void;
   subscribe(onValue: (value: T, oldValue: T) => void): void;
-
 }
+
 /**
- * Un tipo de ayuda que indica que un valor puede ser estático o una señal.
- * @template T El tipo del valor.
+ * Indicates that a value can be static, a signal, or a subscribable.
+ * @es Indica que un valor puede ser estático, una señal o un subscribable.
  */
 type SignalOr<T> = T | TuSignal<T> | Subscribable<T> | number;
 
-/** Un mapa de nombres de clase a una condición booleana para el `toggle`. */
+// =========================================================================
+// 1. ESTILOS Y CLASES (O(1) PERFORMANCE)
+// =========================================================================
+
+type CSSKeys = Exclude<
+  keyof CSSStyleDeclaration,
+  number | symbol | 'length' | 'parentRule' | 'getPropertyPriority' |
+  'getPropertyValue' | 'item' | 'removeProperty' | 'setProperty'
+>;
+
+type StyleObject = {
+  [K in CSSKeys]?: SignalOr<string | number>;
+} & {
+  [customProperty: `--${string}`]: SignalOr<string | number>;
+};
+
 type ClassToggleMap = {
   [className: string]: SignalOr<boolean>;
 };
 
-/** Un mapa de tipos de evento a su función manejadora (listener). */
-type EventListenerMap = {
-  [EventType in keyof HTMLElementEventMap]?: (event: HTMLElementEventMap[EventType]) => void;
-};
+// =========================================================================
+// 2. 🚦 EL ENRUTADOR DE EVENTOS (LA CLAVE DE LA ESCALABILIDAD)
+// =========================================================================
+
 /**
- * Interfaz exhaustiva de los atributos Globales del DOM, usando la nomenclatura
- * de atributos HTML (minúsculas) tal como se requiere para setAttribute().
- *
- * NOTA: Los valores deben ser SignalOr<string | number | boolean>, ya que setAttribute
- * serializa todo a string.
+ * 🧠 METADATA ELEMENTS:
+ * Elements that shouldn't have UI events (like 'click' or 'hover').
+ * @es Elementos de metadatos que por error del DOM heredan eventos de interfaz.
  */
-interface GlobalSetAttributes {
-  // === Atributos Globales Clave (Nomenclatura HTML) ===
-  id?: SignalOr<string>;
-  'class'?: SignalOr<string>; // <-- ¡Usar 'class' en lugar de className!
-  style?: SignalOr<string>;       // Permite un objeto de estilo o un string
-  title?: SignalOr<string>;
-  dir?: SignalOr<'ltr' | 'rtl' | 'auto' | string>;
-  lang?: SignalOr<string>;
-  hidden?: SignalOr<boolean | string>;
+type MetadataElements =
+  | HTMLScriptElement | HTMLLinkElement | HTMLMetaElement
+  | HTMLStyleElement | HTMLTitleElement | HTMLBaseElement | HTMLTemplateElement;
 
-  // === Accesibilidad y Comportamiento ===
-  role?: SignalOr<string>;
-  tabindex?: SignalOr<number | string>; // <-- Usar 'tabindex' en minúsculas
-  contenteditable?: SignalOr<boolean | string>;
-  draggable?: SignalOr<boolean | string>;
-  translate?: SignalOr<'yes' | 'no' | string>;
-
-  // === Atributos de Recursos Comunes ===
-  href?: SignalOr<string>;
-  src?: SignalOr<string>;
-  alt?: SignalOr<string>;
-  type?: SignalOr<string>;
-
-  // === Atributos de Formularios Comunes ===
-  disabled?: SignalOr<boolean | string>;
-  placeholder?: SignalOr<string>;
-  value?: SignalOr<string | number>;
-  name?: SignalOr<string>;
-
-  // === Aria Attributes (Ejemplos) ===
-  'aria-label'?: SignalOr<string>;
-  'aria-hidden'?: SignalOr<boolean | string>;
-  // ... cualquier otro atributo aria-*
-
-  // === Index Signature para data-* y Atributos Personalizados ===
-  // Permite que cualquier otro atributo, como 'data-nombre' o 'custom-attr', sea válido.
-  [attribute: string]: SignalOr<unknown> | undefined;
-  //[key: string]: SignalOr<unknown>;
+/**
+ * Strict lifecycle event map for metadata.
+ * @es Mapa estricto de eventos de carga para scripts, links, etc.
+ */
+interface ResourceEventMap {
+  "load": Event;
+  "error": ErrorEvent;
+  "abort": Event;
 }
+
 /**
- * Un objeto JavaScript estándar que representa los datos de un formulario.
- * Sus claves son los atributos `name` de los campos, y sus valores son
- * los valores de dichos campos. Puede contener arrays para campos múltiples.
+ * 🚀 EVENT ROUTER: 
+ * Determines which EventMap belongs to which Element.
+ * If you find new special tags in the future, add them here!
+ * @es Enrutador de eventos. Asigna el mapa correcto según el elemento.
+ * ¡Añade aquí futuras etiquetas con tratos especiales!
  */
-type FormStateObject = {
-  [key: string]: unknown; // O más estrictamente: FormDataEntryValue | FormDataEntryValue[]
+type GetEventMap<T> =
+  T extends MetadataElements ? ResourceEventMap : // Interceptor de Metadatos
+  T extends SVGElement ? SVGElementEventMap :     // Interceptor SVG
+  T extends MathMLElement ? HTMLElementEventMap : // Interceptor MathML
+  HTMLElementEventMap;                            // Fallback estándar (div, button, etc)
+
+/**
+ * Regenerates native DOM events (on*) strictly from our custom Event Router.
+ * @es Regenera los eventos nativos (on*) de forma estricta desde nuestro enrutador.
+ */
+type NativeEventAttributes<TElement extends Element> = {
+  [K in keyof GetEventMap<TElement> as `on${K & string}`]?: (this: TElement, event: GetEventMap<TElement>[K]) => unknown;
 };
 
-// --- GRUPO 2: DIRECTIVAS REACTIVAS ESPECIALES (`@`) ---
+// =========================================================================
+// 3. DIRECTIVAS REACTIVAS ESPECIALES (`@`)
+// =========================================================================
+
+type EventListenerMap<TElement extends Element> = {
+  [EventType in keyof GetEventMap<TElement>]?: (event: GetEventMap<TElement>[EventType]) => void;
+};
+
+type FormStateObject = { [key: string]: unknown; };
 
 /**
- * Contiene las "directivas" especiales que proveen lógica reactiva avanzada,
- * identificadas por el prefijo `@`.
+ * 🚀 ENRUTADOR DE ATRIBUTOS: 
+ * Decide qué mapa de atributos mostrar en @attrs dependiendo del elemento actual.
  */
-type DirectiveAttributes = {
-  /**
-   * @example
-   * "@classToggle": {
-   *   "classN": signalVar<boolean>,  
-   *   "class1": true,
-   *   "class2": false,
-   * }
-   */
+type GetRawAttributesMap<TElement> =
+  TElement extends SVGElement ? GetSvgRawAttributes<TElement> :
+  TElement extends MathMLElement ? GetMathRawAttributes<TElement> : // (Hasta que hagamos math-attributes)
+  GetHtmlRawAttributes<TElement>;
+
+
+type DirectiveAttributes<TElement extends Element> = {
+
   "@classToggle"?: ClassToggleMap;
   "@addClass"?: SignalOr<string>;
-  "@on"?: EventListenerMap;
-  "@one"?: EventListenerMap;
-  "@once"?: EventListenerMap;
+  "@attrs"?: GetRawAttributesMap<TElement> &
+  Record<`data-${string}`, SignalOr<string | number | boolean>> &
+  Record<`aria-${string}`, SignalOr<string | boolean>>
+  "@on"?: EventListenerMap<TElement>;
+  "@one"?: EventListenerMap<TElement>;
+  "@once"?: EventListenerMap<TElement>;
   "@bind:value"?: SignalOr<string | number | string[]>;
   "@bind:checked"?: SignalOr<boolean>;
   "@innerHTML"?: SignalOr<string>;
-  "@attrs"?: GlobalSetAttributes & {
-    [key: string]: SignalOr<unknown> | undefined;
-  };
   /**
    * [DIRECTIVA] Captura los datos de un formulario en el evento de envío,
    * los convierte en un objeto y los guarda en la señal proporcionada.
    * Previene el envío tradicional del formulario.
    */
   "@bind:form"?: SignalOr<FormStateObject>;
-};
-/**
- * @OmitList (Cubriendo Octubre de 2025)
- * Lista ampliada de propiedades de solo lectura o de objeto que no deben estar 
- * disponibles para la configuración directa para un DX (Developer Experience) óptimo.
- */
-type SpecialExclusionsPropsInHtmlElement =
-  // Constantes Estáticas (Nodos, Posición)
-  'ATTRIBUTE_NODE' | 'ATTRIBUTE_NODE' |
-  'NODE_TYPE' | 'ELEMENT_NODE' | 'ATTRIBUTE_NODE' | 'TEXT_NODE' |
-  'CDATA_SECTION_NODE' | 'ENTITY_REFERENCE_NODE' | 'ENTITY_NODE' |
-  'PROCESSING_INSTRUCTION_NODE' | 'COMMENT_NODE' | 'DOCUMENT_NODE' |
-  'DOCUMENT_TYPE_NODE' | 'DOCUMENT_FRAGMENT_NODE' | 'NOTATION_NODE' |
-  'DOCUMENT_POSITION_DISCONNECTED' | 'DOCUMENT_POSITION_PRECEDING' |
-  'DOCUMENT_POSITION_FOLLOWING' | 'DOCUMENT_POSITION_CONTAINS' |
-  'DOCUMENT_POSITION_CONTAINED_BY' | 'DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC' |
-  //  Propieades NODO
-  'firstElementChild' | 'lastElementChild' | 'attributeStyleMap' | 'nextElementSibling' |
-  'nodeType' | 'enterKeyHin' | 'childElementCount' |
 
-  // especiales o de solo lectura
-  'style' | 'classList' | 'dataset' |
-  'offsetWidth' | 'offsetHeight' | 'offsetLeft' | 'offsetTop' | 'offsetParent' |
-  'clientWidth' | 'clientHeight' | 'clientLeft' | 'clientTop' |
-  'scrollWidth' | 'scrollHeight' |
-  'scrollLeft' | 'scrollTop' |
-  'children' | 'childNodes' | 'parentElement' | 'parentNode' |
-  'firstChild' | 'lastChild' | 'nextElementSibling' | 'previousElementSibling' |
-  'nextSibling' | 'previousSibling' |
-  'localName' | 'namespaceURI' | 'prefix' | 'tagName' | 'nodeName' |
-  'nodeType' | 'ownerDocument' | 'baseURI' | 'isConnected' |
-  'isContentEditable' | 'shadowRoot'
-  | 'currentCSSZoom' | 'childElementCount'
-  ;
-// // Vamos a usar una combinación de tipos que TS pueda inferir como más específico.
-// // Un objeto que tiene al menos una propiedad de ConfigureAttributes
-// type ObjectWithSomeConfigProps<TElement extends HTMLElement> =
-//     Partial<ConfigureAttributes<TElement>> & HasAnyPropertyFromKeys<ConfigureAttributes<TElement>, keyof ConfigureAttributes<TElement>>;
-// 1. Tipo Auxiliar: Selecciona solo las claves de las propiedades que NO son funciones
-type DataPropertyKeys<T> = {
-  [K in keyof T]: T[K] extends FunctionGeneric$2 ? never : K;
+};
+
+// =========================================================================
+// 4. LA GRAN MURALLA (PURGA DE PROPIEDADES NATIVAS)
+// =========================================================================
+
+/**
+ * @OmitList
+ * List of native DOM properties that are either read-only, methods, or 
+ * internal properties that pollute the Developer Experience.
+ * @es Lista negra de propiedades inútiles, read-only o internas que ensucian el autocompletado.
+ */
+type SpecialExclusionsProps =
+  // 🧱 1. Constantes del Sistema (Node Constants)
+  | 'ATTRIBUTE_NODE' | 'CDATA_SECTION_NODE' | 'COMMENT_NODE' | 'DOCUMENT_FRAGMENT_NODE'
+  | 'DOCUMENT_NODE' | 'DOCUMENT_POSITION_CONTAINED_BY' | 'DOCUMENT_POSITION_CONTAINS'
+  | 'DOCUMENT_POSITION_DISCONNECTED' | 'DOCUMENT_POSITION_FOLLOWING'
+  | 'DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC' | 'DOCUMENT_POSITION_PRECEDING'
+  | 'DOCUMENT_TYPE_NODE' | 'ELEMENT_NODE' | 'ENTITY_NODE' | 'ENTITY_REFERENCE_NODE'
+  | 'NOTATION_NODE' | 'PROCESSING_INSTRUCTION_NODE' | 'TEXT_NODE'
+
+  // 🧭 2. Navegación y Jerarquía del DOM (Readonly getters)
+  | 'childNodes' | 'children' | 'firstChild' | 'firstElementChild' | 'lastChild'
+  | 'lastElementChild' | 'nextElementSibling' | 'nextSibling' | 'ownerDocument'
+  | 'parentElement' | 'parentNode' | 'previousElementSibling' | 'previousSibling'
+  | 'isConnected' | 'baseURI' | 'localName' | 'namespaceURI' | 'nodeName' | 'nodeType'
+  | 'prefix' | 'tagName' | 'shadowRoot' | 'assignedSlot' | 'part'
+
+  // 📏 3. Dimensiones, Posición y Scroll (Readonly o manejados por CSS)
+  | 'clientHeight' | 'clientLeft' | 'clientTop' | 'clientWidth'
+  | 'offsetHeight' | 'offsetLeft' | 'offsetParent' | 'offsetTop' | 'offsetWidth'
+  | 'scrollHeight' | 'scrollLeft' | 'scrollTop' | 'scrollWidth'
+  // | 'x' | 'y' // son porta de algunos SVG
+
+  // 📝 4. Inserción de Contenido (Manejado por las directivas del Framework)
+  | 'innerHTML' | 'outerHTML' | 'textContent' | 'nodeValue'
+
+  // 🎨 5. Atributos Complejos y Mapas de Estilo (Manejados por ConfigureAttributes)
+  | 'classList' //| 'dataset' | 'style' 
+  | 'attributeStyleMap' | 'attributes'
+
+  // 🖼️ 6. Ruido Específico de SVG y MathML
+  | 'ownerSVGElement' | 'viewportElement' | 'nearestViewportElement'
+  | 'farthestViewportElement' | 'animatedPathSegList' | 'pathSegList'
+  | 'ownerMathElement'
+
+  // 🛡️ 7. Estados de Validación y Formularios (Readonly getters)
+  | 'validity' | 'validationMessage' | 'willValidate' | 'labels' | 'form' | 'list'
+  | 'control'
+
+  // ♿ 8. Object Models de Accesibilidad (Evitamos camelCase y forzamos el uso de aria-*)
+  | 'ariaAtomic' | 'ariaAutoComplete' | 'ariaBusy' | 'ariaChecked' | 'ariaColCount'
+  | 'ariaColIndex' | 'ariaColSpan' | 'ariaCurrent' | 'ariaDisabled' | 'ariaExpanded'
+  | 'ariaHasPopup' | 'ariaHidden' | 'ariaInvalid' | 'ariaKeyShortcuts' | 'ariaLabel'
+  | 'ariaLevel' | 'ariaLive' | 'ariaModal' | 'ariaMultiLine' | 'ariaMultiSelectable'
+  | 'ariaOrientation' | 'ariaPlaceholder' | 'ariaPosInSet' | 'ariaPressed' | 'ariaReadOnly'
+  | 'ariaRequired' | 'ariaRoleDescription' | 'ariaRowCount' | 'ariaRowIndex' | 'ariaRowSpan'
+  | 'ariaSelected' | 'ariaSetSize' | 'ariaSort' | 'ariaValueMax' | 'ariaValueMin'
+  | 'ariaValueNow' | 'ariaValueText' | 'role'
+
+  // ⚙️ 9. Otras propiedades nativas ruidosas
+  | 'enterKeyHint' | 'childElementCount' | 'currentCSSZoom' | 'elementTiming';
+
+/**
+ * SVG Magic: Unpacks `SVGAnimatedLength` to allow string/number assignments.
+ */
+type DomPropType<T> = T extends { baseVal: infer U } ? U | string | number : T | string | number;
+
+/**
+ * 🚀 THE MASTER FILTER:
+ * Removes native methods, the blacklist, 'style', 'class', and ALL native 'on*' events.
+ * @es El filtro maestro. Borra métodos, lista negra, y TODOS los eventos nativos originales.
+ */
+type ValidBaseKeys<T> = {
+  //[K in keyof T]-?: NonNullable<T[K]> extends AnyFunction ? never :
+  [K in keyof T]-?: NonNullable<T[K]> extends FunctionGeneric$1 ? never :
+  K extends SpecialExclusionsProps | 'style' | 'class' | 'className' ? never :
+  K extends `on${string}` ? never : K // <- ¡Borra los eventos nativos del DOM!
 }[keyof T];
-// 2. Definición Modificada de SignalifyProperties
-/**
- * Transforma un tipo de objeto T, haciendo que cada una de sus propiedades sea
- * del tipo SignalOr<OriginalPropertyType>.
- * Excluye las propiedades que ya son manejadores de eventos (funciones),
- * a menos que quieras que un manejador de eventos en sí mismo pueda ser una Signal.
- * (Aquí se asume que los manejadores de eventos no son Signals, solo sus valores).
- */
-type SignalifyDataProperties<T> = {
-  // Usamos 'Pick' para obtener SOLO las propiedades de datos
-  [K in DataPropertyKeys<T>]?: SignalOr<T[K]>;
-};
-type SignalifyProperties<T> = {
-  [K in keyof T]: T[K] extends FunctionGeneric$2 // Si es una función (manejador de eventos), no lo Signalifiques
-  ? T[K]
-  : SignalOr<T[K]>; // De lo contrario, hazlo SignalOr<OriginalType>
-};
-/**
- * Representa el objeto de configuración para un elemento HTML específico.
- * Es la intersección de tus propiedades configurables fijas y las propiedades de datos del elemento.
- * El resultado será una lista reducida y controlada de sugerencias en el DX.
- * @template TElement - El tipo específico de HTMLElement (ej. HTMLImageElement, HTMLDivElement).
- */
-// export type ConfigureAttributesOLD<TElement extends HTMLElement = HTMLElement> =
-//     Partial<Pick<ConfigurableHtmlProps, keyof ConfigurableHtmlProps & keyof DataPropertiesOnly<TElement>>> &
-//     Record<`data-${string}`, string | number | boolean>;
-//type NodeLikeProperties = 'call' | 'nodeName' | 'childNodes' | 'parentElement' | 'ownerDocument' | 'tagName' | 'children' | 'hasChildNodes';
 
-type ConfigureAttributes<TElement extends HTMLElement = HTMLElement> =
-  SignalifyDataProperties< // ¡Aplicamos SignalifyProperties aquí!
-    Omit<TElement, SpecialExclusionsPropsInHtmlElement>
-  > &
+/**
+ * Converts valid properties to their reactive version (`SignalOr`).
+ */
+type BaseProps<TElement extends Element> = {
+  [K in ValidBaseKeys<TElement>]?: SignalOr<DomPropType<TElement[K]>>;
+};
+
+// =========================================================================
+// 5. TIPO FINAL: ConfigureAttributes
+// =========================================================================
+
+/**
+ * @es Objeto de configuración unificado.
+ * El núcleo de la Arquitectura: Reconstruye el elemento fusionando nuestras 
+ * directivas, nuestros propios eventos (purificados) y los atributos limpios.
+ */
+type ConfigureAttributes<TElement extends Element = HTMLElement> =
+  // 1. Data Properties (limpias de métodos y eventos viejos)
+  BaseProps<TElement> &
+
+  // 2. Eventos Reconstruidos (solo los válidos para el elemento)
+  NativeEventAttributes<TElement> &
+
+  // 3. Clases y Estilos Optimizados
   {
-    style?: SignalifyProperties<Partial<CSSStyleDeclaration>>
-    //style?: SignalifyProperties< Partial< Omit<CSSStyleDeclaration, 'Unknow'>>>
+    style?: StyleObject | SignalOr<string>;
+    //className?: SignalOr<string>;
   } &
-  // SignalifyProperties< // ¡Aplicamos SignalifyProperties aquí!
-  //   Partial<
-  //     Omit<TElement, 'style' | 'classList'>
-  //   // Pick<
-  //   //   TElement, keyof TElement      
-  //   // >
-  //   >
-  // > &
-  // {
-  //   style?: SignalifyProperties< // ¡Aplicamos SignalifyProperties aquí!
-  //     Partial<
-  //       Omit<CSSStyleDeclaration, 'Unknow'>
-  //     // Pick<
-  //     //   TElement, keyof TElement      
-  //     // >
-  //     >
-  //   >
-  // } &
-  DirectiveAttributes &
-  //HtmlGlobalAttributes & // Propiedades y atributos globales
-  // Propiedades específicas del elemento (src, alt, value, href, etc.), todas opcionales
-  Record<`data-${string}`, string | number | boolean>  // Soporte para data-* arbitrarios como `data-id`
-  //&  { readonly [IS_CONFIG_OBJECT]: true; } // <<<=== AÑADIMOS ESTO ===>>>
+  (TElement extends HTMLElement ? { className?: SignalOr<string> } : {}) & // <-- ¡AQUÍ ESTÁ LA MAGIA!
 
-  ;
+  // 4. Directivas Avanzadas de TuJsHtml (@)
+  DirectiveAttributes<TElement> &
+
+  // 5. Soporte para data-* y atributos sin tipar
+  Record<`data-${string}`, string | number | boolean | undefined>;
+
+
+/**
+* 🪤 POISON PILL (Strict Excess Property Check):
+* Intercepts invalid DOM properties and forces a literal string error.
+* Prevents TypeScript from collapsing the callback inference to 'any'.
+*/
+type CatchExcessProps<TProvided, TExpected> = {
+  [K in keyof TProvided]: K extends keyof TExpected
+  ? unknown
+  : `🛑 Invalid DOM property '${K & string}'. Use 'data-${K & string}' or assign it inside the callback.`;
+};
+/**
+ * 🛡️ VALIDATED CONFIGURATION (El Envoltorio Limpio):
+ * Combina la configuración permitida con la trampa de propiedades.
+ * Esto limpia dramáticamente las firmas de las funciones.
+ */
+type ValidatedConfig<TProvided, TElement extends Element> =
+  ConfigureAttributes<TElement> & CatchExcessProps<TProvided, ConfigureAttributes<TElement>>;
 
 /// <reference lib="dom" />
 // webview.d.ts
@@ -1438,909 +2481,2360 @@ interface DialogController {
     ok(response?: string): void;
 }
 
-//import './overloadGlobal.d.ts';
-// importante para forzar los tipos del DOM 
+// ==========================================
+// --- html-tags.d.ts ---
+// ==========================================
 /// <reference lib="dom" />
 
+
+
+/**
+ * Official dictionary of HTML5 tags supported by TuJsHtml.
+ * Extensively documented to guide developers on HTML5 best practices.
+ * @es Diccionario oficial de etiquetas HTML5 soportadas por TuJsHtml.
+ * Documentado exhaustivamente para guiar en las mejores prácticas de HTML5.
+ */
+interface TuJsHtml_NativeTags {
+    // ==========================================================================
+    // 🧩 WEB COMPONENTS & SHADOW DOM
+    // ==========================================================================
+
+    /**
+     * 🧩 **Web Component Slot**: `<slot/>`
+     * A placeholder inside a web component that you can fill with your own markup.
+     * @es 🧩 **Espacio para Web Component**: `<slot/>`
+     * Punto de inserción dentro de un Shadow DOM donde se proyectan los elementos hijos.
+     * @example
+     * tags.slot({ name: "titulo" }, "Título por defecto");
+     */
+    slot: SpecificTagFunction<HTMLSlotElement>;
+    // ==========================================================================
+    // 🧠 DOCUMENT METADATA (METADATOS DEL DOCUMENTO)
+    // Ideales para Server-Side Rendering (SSR) y SEO
+    // ==========================================================================
+
+    /**
+     * 🧠 **Metadata Element (Void)**: `<meta/>`
+     * Defines metadata about an HTML document (e.g., SEO keywords, viewport, charset).
+     * 🛑 **Structure Warning**: This element is void and cannot contain children.
+     * @es 🧠 **Elemento de Metadatos (Vacío)**: `<meta/>`
+     * Define metadatos sobre el documento HTML (ej. palabras clave SEO, viewport).
+     * 🛑 **Advertencia de Estructura**: Este elemento es vacío y no admite hijos.
+     * @example
+     * tags.meta({ name: "description", content: "Mejor framework de UI" });
+     * tags.meta({ charSet: "UTF-8" });
+     */
+    meta: VoidMetadataTagFunction<HTMLMetaElement>;
+
+    /**
+     * 🧠 **Document Base URL (Void)**: `<base/>`
+     * Specifies the base URL/target for all relative URLs in a document.
+     * @es 🧠 **URL Base del Documento (Vacío)**: `<base/>`
+     * Especifica la URL base para todas las URLs relativas del documento.
+     * @example
+     * tags.base({ href: "https://midominio.com/", target: "_blank" });
+     */
+    base: VoidMetadataTagFunction<HTMLBaseElement>;
+
+    /**
+     * 🧠 **External Resource Link (Void)**: `<link/>`
+     * Specifies relationships between the current document and an external resource (like CSS).
+     * @es 🧠 **Enlace a Recurso Externo (Vacío)**: `<link/>`
+     * Especifica la relación entre el documento actual y recursos externos (como CSS).
+     * @example
+     * tags.link({ rel: "stylesheet", href: "styles.css" });
+     */
+    link: VoidMetadataTagFunction<HTMLLinkElement>;
+
+    /**
+     * 🧠 **Document Title**: `<title/>`
+     * Defines the document's title that is shown in a browser's title bar or a page's tab.
+     * @es 🧠 **Título del Documento**: `<title/>`
+     * Define el título del documento que se muestra en la pestaña del navegador.
+     * @example
+     * tags.title("Página de Inicio | Mi App");
+     */
+    title: MetadataTagFunction<HTMLTitleElement>;
+
+    /**
+     * 🧠 **Style Information**: `<style/>`
+     * Contains style information (CSS) for a document, or part of a document.
+     * @es 🧠 **Información de Estilo**: `<style/>`
+     * Contiene reglas CSS para el documento.
+     * @example
+     * tags.style(`body { background: #000; }`);
+     */
+    style: MetadataTagFunction<HTMLStyleElement>;
+
+    /**
+     * 🧠 **Executable Script**: `<script/>`
+     * Used to embed or reference executable code.
+     * @es 🧠 **Script Ejecutable**: `<script/>`
+     * Usado para incrustar o referenciar código JavaScript.
+     * @example
+     * tags.script({ type: "module", src: "/app.js" });
+     */
+    script: MetadataTagFunction<HTMLScriptElement>;
+
+    /**
+     * 🧠 **Template**: `<template/>`
+     * A mechanism for holding HTML that is not to be rendered immediately.
+     * @es 🧠 **Plantilla**: `<template/>`
+     * Mecanismo para contener HTML que no se renderiza inmediatamente, sino que se instancia vía JS.
+     */
+    template: MetadataTagFunction<HTMLTemplateElement>;
+
+    /**
+     * 🧠 **No-Script**: `<noscript/>`
+     * Alternate content for users that have disabled scripts in their browser.
+     * @es 🧠 **Sin-Script**: `<noscript/>`
+     * Contenido alternativo para usuarios con JavaScript deshabilitado.
+     */
+    noscript: MetadataTagFunction<HTMLElement>;
+
+    // ==========================================================================
+    // 🧱 SECTIONING & STRUCTURE (ESTRUCTURA Y SECCIONES)
+    // ==========================================================================
+
+    /**
+     * 🧱 **HTML Document Root**: `<html/>`
+     * Represents the root of an HTML document.
+     * @es 🧱 **Raíz del Documento HTML**: `<html/>`
+     * Representa el elemento raíz de un documento HTML.
+     */
+    html: SpecificTagFunction<HTMLHtmlElement>;
+
+    /**
+     * 🧱 **Document Head**: `<head/>`
+     * Machine-readable information about the document, like its title, scripts, and style sheets.
+     * @es 🧱 **Cabecera del Documento**: `<head/>`
+     * Información legible por máquina sobre el documento (SEO, scripts, estilos).
+     */
+    head: SpecificTagFunction<HTMLHeadElement>;
+
+    /**
+     * 🧱 **Document Body**: `<body/>`
+     * Represents the content of an HTML document.
+     * @es 🧱 **Cuerpo del Documento**: `<body/>`
+     * Representa el contenido visual de un documento HTML.
+     */
+    body: SpecificTagFunction<HTMLBodyElement>;
+
+    /**
+     * 🧱 **Main Content**: `<main/>`
+     * Represents the dominant content of the body of a document.
+     * @es 🧱 **Contenido Principal**: `<main/>`
+     * Representa el contenido principal y único del documento. No debe haber más de un <main> visible.
+     */
+    main: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 🧱 **Article**: `<article/>`
+     * Represents a self-contained composition in a document (e.g., a blog post).
+     * @es 🧱 **Artículo**: `<article/>`
+     * Representa una composición independiente y reutilizable (ej. un post de blog, un comentario).
+     */
+    article: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 🧱 **Section**: `<section/>`
+     * Represents a generic standalone section of a document.
+     * @es 🧱 **Sección**: `<section/>`
+     * Representa una sección genérica temática del documento. Suele incluir un encabezado.
+     */
+    section: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 🧱 **Navigation**: `<nav/>`
+     * Represents a section of a page whose purpose is to provide navigation links.
+     * @es 🧱 **Navegación**: `<nav/>`
+     * Representa una sección destinada a enlaces de navegación principales.
+     */
+    nav: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 🧱 **Header**: `<header/>`
+     * Represents introductory content, typically a group of introductory or navigational aids.
+     * @es 🧱 **Cabecera**: `<header/>`
+     * Representa contenido introductorio o un conjunto de enlaces de navegación superiores.
+     */
+    header: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 🧱 **Footer**: `<footer/>`
+     * Represents a footer for its nearest sectioning content or sectioning root element.
+     * @es 🧱 **Pie de página**: `<footer/>`
+     * Representa el pie de página de la sección o documento actual.
+     */
+    footer: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 🧱 **Heading Level 1**: `<h1/>`
+     * Represents the main heading of the page. Should ideally be used only once per page.
+     * @es 🧱 **Encabezado Nivel 1**: `<h1/>`
+     * Representa el título principal de la página. Idealmente debe usarse solo una vez por página por SEO.
+     */
+    h1: SpecificTagFunction<HTMLHeadingElement>;
+
+    /**
+     * 🧱 **Heading Level 2**: `<h2/>`
+     * Secondary heading used to separate major sections.
+     * @es 🧱 **Encabezado Nivel 2**: `<h2/>`
+     * Título secundario usado para separar secciones principales.
+     */
+    h2: SpecificTagFunction<HTMLHeadingElement>;
+
+    /**
+     * 🧱 **Heading Level 3**: `<h3/>`
+     * Tertiary heading used for subsections.
+     * @es 🧱 **Encabezado Nivel 3**: `<h3/>`
+     * Título terciario usado para subsecciones.
+     */
+    h3: SpecificTagFunction<HTMLHeadingElement>;
+
+    /**
+     * 🧱 **Heading Levels 4, 5, 6**: `<h4/>` - `<h6/>`
+     * Lower-level headings for deeply nested sections.
+     * @es 🧱 **Encabezados Niveles 4, 5, 6**: `<h4/>` - `<h6/>`
+     * Títulos de menor nivel para secciones profundamente anidadas.
+     */
+    h4: SpecificTagFunction<HTMLHeadingElement>;
+    h5: SpecificTagFunction<HTMLHeadingElement>;
+    h6: SpecificTagFunction<HTMLHeadingElement>;
+    /**
+     * 🧱 **Contact Address**: `<address/>`
+     * Indicates that the enclosed HTML provides contact information for a person or people.
+     * @es 🧱 **Dirección de Contacto**: `<address/>`
+     * Proporciona información de contacto para el artículo más cercano o el cuerpo del documento.
+     */
+    address: SpecificTagFunction<HTMLElement>;
+
+    // ==========================================================================
+    // 📦 BLOCK-LEVEL CONTAINERS (CONTENEDORES DE BLOQUE)
+    // ==========================================================================
+
+    /**
+     * 📦 **Generic Block Container**: `<div/>`
+     * The generic container for flow content. It has no effect on the content or layout until styled.
+     * @es 📦 **Contenedor Genérico de Bloque**: `<div/>`
+     * Contenedor genérico para contenido de flujo. Úsalo cuando no haya una etiqueta semántica mejor.
+     * @example
+     * tags.div({ className: "card-body" }, ctx => ctx.p("Texto"));
+     */
+    div: SpecificTagFunction<HTMLDivElement>;
+
+    /**
+     * 📦 **Paragraph**: `<p/>`
+     * Represents a paragraph.
+     * ⚠️ **Do not nest block elements (like div) inside a p tag!**
+     * @es 📦 **Párrafo**: `<p/>`
+     * Representa un párrafo de texto.
+     * ⚠️ **¡No anides elementos de bloque (como div) dentro de un p!**
+     */
+    p: SpecificTagFunction<HTMLParagraphElement>;
+
+    /**
+     * 🛑 **Horizontal Rule (Void)**: `<hr/>`
+     * Represents a thematic break between paragraph-level elements.
+     * @es 🛑 **Línea Horizontal (Vacío)**: `<hr/>`
+     * Representa una ruptura temática visual (línea). No admite hijos.
+     */
+    hr: VoidTagFunction<HTMLHRElement>;
+
+    /**
+     * 📦 **Preformatted Text**: `<pre/>`
+     * Represents preformatted text which is to be presented exactly as written in the HTML file.
+     * @es 📦 **Texto Preformateado**: `<pre/>`
+     * Muestra el texto exactamente como fue escrito, respetando espacios y saltos de línea.
+     */
+    pre: SpecificTagFunction<HTMLPreElement>;
+
+    /**
+     * 📦 **Blockquote**: `<blockquote/>`
+     * Indicates that the enclosed text is an extended quotation.
+     * @es 📦 **Cita en Bloque**: `<blockquote/>`
+     * Indica que el texto interior es una cita extensa.
+     */
+    blockquote: SpecificTagFunction<HTMLElementExtended>; // Using your extended type
+
+    /**
+     * 📦 **Unordered List**: `<ul/>`
+     * Represents a list of items, where the order of the items is not important.
+     * @es 📦 **Lista Desordenada**: `<ul/>`
+     * Representa una lista de elementos sin orden estricto (viñetas).
+     */
+    ul: SpecificTagFunction<HTMLUListElement>;
+
+    /**
+     * 📦 **Ordered List**: `<ol/>`
+     * Represents a list of items, where the items have been intentionally ordered.
+     * @es 📦 **Lista Ordenada**: `<ol/>`
+     * Representa una lista numerada.
+     */
+    ol: SpecificTagFunction<HTMLOListElement>;
+
+    /**
+     * 📦 **List Item**: `<li/>`
+     * Represents an item in a list. Must be contained in a parent `<ul>`, `<ol>`, or `<menu>`.
+     * @es 📦 **Elemento de Lista**: `<li/>`
+     * Representa un ítem dentro de una lista (`ul` u `ol`).
+     */
+    li: SpecificTagFunction<HTMLLIElement>;
+
+    /**
+     * 📦 **Description List**: `<dl/>`
+     * Encloses a list of groups of terms and descriptions.
+     * @es 📦 **Lista de Descripciones**: `<dl/>`
+     * Contenedor para una lista de términos y sus descripciones.
+     */
+    dl: SpecificTagFunction<HTMLDListElement>;
+
+    /**
+     * 📦 **Description Term**: `<dt/>`
+     * Specifies a term in a description or definition list.
+     * @es 📦 **Término de Descripción**: `<dt/>`
+     * Especifica el término a definir dentro de un `<dl>`.
+     */
+    dt: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 📦 **Description Details**: `<dd/>`
+     * Provides the details or the definition of the preceding term (`<dt>`).
+     * @es 📦 **Detalle de Descripción**: `<dd/>`
+     * Proporciona la definición del término que lo precede.
+     */
+    dd: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 📦 **Figure**: `<figure/>`
+     * Represents self-contained content, frequently with a caption (`<figcaption>`).
+     * @es 📦 **Figura**: `<figure/>`
+     * Representa contenido independiente, generalmente con una leyenda (`<figcaption>`).
+     */
+    figure: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 📦 **Figure Caption**: `<figcaption/>`
+     * Represents a caption or legend for the rest of the contents of the `<figure>`.
+     * @es 📦 **Leyenda de Figura**: `<figcaption/>`
+     * Representa la leyenda de los contenidos de un elemento `<figure>`.
+     */
+    figcaption: SpecificTagFunction<HTMLElement>;
+
+
+    // ==========================================================================
+    // 📝 INLINE TEXT SEMANTICS (SEMÁNTICA DE TEXTO EN LÍNEA)
+    // ==========================================================================
+
+    /**
+     * 📝 **Anchor / Hyperlink**: `<a/>`
+     * Creates a hyperlink to web pages, files, email addresses, etc.
+     * @es 📝 **Enlace / Hipervínculo**: `<a/>`
+     * Crea un enlace interactivo hacia otra URL.
+     */
+    a: SpecificTagFunction<HTMLAnchorElement>;
+
+    /**
+     * 📝 **Generic Inline Container**: `<span/>`
+     * A generic inline container for phrasing content.
+     * @es 📝 **Contenedor Genérico en Línea**: `<span/>`
+     * Agrupa texto sin aportar significado semántico adicional. Ideal para aplicar CSS.
+     */
+    span: SpecificTagFunction<HTMLSpanElement>;
+
+    /**
+     * 🛑 **Line Break (Void)**: `<br/>`
+     * Produces a line break in text (carriage-return).
+     * @es 🛑 **Salto de Línea (Vacío)**: `<br/>`
+     * Fuerza un salto de línea en el texto.
+     */
+    br: VoidTagFunction<HTMLBRElement>;
+
+    /**
+     * 🛑 **Word Break Opportunity (Void)**: `<wbr/>`
+     * Represents a word break opportunity for the browser.
+     * @es 🛑 **Oportunidad de Salto (Vacío)**: `<wbr/>`
+     * Indica al navegador un lugar seguro para romper una palabra larga si es necesario.
+     */
+    wbr: VoidTagFunction<HTMLElement>;
+
+    /**
+     * 📝 **Strong Importance**: `<strong/>`
+     * Indicates that its contents have strong importance (usually rendered bold).
+     * @es 📝 **Importancia Fuerte**: `<strong/>`
+     * Indica texto con gran importancia o urgencia.
+     */
+    strong: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 📝 **Bring Attention To**: `<b/>`
+     * Used to draw the reader's attention (rendered bold) without extra semantic importance.
+     * @es 📝 **Llamar la Atención**: `<b/>`
+     * Texto estilizado en negrita por propósitos utilitarios.
+     */
+    b: SpecificTagFunction<HTMLElementExtended>;
+
+    /**
+     * 📝 **Emphasis**: `<em/>`
+     * Marks text that has stress emphasis (usually rendered italic).
+     * @es 📝 **Énfasis**: `<em/>`
+     * Marca texto con énfasis verbal.
+     */
+    em: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 📝 **Idiomatic Text**: `<i/>`
+     * Represents a range of text set off from normal text (like technical terms or icons).
+     * @es 📝 **Texto Idiomático**: `<i/>`
+     * Texto itálico para términos técnicos, extranjerismos o iconos (ej. FontAwesome).
+     */
+    i: SpecificTagFunction<HTMLElementExtended>;
+
+    /**
+     * 📝 **Code Fragment**: `<code/>`
+     * Displays a short fragment of computer code.
+     * @es 📝 **Fragmento de Código**: `<code/>`
+     * Muestra código fuente (usualmente monoespaciado).
+     */
+    code: SpecificTagFunction<HTMLElementExtended>;
+
+    /**
+     * 📝 **Mark/Highlight Text**: `<mark/>`
+     * Represents text which is marked or highlighted for reference.
+     * @es 📝 **Texto Resaltado**: `<mark/>`
+     * Representa texto resaltado o marcado como referencia.
+     */
+    mark: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 📝 **Time**: `<time/>`
+     * Represents a specific period in time. Use the `datetime` attribute.
+     * @es 📝 **Tiempo**: `<time/>`
+     * Representa un periodo de tiempo específico (fecha/hora).
+     */
+    time: SpecificTagFunction<HTMLTimeElement>;
+
+    /**
+     * 📝 **Small Text**: `<small/>`
+     * Represents side-comments and small print, like copyright and legal text.
+     * @es 📝 **Texto Pequeño**: `<small/>`
+     * Representa comentarios laterales o letra pequeña (copyright, legal).
+     */
+    small: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 📝 **Strikethrough (Incorrect)**: `<s/>`
+     * Renders text with a strikethrough. Use to represent things that are no longer relevant.
+     * @es 📝 **Texto Tachado**: `<s/>`
+     * Representa cosas que ya no son relevantes o precisas.
+     */
+    s: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 📝 **Underline**: `<u/>`
+     * Represents text with an unarticulated annotation (usually underlined).
+     * @es 📝 **Subrayado**: `<u/>`
+     * Texto subrayado (usar con precaución para no confundir con enlaces).
+     */
+    u: SpecificTagFunction<HTMLElementExtended>;
+
+    /**
+     * 📝 **Inline Quotation**: `<q/>`
+     * Indicates that the enclosed text is a short inline quotation.
+     * @es 📝 **Cita en Línea**: `<q/>`
+     * Indica una cita corta dentro de la misma línea (el navegador añade comillas automáticamente).
+     */
+    q: SpecificTagFunction<HTMLQuoteElement>;
+
+    /**
+     * 📝 **Abbreviation**: `<abbr/>`
+     * Represents an abbreviation or acronym (use `title` for the full string).
+     * @es 📝 **Abreviatura**: `<abbr/>`
+     * Representa un acrónimo o abreviatura.
+     */
+    abbr: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 📝 **Citation**: `<cite/>`
+     * Represents a reference to a creative work.
+     * @es 📝 **Cita de Obra**: `<cite/>`
+     * Referencia el título de una obra creativa (libro, película, canción).
+     */
+    cite: SpecificTagFunction<HTMLElement>;
+    /**
+     * 📝 **Subscript**: `<sub/>`
+     * Specifies inline text which should be displayed as subscript for solely typographical reasons.
+     * @es 📝 **Subíndice**: `<sub/>`
+     * Texto tipográfico más pequeño situado debajo de la línea base (ej. fórmulas químicas como H₂O).
+     */
+    sub: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 📝 **Superscript**: `<sup/>`
+     * Specifies inline text which is to be displayed as superscript for solely typographical reasons.
+     * @es 📝 **Superíndice**: `<sup/>`
+     * Texto tipográfico más pequeño situado por encima de la línea base (ej. x² o notas al pie).
+     */
+    sup: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 📝 **Keyboard Input**: `<kbd/>`
+     * Represents a span of inline text denoting textual user input from a keyboard.
+     * @es 📝 **Entrada de Teclado**: `<kbd/>`
+     * Representa una entrada de teclado del usuario (ej. presiona <kbd>Ctrl</kbd> + <kbd>C</kbd>).
+     */
+    kbd: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 📝 **Machine-Readable Data**: `<data/>`
+     * Links a given piece of content with a machine-readable translation.
+     * @es 📝 **Dato Legible por Máquina**: `<data/>`
+     * Asocia un valor legible por humanos con un valor legible por máquinas (usando el atributo `value`).
+     */
+    data: SpecificTagFunction<HTMLDataElement>;
+
+    // ==========================================================================
+    // 🖼️ MEDIA & EMBEDDED CONTENT (CONTENIDO MULTIMEDIA)
+    // ==========================================================================
+
+    /**
+     * 🛑 **Image (Void)**: `<img/>`
+     * Embeds an image into the document.
+     * @es 🛑 **Imagen (Vacío)**: `<img/>`
+     * Incrusta una imagen. No admite hijos.
+     * @example
+     * tags.img({ src: "logo.png", alt: "Logotipo" });
+     */
+    img: VoidTagFunction<HTMLImageElement>;
+
+    /**
+     * 🖼️ **Video Player**: `<video/>`
+     * Embeds a media player which supports video playback.
+     * @es 🖼️ **Reproductor de Video**: `<video/>`
+     * Incrusta un reproductor de video.
+     */
+    video: SpecificTagFunction<HTMLVideoElement>;
+
+    /**
+     * 🖼️ **Audio Player**: `<audio/>`
+     * Embeds sound content in documents.
+     * @es 🖼️ **Reproductor de Audio**: `<audio/>`
+     * Incrusta un reproductor de audio.
+     */
+    audio: SpecificTagFunction<HTMLAudioElement>;
+
+    /**
+     * 🛑 **Media Source (Void)**: `<source/>`
+     * Specifies multiple media resources for `<picture>`, `<audio>`, and `<video>`.
+     * @es 🛑 **Fuente de Medios (Vacío)**: `<source/>`
+     * Especifica múltiples archivos para elementos multimedia.
+     */
+    source: VoidTagFunction<HTMLSourceElement>;
+
+    /**
+     * 🛑 **Text Track (Void)**: `<track/>`
+     * Specifies timed text tracks (subtitles) for media elements.
+     * @es 🛑 **Pista de Texto (Vacío)**: `<track/>`
+     * Especifica subtítulos o descripciones para video/audio.
+     */
+    track: VoidTagFunction<HTMLTrackElement>;
+
+    /**
+     * 🖼️ **Picture**: `<picture/>`
+     * Contains `<source>` elements and one `<img>` to offer alternative image versions.
+     * @es 🖼️ **Imagen Responsiva**: `<picture/>`
+     * Contenedor para imágenes responsivas y modernas.
+     */
+    picture: SpecificTagFunction<HTMLPictureElement>;
+
+    /**
+     * 🛑 **Embed External Content (Void)**: `<embed/>`
+     * Embeds external content at the specified point in the document.
+     * @es 🛑 **Incrustar Contenido Externo (Vacío)**: `<embed/>`
+     * Incrusta plugins interactivos externos.
+     */
+    embed: VoidTagFunction<HTMLEmbedElement>;
+
+    /**
+     * 🖼️ **Object**: `<object/>`
+     * Represents an external resource, which can be treated as an image, a nested browsing context, or a resource to be handled by a plugin.
+     * @es 🖼️ **Objeto Externo**: `<object/>`
+     * Incrusta recursos externos (PDFs, SVGs interactivos).
+     */
+    object: SpecificTagFunction<HTMLObjectElement>;
+
+    /**
+     * 🛑 **Image Map Area (Void)**: `<area/>`
+     * Defines a hot-spot region on an image, and optionally associates it with a hyperlink.
+     * @es 🛑 **Área de Mapa de Imagen (Vacío)**: `<area/>`
+     * Define un área clicable dentro de un mapa de imagen (`<map>`).
+     */
+    area: VoidTagFunction<HTMLAreaElement>;
+
+    /**
+     * 🖼️ **Image Map**: `<map/>`
+     * Used with `<area>` elements to define an image map.
+     * @es 🖼️ **Mapa de Imagen**: `<map/>`
+     * Contenedor para definir áreas clicables sobre una imagen.
+     */
+    map: SpecificTagFunction<HTMLMapElement>;
+
+    /**
+     * 🖼️ **Inline Frame**: `<iframe/>`
+     * Represents a nested browsing context (embedding another HTML page).
+     * @es 🖼️ **Marco en Línea**: `<iframe/>`
+     * Incrusta una página web externa dentro de la actual.
+     */
+    iframe: SpecificTagFunction<HTMLIFrameElement>;
+
+    /**
+     * 🖼️ **Canvas**: `<canvas/>`
+     * Used to draw graphics, on the fly, via scripting (usually JavaScript).
+     * @es 🖼️ **Lienzo Gráfico**: `<canvas/>`
+     * Área para dibujar gráficos dinámicos 2D/3D mediante JavaScript.
+     */
+    canvas: SpecificTagFunction<HTMLCanvasElement>;
+
+
+    // ==========================================================================
+    // 📊 TABLE ELEMENTS (ELEMENTOS DE TABLA)
+    // ==========================================================================
+
+    /**
+     * 📊 **Table**: `<table/>`
+     * Represents tabular data (information presented in a two-dimensional table).
+     * @es 📊 **Tabla**: `<table/>`
+     * Representa datos tabulares en filas y columnas.
+     */
+    table: SpecificTagFunction<HTMLTableElement>;
+
+    /**
+     * 📊 **Table Caption**: `<caption/>`
+     * Specifies the caption (or title) of a table. Must be the first child of a `<table>`.
+     * @es 📊 **Título de la Tabla**: `<caption/>`
+     * Especifica el título o leyenda de la tabla.
+     */
+    caption: SpecificTagFunction<HTMLTableCaptionElement>;
+
+    /**
+     * 📊 **Table Header Group**: `<thead/>`
+     * Defines a set of rows defining the head of the columns of the table.
+     * @es 📊 **Cabecera de Tabla**: `<thead/>`
+     * Agrupa las filas de encabezado de una tabla.
+     */
+    thead: SpecificTagFunction<HTMLTableSectionElement>;
+
+    /**
+     * 📊 **Table Body Group**: `<tbody/>`
+     * Encapsulates a set of table rows (`<tr>`), indicating that they comprise the body of the table.
+     * @es 📊 **Cuerpo de Tabla**: `<tbody/>`
+     * Agrupa las filas de datos principales de la tabla.
+     */
+    tbody: SpecificTagFunction<HTMLTableSectionElement>;
+
+    /**
+     * 📊 **Table Footer Group**: `<tfoot/>`
+     * Defines a set of rows summarizing the columns of the table.
+     * @es 📊 **Pie de Tabla**: `<tfoot/>`
+     * Agrupa las filas de resumen en la parte inferior de la tabla.
+     */
+    tfoot: SpecificTagFunction<HTMLTableSectionElement>;
+
+    /**
+     * 📊 **Table Row**: `<tr/>`
+     * Defines a row of cells in a table.
+     * @es 📊 **Fila de Tabla**: `<tr/>`
+     * Define una fila dentro de la tabla (contiene `<th>` o `<td>`).
+     */
+    tr: SpecificTagFunction<HTMLTableRowElement>;
+
+    /**
+     * 📊 **Table Data Cell**: `<td/>`
+     * Defines a cell of a table that contains data.
+     * @es 📊 **Celda de Datos**: `<td/>`
+     * Define una celda estándar dentro de una fila.
+     */
+    td: SpecificTagFunction<HTMLTableCellElement>;
+
+    /**
+     * 📊 **Table Header Cell**: `<th/>`
+     * Defines a cell as header of a group of table cells.
+     * @es 📊 **Celda de Encabezado**: `<th/>`
+     * Define una celda de título (se muestra en negrita y centrada por defecto).
+     */
+    th: SpecificTagFunction<HTMLTableCellElement>;
+
+    /**
+     * 📊 **Column Group**: `<colgroup/>`
+     * Defines a group of columns within a table.
+     * @es 📊 **Grupo de Columnas**: `<colgroup/>`
+     * Agrupa elementos `<col>` para aplicar estilos o configuraciones comunes.
+     */
+    colgroup: SpecificTagFunction<HTMLTableColElement>;
+
+    /**
+     * 🛑 **Column Definition (Void)**: `<col/>`
+     * Defines column properties for each column within a `<colgroup>`.
+     * @es 🛑 **Definición de Columna (Vacío)**: `<col/>`
+     * Define propiedades para columnas específicas. No admite hijos.
+     */
+    col: VoidTagFunction<HTMLTableColElement>;
+
+
+    // ==========================================================================
+    // 📝 FORMS & INTERACTIVE (FORMULARIOS E INTERACTIVIDAD)
+    // ==========================================================================
+
+    /**
+     * 📝 **Form**: `<form/>`
+     * Represents a document section containing interactive controls for submitting information.
+     * @es 📝 **Formulario**: `<form/>`
+     * Contenedor principal para controles interactivos y envío de datos.
+     */
+    form: SpecificTagFunction<HTMLFormElement>;
+
+    /**
+     * 🛑 **Input Control (Void)**: `<input/>`
+     * Used to create interactive controls for web-based forms.
+     * @es 🛑 **Control de Entrada (Vacío)**: `<input/>`
+     * Campo de entrada de texto, checkbox, radio, etc. ¡No admite hijos!
+     */
+    input: VoidTagFunction<HTMLInputElementExtended>;
+
+    /**
+     * 📝 **Button**: `<button/>`
+     * An interactive element activated by a user with a mouse, keyboard, etc.
+     * @es 📝 **Botón**: `<button/>`
+     * Botón interactivo que puede contener iconos y texto.
+     */
+    button: SpecificTagFunction<HTMLButtonElement>;
+
+    /**
+     * 📝 **Text Area**: `<textarea/>`
+     * Represents a multi-line plain-text editing control.
+     * @es 📝 **Área de Texto**: `<textarea/>`
+     * Control de entrada de texto de múltiples líneas.
+     */
+    textarea: SpecificTagFunction<HTMLTextAreaElement>;
+
+    /**
+     * 📝 **Select Dropdown**: `<select/>`
+     * Represents a control that provides a menu of options.
+     * @es 📝 **Menú Desplegable**: `<select/>`
+     * Control que ofrece múltiples opciones (requiere hijos `<option>`).
+     */
+    select: SpecificTagFunction<HTMLSelectElement>;
+
+    /**
+     * 📝 **Option**: `<option/>`
+     * Used to define an item contained in a `<select>`, `<optgroup>`, or `<datalist>`.
+     * @es 📝 **Opción**: `<option/>`
+     * Elemento individual dentro de un menú desplegable.
+     */
+    option: SpecificTagFunction<HTMLOptionElement>;
+
+    /**
+     * 📝 **Option Group**: `<optgroup/>`
+     * Creates a grouping of options within a `<select>` element.
+     * @es 📝 **Grupo de Opciones**: `<optgroup/>`
+     * Agrupa elementos `<option>` de manera lógica bajo un mismo título.
+     */
+    optgroup: SpecificTagFunction<HTMLOptGroupElement>;
+
+    /**
+     * 📝 **Input Label**: `<label/>`
+     * Represents a caption for an item in a user interface.
+     * @es 📝 **Etiqueta de Control**: `<label/>`
+     * Texto descriptivo asociado a un input (mejora la accesibilidad).
+     */
+    label: SpecificTagFunction<HTMLLabelElement>;
+
+    /**
+     * 📝 **Field Set**: `<fieldset/>`
+     * Used to group several controls as well as labels (`<legend>`) within a web form.
+     * @es 📝 **Agrupación de Campos**: `<fieldset/>`
+     * Agrupa controles interactivos y etiquetas dentro de un formulario.
+     */
+    fieldset: SpecificTagFunction<HTMLFieldSetElement>;
+
+    /**
+     * 📝 **Legend**: `<legend/>`
+     * Represents a caption for the content of its parent `<fieldset>`.
+     * @es 📝 **Leyenda de Campo**: `<legend/>`
+     * Representa el título o leyenda para un `<fieldset>`.
+     */
+    legend: SpecificTagFunction<HTMLLegendElement>;
+
+    /**
+     * 📝 **Data List**: `<datalist/>`
+     * Contains a set of `<option>` elements that represent the permissible or recommended options available for an `<input>`.
+     * @es 📝 **Lista de Datos**: `<datalist/>`
+     * Proporciona sugerencias de autocompletado para un `<input>`.
+     */
+    datalist: SpecificTagFunction<HTMLDataListElement>;
+
+    /**
+     * 📝 **Output**: `<output/>`
+     * Container element into which a site or app can inject the results of a calculation or the outcome of a user action.
+     * @es 📝 **Salida Calculada**: `<output/>`
+     * Muestra el resultado de un cálculo o acción del usuario en un formulario.
+     */
+    output: SpecificTagFunction<HTMLOutputElement>;
+
+    /**
+     * 📝 **Progress Indicator**: `<progress/>`
+     * Displays an indicator showing the completion progress of a task.
+     * @es 📝 **Barra de Progreso**: `<progress/>`
+     * Muestra el progreso de finalización de una tarea.
+     */
+    progress: SpecificTagFunction<HTMLProgressElement>;
+
+    /**
+     * 📝 **Meter**: `<meter/>`
+     * Represents a scalar value within a known range, or a fractional value (e.g., disk usage).
+     * @es 📝 **Medidor Escalar**: `<meter/>`
+     * Representa un valor dentro de un rango conocido (ej. uso de disco). No confundir con progreso.
+     */
+    meter: SpecificTagFunction<HTMLMeterElement>;
+
+    /**
+     * 🖱️ **Details Disclosure**: `<details/>`
+     * Creates a disclosure widget in which information is visible only when the widget is toggled into an "open" state.
+     * @es 🖱️ **Desplegable de Detalles**: `<details/>`
+     * Widget nativo que oculta información hasta que el usuario lo expande.
+     */
+    details: SpecificTagFunction<HTMLDetailsElement>;
+
+    /**
+     * 🖱️ **Details Summary**: `<summary/>`
+     * Specifies a summary, caption, or legend for a `<details>` element's disclosure box.
+     * @es 🖱️ **Resumen de Detalles**: `<summary/>`
+     * El título visible o pestaña clicable de un elemento `<details>`.
+     */
+    summary: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 🖱️ **Dialog Box**: `<dialog/>`
+     * Represents a dialog box or other interactive component, such as a dismissible alert, inspector, or subwindow.
+     * @es 🖱️ **Cuadro de Diálogo**: `<dialog/>`
+     * Modal nativo, alerta interactiva o ventana emergente.
+     */
+    dialog: SpecificTagFunction<HTMLDialogElement>;
+
+
+    // ==========================================================================
+    // 💀 OBSOLETE ELEMENTS (OBSOLETOS - NO USAR)
+    // ==========================================================================
+
+    /**
+     * 💀 **OBSOLETE**: `<marquee/>`
+     * @deprecated 🚨 ¡NO USAR! This tag was removed from the HTML5 standard. 
+     * @es 💀 **OBSOLETO**: `<marquee/>`
+     * @deprecated 🚨 ¡NO USAR! Etiqueta eliminada de HTML5. Usa animaciones CSS.
+     */
+    marquee: SpecificTagFunction<HTMLMarqueeElement>;
+
+    /**
+     * 💀 **OBSOLETE**: `<center/>`
+     * @deprecated 🚨 ¡NO USAR! Use CSS `text-align: center` or Flexbox instead.
+     * @es 💀 **OBSOLETO**: `<center/>`
+     * @deprecated 🚨 ¡NO USAR! Usa CSS para centrar elementos.
+     */
+    center: SpecificTagFunction<HTMLElement>;
+
+    /**
+     * 💀 **OBSOLETE**: `<font/>`
+     * @deprecated 🚨 ¡NO USAR! Use CSS properties like `color` or `font-size`.
+     * @es 💀 **OBSOLETO**: `<font/>`
+     * @deprecated 🚨 ¡NO USAR! Etiqueta eliminada. Usa clases CSS.
+     */
+    font: SpecificTagFunction<HTMLElement>;
+    // ==========================================================================
+    // ✍️ EDITS & TRACK CHANGES (EDICIONES DE TEXTO)
+    // ==========================================================================
+
+    /**
+     * ✍️ **Deleted Text**: `<del/>`
+     * Represents a range of text that has been deleted from a document.
+     * @es ✍️ **Texto Eliminado**: `<del/>`
+     * Representa texto que ha sido borrado (suele renderizarse tachado). Usado para control de cambios.
+     */
+    del: SpecificTagFunction<HTMLModElement>;
+
+    /**
+     * ✍️ **Inserted Text**: `<ins/>`
+     * Represents a range of text that has been added to a document.
+     * @es ✍️ **Texto Insertado**: `<ins/>`
+     * Representa texto que ha sido añadido (suele renderizarse subrayado). Usado junto a `<del>`.
+     */
+    ins: SpecificTagFunction<HTMLModElement>;
+}
+
+// ==========================================
+// --- svg-tags.d.ts ---
+// ==========================================
+/// <reference lib="dom" />
+
+// 1. Limpiamos las propiedades nativas de JS
+type ValidSvgTags = keyof Omit<TuJsHtml_SvgContext,
+    'prototype' | 'apply' | 'call' | 'bind' | 'length' | 'name' | 'arguments' | 'caller' | 'toString'>;
+// ==========================================================================
+// 🎨 CORE DEL ECOSISTEMA SVG (Ultrastricto)
+// ==========================================================================
+
+/**
+ * Nodos recursivos para contenedores SVG puros.
+ * 🛑 ¡ATENCIÓN!: Se han eliminado `string` y `number`. 
+ * En SVG, el texto solo es válido dentro de la etiqueta `<text>`.
+ * @es Previene inyectar texto huérfano dentro de etiquetas como `<g>` o `<svg>`.
+ */
+type SvgRecursiveNode<TRoot extends SVGElement = SVGElement> =
+    | Node
+    | SuperElementClass<SVGElement>
+    | TuJsHtml_SvgCallback<TRoot>;
+
+/**
+ * Callback estricto para entornos SVG.
+ */
+type TuJsHtml_SvgCallback<TRoot extends SVGElement = SVGElement> = (
+    //svg: TuJsHtml_SvgContext<TRoot>,
+    svg: TuJsHtml_SvgProxy<TRoot>,
+    currentElement: SuperElementClass<TRoot>
+) => unknown;
+
+/**
+ * 1. 📦 FÁBRICA CONTENEDORA (Container Tag)
+ * Admite hijos (nodos, callbacks), pero NO admite texto primitivo (strings/numbers).
+ */
+interface SvgContainerTagFunction<TElement extends SVGElement> {
+    //(config: ConfigureAttributes<TElement>, ...args: SvgRecursiveNode<TElement>[]): SuperElementClass<TElement>;
+    <TConfig extends Record<string, unknown>>(
+        config: ValidatedConfig<TConfig, TElement>,
+        ...args: SvgTextRecursiveNode<TElement>[]
+    ): SuperElementClass<TElement>;
+    (...args: SvgRecursiveNode<TElement>[]): SuperElementClass<TElement>;
+}
+
+/**
+ * 2. 🛑 FÁBRICA VACÍA (Void Tag)
+ * Elementos de dibujo vectorial puro. NO admiten hijos de ningún tipo.
+ * Solo aceptan su objeto de configuración.
+ */
+interface SvgVoidTagFunction<TElement extends SVGElement> {
+    //(config?: ConfigureAttributes<TElement>): SuperElementClass<TElement>;
+    <TConfig extends Record<string, unknown>>(
+        config?: ValidatedConfig<TConfig, TElement>
+    ): SuperElementClass<TElement>;
+}
+/**
+ * Nodos permitidos en elementos de texto.
+ * Hereda los nodos normales de SVG y le suma permisos para strings/numbers.
+ */
+type SvgTextRecursiveNode<TRoot extends SVGElement = SVGElement> =
+    | SvgRecursiveNode<TRoot>
+    | string
+    | number;
+/**
+ * 3. 📝 FÁBRICA DE TEXTO (Text Tag)
+ * Las ÚNICAS etiquetas de SVG que tienen permiso para recibir strings, numbers y Template Literals.
+ */
+// export interface SvgTextTagFunction<TElement extends SVGElement> {
+//     // (config: ConfigureAttributes<TElement>, ...args: (SvgRecursiveNode<TElement> | string | number)[]): SuperElementClass<TElement>;
+//     // (...args: (SvgRecursiveNode<TElement> | string | number)[]): SuperElementClass<TElement>;
+//     // (template: TemplateStringsArray, ...values: unknown[]): SuperElementClass<TElement>;
+//     //(config: ConfigureAttributes<TElement>, ...args: SvgTextRecursiveNode<TElement>[]): SuperElementClass<TElement>;
+//     <TConfig extends Record<string, unknown>>(
+//         config: ValidatedConfig<TConfig, TElement>,
+//         ...args: SvgTextRecursiveNode<TElement>[]
+//     ): SuperElementClass<TElement>;
+//     (...args: SvgTextRecursiveNode<TElement>[]): SuperElementClass<TElement>;
+//     (template: TemplateStringsArray, ...values: unknown[]): SuperElementClass<TElement>;
+// }
+// =========================================================================
+// 🧹 ALIAS LOCALES (Shorthands para no ensuciar el código)
+// =========================================================================
+//type TuConfig = unknown;
+type Cfg<C, T extends Element = SVGElement> = ValidatedConfig<C, T>;
+type NodosTxt<T extends SVGElement> = SvgTextRecursiveNode<T>[];
+type Ret<T extends SVGElement> = SuperElementClass<T>;
+// ==========================================================================
+// 🎨 DICCIONARIO DE ETIQUETAS SVG (CONTEXTO AISLADO)
+// ==========================================================================
+
+// export type SvgTextValidArgs<TElement extends SVGElement, TConfig> =
+//     | [config: ValidatedConfig<TConfig, TElement>, ...nodes: SvgTextRecursiveNode<TElement>[]]
+//     | [...nodes: SvgTextRecursiveNode<TElement>[]]
+//     | [template: TemplateStringsArray, ...values: unknown[]];
+// 2. Definimos el mensaje estandarizado para esta etiqueta
+
+interface SvgTextTagFunction<TEl extends SVGElement> {
+    /**
+     * 📝 **Fábrica de Texto SVG**
+     * @example
+     * svg.text({ "@attrs": { x: 10,fill:"red"  } }, "Hola")
+     * svg.tspan({ "@attrs": { x: 10 } }, "hello"," ",1)
+     */
+    <C>(config: Cfg<C, TEl>, ...args: NodosTxt<TEl>): Ret<TEl>;
+    /**
+     * 📝 **Fábrica de Texto SVG (Directo)**
+     * @example
+     * svg.text("Mundo")
+     * svg.tspan("hello World"," ",varname_1," ",1}
+     */
+    (...args: NodosTxt<TEl>): Ret<TEl>;
+    /**
+     * 📝 **Fábrica de Texto SVG (Template)**
+     * @example 
+     * svg.text`Hola Mundo`
+     * svg.tspan`hello World ${varname_1}`
+     */
+    (template: TemplateStringsArray, ...values: unknown[]): Ret<TEl>;
+    /**
+     * 📝 **Fábrica de Texto SVG**
+     * @example text({ x: 10, y: 20 }, "Hola")
+     * @example text("Mundo")
+     * @example text`Hola Mundo`
+     */
+    // <TConfig extends Record<string, unknown>, TArgs extends unknown[]>(
+    //     ...args: ValidateFunctionArgs<TArgs, SvgTextValidArgs<TElement, TConfig>, TextErrorMsg>
+    // ): SuperElementClass<TElement>;
+    // <TConfig extends Record<string, any>, TArgs extends any[]>(
+    //     ...args: TArgs extends SvgTextValidArgs<TElement, TConfig>
+    //         ? TArgs // ✅ Si es válido, déjalo pasar
+    //         : [error: "🛑 ARGUMENTOS INVÁLIDOS: Esperaba un objeto de configuración {@attrs}, nodos de texto, o un template string."] // ❌ Si es inválido, inyecta el veneno
+    // ): SuperElementClass<TElement>;
+}
+/**
+ * 🎨 **Contexto de Etiquetas SVG (Proxy SVG)**
+ * Expone etiquetas con un control semántico absoluto sobre lo que pueden contener.
+ */
+interface TuJsHtml_SvgContext<TRoot extends SVGElement = SVGElement> {
+
+    /** Permite anidar elementos al root actual, prohibiendo texto flotante */
+    (...args: SvgRecursiveNode<TRoot>[]): TRoot;
+    // =========================================================================
+    // 🛑 LIMPIEZA DE AUTOCOMPLETADO (FUNCTION SHADOWING)
+    // =========================================================================
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    prototype: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    apply: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    call: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    bind: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    length: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    name: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    arguments: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    caller: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    toString: never;
+    // ----------------------------------------------------------------------
+    // 🛑 ELEMENTOS DE DIBUJO (VACÍOS / VOID)
+    // ----------------------------------------------------------------------
+
+    /**
+     * 🛑 **SVG Path (Void)**: `<path/>`
+     * The most powerful drawing element. Cannot have children.
+     * @es 🛑 **Ruta SVG (Vacío)**: `<path/>`
+     * El elemento de dibujo vectorial más potente. ¡No admite hijos!
+     * @example
+     * svg.path({ d: "M20 60 L120 20", stroke: "green", fill: "transparent" });
+     */
+    path: SvgVoidTagFunction<SVGPathElement>;
+
+    /**
+     * 🛑 **SVG Circle (Void)**: `<circle/>`
+     * @es 🛑 **Círculo SVG (Vacío)**: `<circle/>`
+     * @example
+     * svg.circle({ cx: 50, cy: 50, r: 40, fill: "blue" });
+     */
+    circle: SvgVoidTagFunction<SVGCircleElement>;
+
+    /**
+     * 🛑 **SVG Rectangle (Void)**: `<rect/>`
+     * @es 🛑 **Rectángulo SVG (Vacío)**: `<rect/>`
+     * @example
+     * svg.rect({ x: 10, y: 10, width: 100, height: 50, rx: 5 });
+     */
+    rect: SvgVoidTagFunction<SVGRectElement>;
+
+    /**
+     * 🛑 **SVG Line (Void)**: `<line/>`
+     * @es 🛑 **Línea SVG (Vacío)**: `<line/>`
+     */
+    line: SvgVoidTagFunction<SVGLineElement>;
+
+    /**
+     * 🛑 **SVG Polygon (Void)**: `<polygon/>`
+     * @es 🛑 **Polígono SVG (Vacío)**: `<polygon/>`
+     * @example
+     * svg.polygon({ points: "50,15 100,100 0,100", fill: "gold" });
+     */
+    polygon: SvgVoidTagFunction<SVGPolygonElement>;
+
+    /**
+     * 🛑 **SVG Ellipse (Void)**: `<ellipse/>`
+     * @es 🛑 **Elipse SVG (Vacío)**: `<ellipse/>`
+     */
+    ellipse: SvgVoidTagFunction<SVGEllipseElement>;
+
+    /**
+     * 🛑 **SVG Use (Void)**: `<use/>`
+     * Clones nodes from within the SVG. Cannot have direct children.
+     * @es 🛑 **Reutilizar SVG (Vacío)**: `<use/>`
+     * Clona y dibuja un elemento referenciado. ¡No admite hijos!
+     * @example
+     * svg.use({ href: "#miPatron", x: 50, y: 50 });
+     */
+    use: SvgVoidTagFunction<SVGUseElement>;
+
+
+    // ----------------------------------------------------------------------
+    // 📦 ELEMENTOS CONTENEDORES (SIN TEXTO)
+    // ----------------------------------------------------------------------
+
+    /**
+     * 📦 **SVG Group (Container)**: `<g/>`
+     * Groups SVG elements. Rejects raw strings/numbers.
+     * @es 📦 **Grupo SVG (Contenedor)**: `<g/>`
+     * Agrupa elementos SVG. 🚫 Rechaza strings y numbers huérfanos.
+     * @example
+     * svg.g({ transform: "translate(50, 50)" }, gCtx => {
+     * gCtx.circle({ r: 20 });
+     * // gCtx("Hola") -> ❌ Error de TypeScript: Texto no permitido aquí.
+     * });
+     */
+    g: SvgContainerTagFunction<SVGGElement>;
+
+    /**
+     * 📦 **SVG Definitions (Container)**: `<defs/>`
+     * Stores graphical objects.
+     * @es 📦 **Definiciones SVG (Contenedor)**: `<defs/>`
+     * Almacena elementos gráficos ocultos (gradientes, máscaras).
+     */
+    defs: SvgContainerTagFunction<SVGDefsElement>;
+
+    /**
+     * 🌉 **SVG Foreign Object (Container)**: `<foreignObject/>`
+     * @es 🌉 **Objeto Foráneo SVG**: `<foreignObject/>`
+     * Permite incrustar un entorno HTML. No admite texto directo, requiere nodos.
+     */
+    foreignObject: SvgContainerTagFunction<SVGForeignObjectElement>;
+
+
+    // ----------------------------------------------------------------------
+    // 📝 ELEMENTOS DE TEXTO (LOS ÚNICOS QUE ADMITEN STRINGS/NUMBERS)
+    // ----------------------------------------------------------------------
+
+    /**
+     * 📝 **SVG Text**: `<text/>`
+     * The ONLY base SVG element that should accept text nodes.
+     * @es 📝 **Texto SVG**: `<text/>`
+     * El ÚNICO elemento base de SVG que acepta libremente `string` o `number`.
+     * @example
+     * svg.text({ x: 10, y: 40, fill: "black" }, "Hola SVG: ", 2026);
+     * svg.text`Usando Template Literals directamente!`;
+     */
+    //text: SvgTextTagFunction<SVGTextElement>;
+    text: SvgTextTagFunction<TRoot>
+    /**
+     * 📝 **SVG Text Span**: `<tspan/>`
+     * Used to format individual pieces of text inside a `<text>` element.
+     * @es 📝 **Tramo de Texto SVG**: `<tspan/>`
+     * Se usa dentro de `<text>` para estilizar partes del texto de forma individual.
+     * @example
+     * svg.text( tCtx => {
+     *   tCtx.tspan({ fill: "red" }, "Rojo ");
+     *   tCtx.tspan({ fill: "blue" }, "Azul");
+     * });
+     */
+    tspan: SvgTextTagFunction<SVGTSpanElement>;
+}
+
+/**
+ * 🎨 CONTEXTO FINAL SVG (Estricto)
+ * Combina las etiquetas limpias con la magia de desestructuración Emmet.
+ * 🛑 SIN FALLBACK: Garantiza que solo se usen etiquetas válidas de la W3C.
+ */
+type TuJsHtml_SvgProxy<TRoot extends SVGElement = SVGElement> =
+    TuJsHtml_SvgContext<TRoot> & CustomEmmetSelectors<TuJsHtml_SvgContext<TRoot>, ValidSvgTags>;
+
+// ==========================================
+// --- math-tags.d.ts ---
+// ==========================================
+/// <reference lib="dom" />
+
+// 1. Limpiamos las propiedades nativas de JS
+type ValidMathTags = keyof Omit<TuJsHtml_MathContext,
+    'prototype' | 'apply' | 'call' | 'bind' | 'length' | 'name' | 'arguments' | 'caller' | 'toString'>;
+// ==========================================================================
+// 📐 CORE DEL ECOSISTEMA MATHML (Ultrastricto)
+// ==========================================================================
+
+/**
+ * Recursive nodes strictly permitted within a MathML context.
+ * 🛑 WARNING: Raw strings and numbers are removed here.
+ * In MathML, text must be inside Token elements like `<mi>`, `<mn>`, or `<mo>`.
+ * @es Nodos recursivos para contenedores MathML puros.
+ * 🛑 ¡ATENCIÓN!: Se previenen strings/numbers huérfanos dentro de `<math>` o `<mrow>`.
+ */
+type MathRecursiveNode<TRoot extends MathMLElement = MathMLElement> =
+    | Node
+    | SuperElementClass<MathMLElement>
+    | TuJsHtml_MathCallback<TRoot>;
+
+/**
+ * Inherits normal nodes and adds permissions for strings/numbers.
+ * Unique for Token tags (mi, mn, mo, mtext, ms).
+ * @es Hereda los nodos normales y le suma permisos para strings/numbers.
+ * Único para las etiquetas de Token.
+ */
+type MathTextRecursiveNode<TRoot extends MathMLElement = MathMLElement> =
+    | MathRecursiveNode<TRoot>
+    | string
+    | number;
+
+/**
+ * Strict callback for MathML environments.
+ * @es Callback estricto para entornos MathML.
+ */
+type TuJsHtml_MathCallback<TRoot extends MathMLElement = MathMLElement> = (
+    //math: TuJsHtml_MathContext<TRoot>,
+    math: TuJsHtml_MathProxy<TRoot>,
+    currentElement: SuperElementClass<TRoot>
+) => unknown;
+
+// ------------------------------------------------------------------------
+// LAS FÁBRICAS DE ETIQUETAS
+// ------------------------------------------------------------------------
+
+/**
+ * 📦 **Math Container Element Factory**
+ * Defines layout elements (e.g., mrow, mfrac, msqrt, mtable).
+ * 🛑 STRICT RULE: Raw strings/numbers are NOT allowed as direct children. Text must be wrapped in Token tags (mi, mn, mo).
+ *
+ * 🤖 **AI INSTRUCTION (DESIGN PHILOSOPHY):**
+ * - Use for structural grouping and complex mathematical layouts.
+ * - ALWAYS wrap text in token tags (e.g., `mrow( mi\`x\` )`, NEVER `mrow("x")`).
+ * - Use callbacks (`ctx => ...`) for deep nesting like matrices or limits to maintain readability.
+ *
+ * @es 📦 **Fábrica Contenedora MathML**
+ * Define elementos de diseño o agrupación (ej. mrow, mfrac).
+ * 🛑 REGLA ESTRICTA: No admite texto crudo. El texto debe ir dentro de Tokens (mi, mn, mo).
+ */
+interface MathContainerTagFunction<TElement extends MathMLElement> {
+    /**
+     * 🎨 **Render with Configuration / Renderiza con Configuración**
+     * @usage 🤖 AI Hint: Use when the container requires specific attributes (e.g., linethickness in fractions).
+     * @es Úsalo cuando el contenedor necesite atributos específicos de presentación.
+     * @example
+     * // 🤖 COMPLEX USE CASE: Binomial coefficient (Fraction without line)
+     * // <mfrac linethickness="0"> ... </mfrac>
+     * mfrac({ "@attrs": { linethickness: "0" } }, mi`n`, mi`k`)
+     */
+    <TConfig extends Record<string, unknown>>(
+        config: ValidatedConfig<TConfig, TElement>,
+        ...args: MathRecursiveNode<TElement>[]
+    ): SuperElementClass<TElement>;
+    /**
+     * 🎨 **Direct Composition & Callbacks / Composición Directa**
+     * @usage 🤖 AI Hint: PREFER THIS for standard grouping (`mrow`) where no attributes are needed.
+     * @es Omite la configuración. Ideal para agrupar elementos rápidamente.
+     * @example
+     * // 🤖 STRUCTURAL USE CASE:
+     * // <mrow><mi>x</mi><mo>+</mo><mi>y</mi></mrow>
+     * mrow( mi`x`, mo`+`, mi`y` )
+     */
+    (...args: MathRecursiveNode<TElement>[]): SuperElementClass<TElement>;
+}
+
+/**
+ * 📝 **Math Token Element Factory**
+ * Defines token elements that hold text, numbers, or symbols (e.g., mi, mn, mo, mtext).
+ * 🔓 PERMISSIVE: Allows raw strings and numbers.
+ *
+ * 🤖 **AI INSTRUCTION (DESIGN PHILOSOPHY):**
+ * - Use Template Literals (``) for simple variables, operators, and numbers.
+ * - Use Configuration when styling tokens (e.g., mathvariant, mathcolor).
+ *
+ * @es 📝 **Fábrica de Tokens MathML**
+ * Define elementos que contienen texto real o símbolos (ej. mi, mn, mo).
+ * 🔓 PERMISIVO: Admite strings y números directamente en la función.
+ */
+interface MathTokenTagFunction<TElement extends MathMLElement> {
+    /**
+     * 🎨 **Render with Configuration / Renderiza con Configuración**
+     * @usage 🤖 AI Hint: Use to modify typographic styles or add colors to specific tokens.
+     * @es Úsalo para modificar estilos tipográficos (ej. negritas, colores) en el token.
+     * * @example
+     * // 🤖 STYLING USE CASE: Real numbers set symbol (ℝ)
+     * // <mi mathvariant="double-struck">R</mi>
+     * mi({ "@attrs": { mathvariant: "double-struck" } }, "R")
+     */
+    <TConfig extends Record<string, unknown>>(
+        config: ValidatedConfig<TConfig, TElement>,
+        ...args: MathTextRecursiveNode<TElement>[]
+    ): SuperElementClass<TElement>;
+    /**
+     * 🎨 **Direct Composition / Composición Directa**
+     * @usage 🤖 AI Hint: Use when dynamically mapping arrays of strings/numbers.
+     * @es Úsalo al mapear arrays o pasar variables que ya son strings/números.
+     * @example
+     * mn("3.1415")
+     */
+    (...args: MathTextRecursiveNode<TElement>[]): SuperElementClass<TElement>;
+    /**
+     * 🎨 **Template Literal Syntax / Sintaxis de Template Literals**
+     * @usage 🤖 AI Hint: PREFER THIS syntax for standard math sketching. It keeps formulas highly readable.
+     * @es PREFIERE esta sintaxis para escribir fórmulas rápidamente como bocetos legibles.
+     * @example
+     * // 🤖 SKETCH USE CASE: Quadratic Equation snippet
+     * mrow( mi`b`, mo`²`, mo`-`, mn`4`, mi`a`, mi`c` )
+     */
+    (template: TemplateStringsArray, ...values: unknown[]): SuperElementClass<TElement>;
+}
+
+/**
+ * 🛑 **Math Void Element Factory**
+ * Defines elements that DO NOT accept children, used for spacing or structural markers (e.g., mspace, mprescripts, none).
+ *
+ * 🤖 **AI INSTRUCTION (DESIGN PHILOSOPHY):**
+ * - Never attempt to pass children or text to these functions.
+ * - Use `mspace` with config for visual adjustments.
+ * - Use `mprescripts` and `none` without config as separators in tensors.
+ *
+ * @es 🛑 **Fábrica Vacía MathML (Void)**
+ * Define elementos sin hijos, usados para espaciado o marcadores tensores (ej. mspace, mprescripts).
+ */
+interface MathVoidTagFunction<TElement extends MathMLElement> {
+    /**
+     * 🎨 **Render with Configuration / Renderiza con Configuración**
+     * @usage 🤖 AI Hint: Pass an object for sizing (`mspace`), or call empty for markers (`none()`).
+     * @es Pasa un objeto de configuración para tamaño (`mspace`), o llámala vacía para marcadores.
+     * @example
+     * // Configured space: <mspace width="2em" />
+     * mspace({ "@attrs": { width: "2em" } })
+     * @example
+     * // Empty marker in tensors: <none />
+     * none()
+     */
+    <TConfig extends Record<string, unknown>>(
+        config?: ValidatedConfig<TConfig, TElement>
+    ): SuperElementClass<TElement>;
+}
+
+
+// ==========================================================================
+// 📐 DICCIONARIO DE ETIQUETAS MATHML (CONTEXTO AISLADO)
+// ==========================================================================
+
+/**
+ * 📐 **MathML Tags Context (Math Proxy)**
+ * Exposes tags with absolute semantic control over mathematical expressions.
+ * @es **Contexto de Etiquetas MathML (Proxy Math)**
+ * Expone etiquetas con control semántico absoluto sobre fórmulas matemáticas.
+ */
+interface TuJsHtml_MathContext<TRoot extends MathMLElement = MathMLElement> {
+
+    /**
+     * ⚙️ **Root Appender (Direct Nesting) / Anexador Raíz (Anidamiento Directo)**
+     * Appends valid MathML nodes directly to the current root element of this context.
+     * 🛑 STRICT RULE: Raw text/numbers are strictly forbidden. Use Tokens (mi, mn, mo).
+     *
+     * 🤖 **AI INSTRUCTION (DESIGN PHILOSOPHY):**
+     * - USE THIS to attach multiple child nodes directly to the parent element without wrapping them in an extra `<mrow>`.
+     * - NEVER pass strings directly into this function.
+     * @es Permite anidar elementos matemáticos válidos directamente al root actual, prohibiendo texto flotante.
+     * @example
+     * // 🤖 DIRECT ATTACHMENT USE CASE (Anidamiento Directo):
+     * // Assuming we are inside a `<math>` or `<mrow>` callback:
+     * math( ctx => {
+     * // This appends exactly 3 nodes directly to the `<math>` root
+     *   ctx( 
+     *     ctx.mi`f`, 
+     *     ctx.mo`=`, 
+     *     ctx.mi`m` 
+     *   );
+     * })
+     */
+    (...args: MathRecursiveNode<TRoot>[]): TRoot;
+
+    // =========================================================================
+    // 🛑 LIMPIEZA DE AUTOCOMPLETADO (FUNCTION SHADOWING)
+    // =========================================================================
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    prototype: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    apply: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    call: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    bind: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    length: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    name: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    arguments: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    caller: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    toString: never;
+
+    // ----------------------------------------------------------------------
+    // 📝 ELEMENTOS DE TOKEN (ADMITEN TEXTO / NÚMEROS)
+    // ----------------------------------------------------------------------
+
+    /**
+     * 📝 **Math Identifier**: `<mi/>`
+     * Indicates that the content should be rendered as an identifier (variables, function names).
+     * @es 📝 **Identificador Matemático**: `<mi/>`
+     * Variables o nombres de funciones (ej. x, y, sin, cos).
+     * @example math.mi("x");
+     */
+    mi: MathTokenTagFunction<MathMLElement>;
+
+    /**
+     * 📝 **Math Number**: `<mn/>`
+     * Indicates that the content should be rendered as a numeric literal.
+     * @es 📝 **Número Matemático**: `<mn/>`
+     * @example math.mn("3.14");
+     */
+    mn: MathTokenTagFunction<MathMLElement>;
+
+    /**
+     * 📝 **Math Operator**: `<mo/>`
+     * Indicates that the content should be rendered as an operator, fence, or separator.
+     * @es 📝 **Operador Matemático**: `<mo/>`
+     * @example math.mo("+");
+     */
+    mo: MathTokenTagFunction<MathMLElement>;
+
+    /**
+     * 📝 **Math Text**: `<mtext/>`
+     * Renders arbitrary text with no mathematical meaning.
+     * @es 📝 **Texto Arbitrario**: `<mtext/>`
+     * Texto normal dentro de una fórmula.
+     */
+    mtext: MathTokenTagFunction<MathMLElement>;
+
+    /**
+     * 📝 **Math String Literal**: `<ms/>`
+     * Represents a string literal meant to be interpreted by a programming language.
+     * @es 📝 **Literal de Cadena**: `<ms/>`
+     */
+    ms: MathTokenTagFunction<MathMLElement>;
+
+    // ----------------------------------------------------------------------
+    // 📦 ELEMENTOS DE DISEÑO (CONTENEDORES SIN TEXTO)
+    // ----------------------------------------------------------------------
+
+    /**
+     * 📦 **Math Row**: `<mrow/>`
+     * Groups sub-expressions, usually forming a single entity.
+     * @es 📦 **Fila Matemática**: `<mrow/>`
+     * Agrupa subexpresiones. Esencial para delimitar numeradores, denominadores o bases.
+     */
+    mrow: MathContainerTagFunction<MathMLElement>;
+
+    /**
+     * 📦 **Math Fraction**: `<mfrac/>`
+     * Creates a fraction from two sub-expressions (numerator and denominator).
+     * @es 📦 **Fracción**: `<mfrac/>`
+     * @example
+     * // a / b
+     * math.mfrac( mCtx => {
+     *   mCtx.mi("a"); // Numerator
+     *   mCtx.mi("b"); // Denominator
+     * });
+     */
+    mfrac: MathContainerTagFunction<MathMLElement>;
+
+    /**
+     * 📦 **Math Square Root**: `<msqrt/>`
+     * Renders a square root.
+     * @es 📦 **Raíz Cuadrada**: `<msqrt/>`
+     */
+    msqrt: MathContainerTagFunction<MathMLElement>;
+
+    /**
+     * 📦 **Math Root**: `<mroot/>`
+     * Renders a root with a specified index.
+     * @es 📦 **Raíz con Índice**: `<mroot/>`
+     * Espera dos hijos: la base y el índice.
+     * @example
+     * // Raíz cúbica de x (∛x)
+     * math.mroot(math.mi("x"),math.mn("3"))
+     * // or
+     * math.mroot( mCtx => {
+     *   mCtx.mi`x`; // Base
+     *   mCtx.mn`3`; // Index
+     * });
+     * 
+     */
+    mroot: MathContainerTagFunction<MathMLElement>;
+
+    /**
+     * 📦 **Math Fenced**: `<mfenced/>` (Deprecated in HTML5, use mrow+mo)
+     * Adds custom delimiters (like parentheses) around its content.
+     * @es 📦 **Delimitadores**: `<mfenced/>` (Obsoleto en HTML5)
+     * @deprecated HTML5 recomienda usar `<mrow>` con `<mo>` para los paréntesis.
+     */
+    mfenced: MathContainerTagFunction<MathMLElement>;
+
+    /**
+     * 📦 **Math Error**: `<merror/>`
+     * Displays its contents as an error message.
+     * @es 📦 **Mensaje de Error**: `<merror/>`
+     */
+    merror: MathContainerTagFunction<MathMLElement>;
+
+    /**
+     * 📦 **Math Enclose**: `<menclose/>`
+     * Renders its content inside an enclosing notation (e.g., long division).
+     * @es 📦 **Notación de Cierre**: `<menclose/>`
+     * @example
+     * // División larga
+     * math.menclose({ "@attrs": { notation: "longdiv" } }, math.mn`12345`)
+     * // or
+     * math.menclose({ "@attrs": { notation: "longdiv" } }, mCtx => {
+     *   mCtx.mn("12345");
+     * });
+     */
+    menclose: MathContainerTagFunction<MathMLElement>;
+
+    /**
+     * 📦 **Math Phantom**: `<mphantom/>`
+     * Renders invisibly, but reserves the same space as if it were visible.
+     * @es 📦 **Elemento Fantasma**: `<mphantom/>`
+     * Es invisible, pero ocupa exactamente el mismo espacio que su contenido (útil para alineación).
+     */
+    mphantom: MathContainerTagFunction<MathMLElement>;
+
+    /**
+     * 📦 **Math Padded**: `<mpadded/>`
+     * Adjusts the bounding box of its content (adding padding).
+     * @es 📦 **Relleno Matemático**: `<mpadded/>`
+     * Ajusta el tamaño de la caja contenedora (añade padding o ajusta márgenes).
+     */
+    mpadded: MathContainerTagFunction<MathMLElement>;
+
+    /**
+     * 📦 **Math Action**: `<maction/>`
+     * Allows binding actions to sub-expressions (e.g., tooltips or toggles).
+     * @es 📦 **Acción Matemática**: `<maction/>`
+     * Permite interactividad, como alternar entre expresiones o mostrar tooltips.
+     */
+    maction: MathContainerTagFunction<MathMLElement>;
+    // ----------------------------------------------------------------------
+    // 🎨 ESTILOS GENERALES
+    // ----------------------------------------------------------------------
+
+    /**
+     * 📦 **Math Style**: `<mstyle/>`
+     * Allows style changes (like mathcolor, mathsize, displaystyle) to apply to all its children.
+     * @es 📦 **Estilo Matemático**: `<mstyle/>`
+     * Aplica atributos de estilo a todos sus hijos simultáneamente.
+     */
+    mstyle: MathContainerTagFunction<MathMLElement>;
+
+    // ----------------------------------------------------------------------
+    // ⚛️ TENSORES Y MÚLTIPLES ÍNDICES
+    // ----------------------------------------------------------------------
+
+    /**
+     * 📦 **Math Multiscripts**: `<mmultiscripts/>`
+     * Attaches multiple subscripts and superscripts to a base object (used for tensors).
+     * @es 📦 **Múltiples Índices (Tensores)**: `<mmultiscripts/>`
+     * Permite colocar subíndices y superíndices tanto a la derecha como a la izquierda de la base.
+     * @example
+     * // Tensor:  _3^4 X _1^2
+     * math.mmultiscripts( mCtx => {
+     *   mCtx.mi`X`;              // 1. Base
+     *   mCtx.mn`1`;              // 2. Post-subscript
+     *   mCtx.mn`2`;              // 3. Post-superscript
+     *   mCtx.mprescripts();      // 4. Separator
+     *   mCtx.mn("3");            // 5. Pre-subscript
+     *   mCtx.mn("4");            // 6. Pre-superscript
+     * });
+     */
+    mmultiscripts: MathContainerTagFunction<MathMLElement>;
+
+    /**
+     * 🛑 **Math Prescripts**: `<mprescripts/>`
+     * Separator used inside `<mmultiscripts>` to denote the start of pre-scripts (left-side).
+     * @es 🛑 **Separador de Pre-índices**: `<mprescripts/>`
+     * Etiqueta vacía usada dentro de `<mmultiscripts>` para indicar que los siguientes índices van a la izquierda.
+     */
+    mprescripts: MathVoidTagFunction<MathMLElement>;
+
+    /**
+     * 🛑 **Math None**: `<none/>`
+     * Represents an empty slot in `<mmultiscripts>` (e.g., a superscript without a subscript).
+     * @es 🛑 **Espacio Vacío**: `<none/>`
+     * Marcador de posición vacío usado dentro de `<mmultiscripts>` para alinear índices asimétricos.
+     */
+    none: MathVoidTagFunction<MathMLElement>;
+    // ----------------------------------------------------------------------
+    // 📦 ÍNDICES, POTENCIAS Y LÍMITES (SCRIPTS)
+    // ----------------------------------------------------------------------
+
+    /**
+     * 📦 **Math Superscript**: `<msup/>`
+     * Attaches a superscript to a base.
+     * @es 📦 **Superíndice (Potencia)**: `<msup/>`
+     */
+    msup: MathContainerTagFunction<MathMLElement>;
+
+    /**
+     * 📦 **Math Subscript**: `<msub/>`
+     * Attaches a subscript to a base.
+     * @es 📦 **Subíndice**: `<msub/>`
+     */
+    msub: MathContainerTagFunction<MathMLElement>;
+
+    /**
+     * 📦 **Math Subscript & Superscript**: `<msubsup/>`
+     * Attaches both a subscript and a superscript to a base.
+     * @es 📦 **Subíndice y Superíndice simultáneos**: `<msubsup/>`
+     */
+    msubsup: MathContainerTagFunction<MathMLElement>;
+
+    /**
+     * 📦 **Math Overscript**: `<mover/>`
+     * Attaches an overscript (like a limit or vector arrow) to a base.
+     * @es 📦 **Texto Superior**: `<mover/>`
+     */
+    mover: MathContainerTagFunction<MathMLElement>;
+
+    /**
+     * 📦 **Math Underscript**: `<munder/>`
+     * Attaches an underscript (like a limit) to a base.
+     * @es 📦 **Texto Inferior**: `<munder/>`
+     */
+    munder: MathContainerTagFunction<MathMLElement>;
+
+    /**
+     * 📦 **Math Under & Overscript**: `<munderover/>`
+     * @es 📦 **Texto Inferior y Superior**: `<munderover/>`
+     * Ideal para límites de sumatorias (∑) e integrales (∫). El orden es: Base, Under, Over.
+     * @example
+     * // Sumatoria desde i=0 hasta n
+     * math.munderover( mCtx => {
+     *   mCtx.mo("∑"); // Base
+     *   mCtx.mrow( rCtx => {  // Under (i=0)
+     *     rCtx.mi`i`; rCtx.mo`=`; rCtx.mn`0`;
+     *   });
+     *   mCtx.mi("n"); // Over (n)
+     * });
+     */
+    munderover: MathContainerTagFunction<MathMLElement>;
+
+    // ----------------------------------------------------------------------
+    // 📊 MATRICES Y TABLAS MATEMÁTICAS
+    // ----------------------------------------------------------------------
+
+    /**
+     * 📦 **Math Table**: `<mtable/>`
+     * Creates a table or matrix.
+     * @es 📦 **Tabla Matemática**: `<mtable/>`
+     * @example
+     * // Matriz Identidad 2x2
+     * // [ 1  0 ]
+     * // [ 0  1 ]
+     * math.mtable( mCtx => {
+     *   mCtx.mtr( rCtx => {
+     *     rCtx.mtd( dCtx => dCtx.mn("1") );
+     *     rCtx.mtd( dCtx => dCtx.mn("0") );
+     *   });
+     *   mCtx.mtr( rCtx => {
+     *     rCtx.mtd( dCtx => dCtx.mn("0") );
+     *     rCtx.mtd( dCtx => dCtx.mn("1") );
+     *   });
+     * });
+     * // or short style
+     * math.mtable( ({mtr:myRow,mtd:myCol,mn}) => {
+     *   myRow( 
+     *     myCol( mn`1` ),
+     *     myCol( mn`0` )
+     *   );
+     *   myRow( 
+     *     myCol( mn`0` ),
+     *     myCol( mn`1` )
+     *   );
+     * });
+     */
+    mtable: MathContainerTagFunction<MathMLElement>;
+
+    /**
+     * 📦 **Math Table Row**: `<mtr/>`
+     * @es 📦 **Fila de Tabla Matemática**: `<mtr/>`
+     */
+    mtr: MathContainerTagFunction<MathMLElement>;
+
+    /**
+     * 📦 **Math Table Data**: `<mtd/>`
+     * @es 📦 **Celda de Tabla Matemática**: `<mtd/>`
+     */
+    mtd: MathContainerTagFunction<MathMLElement>;
+
+    // ----------------------------------------------------------------------
+    // 🧠 SEMÁNTICA (METADATOS AVANZADOS)
+    // ----------------------------------------------------------------------
+
+    /**
+     * 🧠 **Math Semantics**: `<semantics/>`
+     * Associates mathematical presentation with its semantic meaning.
+     * @es 🧠 **Semántica Matemática**: `<semantics/>`
+     * Asocia la presentación visual con su significado semántico o código fuente (ej. LaTeX).
+     * @example
+     * math.semantics( mCtx => {
+     *   // 1. Presentación visual
+     *   mCtx.mrow( rCtx => { rCtx.mi("x"); rCtx.mo("+"); rCtx.mi("y"); }); 
+     *   // 2. Significado semántico oculto
+     *   mCtx.annotation({ "@attrs": { encoding: "application/x-tex" } }, "x + y"); 
+     * });
+     * // or short style
+     * math.semantics( ({mrow,'annotation[enconding="application/x-tex"]':myAnnotation,mi,mo})=>{
+     *   // 1. Presentation visual
+     *   mrow(
+     *     mi`x`, mo`+`, mi`y`
+     *   )
+     *   // 2. Hidden semantic meaning
+     *   myAnnotation`x + y`;
+     * })
+     */
+    semantics: MathContainerTagFunction<MathMLElement>;
+
+    /**
+     * 🧠 **Math Annotation**: `<annotation/>`
+     * Holds semantic data (usually plain text) for a semantics element.
+     * @es 🧠 **Anotación**: `<annotation/>`
+     * Contiene texto plano semántico dentro de un tag `<semantics>`.
+     */
+    annotation: MathTokenTagFunction<MathMLElement>;
+
+    /**
+     * 🧠 **Math XML Annotation**: `<annotation-xml/>`
+     * Holds XML semantic data for a semantics element.
+     * @es 🧠 **Anotación XML**: `<annotation-xml/>`
+     */
+    'annotation-xml': MathContainerTagFunction<MathMLElement>;
+
+    // ----------------------------------------------------------------------
+    // 🛑 ESPACIADO (VOID)
+    // ----------------------------------------------------------------------
+
+    /**
+     * 🛑 **Math Space (Void)**: `<mspace/>`
+     * Displays a blank space, whose size is set by its attributes.
+     * @es 🛑 **Espacio Matemático (Vacío)**: `<mspace/>`
+     * Inserta un espacio en blanco de tamaño configurable. No admite hijos.
+     * @example math.mspace({ width: "10px" });
+     */
+    mspace: MathVoidTagFunction<MathMLElement>;
+}
+/**
+ * 📐 CONTEXTO FINAL MATHML (Estricto)
+ * Combina las etiquetas limpias con la magia de desestructuración Emmet.
+ * 🛑 SIN FALLBACK: Previene errores tipográficos (typos) en el ecosistema cerrado de MathML.
+ */
+type TuJsHtml_MathProxy<TRoot extends MathMLElement = MathMLElement> =
+    TuJsHtml_MathContext<TRoot> & CustomEmmetSelectors<TuJsHtml_MathContext<TRoot>, ValidMathTags>;
+
+// ==========================================
 // --- TuJsHtml.d.ts ---
-type EventOff = () => void;
-type FunctionGeneric$1 = (...args: unknown[]) => unknown;
-// Solo declaraciones de la clase y sus métodos (sin implementación)
-// export declare class TuadminHtmlElement extends HTMLElement {
-//   // Definir la firma del método `on`
-//   on(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => unknown): EventOff;
+// ==========================================
 
-//   // Definir la firma del método `one`
-//   one(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => unknown): EventOff;
 
-//   // Definir la firma del método `off`
-//   off(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => unknown): this;
+
+// ============================================
+// 1. BASE TYPES & UTILITIES / TIPOS BASE Y UTILIDADES
+// ============================================
+
+// export type EventOff = () => void;
+// export type ExecuteAfterRender = () => void;
+
+
+
+// /**
+//  * Interface that structurally resembles a DOM Node.
+//  * @es Interfaz que se asemeja estructuralmente a un Nodo del DOM.
+//  */
+// export interface InstanceNode {
+//   readonly ATTRIBUTE_NODE: number;
 // }
 
+// export declare class ElementUtil$<TBaseElement extends HTMLElement = HTMLElement> {
+//   on(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => unknown): EventOff;
+//   one(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => unknown): EventOff;
+//   off(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => unknown): this;
+//   configure(configureObject: ConfigureAttributes<TBaseElement>): this;
+//   tags: TuJsHtml_Tags<TBaseElement>;
+// }
+declare class ElementUtil$<TBaseElement extends HTMLElement | SVGElement | MathMLElement = HTMLElement> {
+  /**
+   * Adjunta un event listener al elemento.
+   * @param type El tipo de evento (ej. 'click', 'input')
+   * @param listener El callback fuertemente tipado según el evento.
+   */
+  on<K extends keyof HTMLElementEventMap>(
+    type: K,
+    listener: (this: TBaseElement, ev: HTMLElementEventMap[K]) => unknown
+  ): EventOff;
 
-declare class ElementUtil$<TBaseElement extends HTMLElement = HTMLElement> {
-  // Definir la firma del método `on`
-  on(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => unknown): EventOff;
+  /**
+   * Adjunta un event listener que se ejecuta una sola vez.
+   */
+  one<K extends keyof HTMLElementEventMap>(
+    type: K,
+    listener: (this: TBaseElement, ev: HTMLElementEventMap[K]) => unknown
+  ): EventOff;
 
-  // Definir la firma del método `one`
-  one(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => unknown): EventOff;
+  /**
+   * Remueve un event listener del elemento.
+   */
+  off<K extends keyof HTMLElementEventMap>(
+    type: K,
+    listener: (this: TBaseElement, ev: HTMLElementEventMap[K]) => unknown
+  ): this;
 
-  // Definir la firma del método `off`
-  off(type: keyof HTMLElementEventMap, listener: (ev: Event | UIEvent | AnimationEvent | CustomEvent | WheelEvent) => unknown): this;
   configure(configureObject: ConfigureAttributes<TBaseElement>): this;
-  tags: TuJsHtml_Tags;
+  tags: TuJsHtml_Tags<TBaseElement>;
 }
+
 declare global {
   interface SuperElementProperties {
     [ELEMENT_UTIL]: ElementUtil$;
-    // ... cualquier otra cosa que añada tu framework a cada elemento
   }
 }
 
 /**
- * Clase base para todos los elementos DOM extendidos por tu framework.
- * @template TBaseElement - El tipo de elemento HTML nativo que esta clase envuelve o extiende (ej. HTMLDivElement, HTMLSpanElement).
- * Por defecto, si no se especifica, será HTMLElement.
+ * Base class for all DOM elements extended by the framework.
+ * Ensures every element has access to framework utilities like `[ELEMENT_UTIL]`.
+ * @es Clase base para todos los elementos DOM extendidos por el framework.
+ * Garantiza que cada elemento tenga acceso a las utilidades del framework.
  */
-type SuperElementClass<TBaseElement extends HTMLElement> = TBaseElement & SuperElementProperties;
+type SuperElementClass<TBaseElement extends HTMLElement | SVGElement | MathMLElement> = TBaseElement & SuperElementProperties;
 
-
-
-
-
+// ============================================
+// 2. RECURSIVE CONTEXT / CONTEXTO RECURSIVO (TRoot)
+// ============================================
 
 /**
- * Cremoas interfaces para que el atucompeltado discrimine y no nos haga un MIXED
- * 
+ * Represents unknown valid node/argument that can be passed inside a tag function.
+ * Carries the `TRoot` context down to callbacks to prevent losing the parent context in deeply nested structures.
+ * @es Representa cualquier nodo/argumento válido dentro de una función de etiqueta.
+ * Transporta el contexto `TRoot` hacia abajo para evitar perder el contexto padre en anidamientos profundos.
  */
-/**
- * Tipo que representa un objeto que estructuralmente se parece a una Function
- * por tener un método 'call' y 'apply'.
- * Esto ayuda a TypeScript a discriminar.
- */
-interface FunctionLike {
-  call(...args: unknown[]): unknown;
-  apply(thisArg: unknown, args?: unknown): unknown;
-  (...args: unknown[]): unknown; // Para que sea llamable
-}
-/**
- * Tipo que representa un objeto que estructuralmente se parece a un Node
- * por tener propiedades como 'nodeType' y 'childNodes'.
- */
-interface InstanceNode {
-  readonly ATTRIBUTE_NODE: number;
-  //readonly childNodes: NodeListOf<Node>;
-  // Puedes añadir más propiedades distintivas aquí si lo necesitas,
-  // ej: 'ownerDocument', 'tagName', 'parentElement'
-}
+type RecursiveNode$1<TRoot extends HTMLElement | DocumentFragment | SVGElement | MathMLElement = HTMLElement> =
+  | Node
+  | SuperElementClass<HTMLElement>
+  | TuJsHtml_Callback<TRoot>
+  | string
+  | number;
 
-
-//Node.ATTRIBUTE_NODE
-
-/**
- * Tipo que define los nodos posibles que pueden ser pasados a las funciones de tags.
- * Pueden ser elementos HTML, nodos de texto, o funciones.
- */
-type RecursiveNode$1 = Node | SuperElementClass<HTMLElement> | TuJsHtml_Callback<HTMLElement> | string | number | FunctionGeneric$1;                                      // Fallback genérico
-
-
-
-// type MapToDOMNode<T> = 
-//     T extends SuperElementClass<infer E> ? E : 
-//     T extends (...args: unknown[]) => unknown ? DynamicNodes : // Si es callback, advertimos que son varios
-//     T extends Node ? T :
-//     T extends string | number ? Text :
-//     Node;
 type DynamicNodes = ChildNode[];
-/**
- * El motor de aplanamiento (Flatten).
- * Recorre la tupla T y si un elemento es un array, lo expande.
- */
-type Flatten<T extends unknown[]> = T extends [infer First, ...infer Rest]
-  ? First extends unknown[]
-  ? [...First, ...Flatten<Rest>] // Si es array (como DynamicNodes), lo esparcimos
-  : [MapToDOMNode<First>, ...Flatten<Rest>] // Si es simple, lo mapeamos y seguimos
-  : [];
 
 /**
- * Mapeo base (el mismo que ya tenías)
+ * Utility type to map argument types to their actual DOM Node representation.
+ * @es Tipo utilitario para mapear los tipos de argumentos a su representación real en el DOM.
  */
 type MapToDOMNode<T> =
   T extends SuperElementClass<infer E> ? E :
-  T extends (...args: unknown[]) => unknown ? DynamicNodes : // Marcamos los callbacks como arrays
+  T extends (...args: unknown[]) => unknown ? DynamicNodes :
   T extends Node ? T :
   T extends string | number ? Text :
   Node;
-/**
- * Interfaz para tu clase que contiene el método $insert
- */
-// export interface MyClassInstance {
-//     /**
-//      * Inserta elementos y devuelve una tupla con los tipos exactos procesados.
-//      * @param args Elementos, strings o instancias de SuperElementClass.
-//      */
-//     $insert<T extends unknown[]>(
-//         ...args: T
-//     ): { [K in keyof T]: MapToDOMNode<T[K]> };
-// }
-
-// // Ejemplo de cómo declararías tu variable global o instancia
-// export const _: MyClassInstance;
-
 
 /**
- * Función recursiva que puede ser utilizada para crear etiquetas HTML.
- * Puede tomar nodos o funciones y devolver más funciones recursivas.
- * @template TElement - El tipo de elemento HTML que se espera que la función retorne.
+ * Flattening engine for arrays and nested nodes during insertion.
+ * @es Motor de aplanamiento para arrays y nodos anidados durante la inserción.
  */
-// export interface RecursiveTag<TElement extends HTMLElement = HTMLElement> {
-//     // Firma 0: Objeto de configuración (más específica en cuanto a su estructura de objeto)
-//     (fakeArg : undefined,firstArg:  ConfigureAttributes<TElement>): SuperElementClass<TElement>;
-//     (firstArg:  ConfigureAttributes<TElement>,secondArg:null): SuperElementClass<TElement>;
-//     (firstArg:  ConfigureAttributes<TElement>): SuperElementClass<TElement>;
-//     // Firma 1: Objeto de configuración (más específica en cuanto a su estructura de objeto)
-//     (firstArg: ConfigureAttributes<TElement>, ...args: RecursiveNode[]): SuperElementClass<TElement>;
+type Flatten<T extends unknown[]> = T extends [infer First, ...infer Rest]
+  ? First extends unknown[]
+  ? [...First, ...Flatten<Rest>]
+  : [MapToDOMNode<First>, ...Flatten<Rest>]
+  : [];
 
-//     // Firma 2: Otro tipo de nodo (más general para tipos que no son objetos de configuración)
-//     (nodeArg: Node ,...args: RecursiveNode[]): SuperElementClass<TElement>;
-//     (functionArg: Function ,...args: RecursiveNode[]): SuperElementClass<TElement>;
-//     (TuJsHtmlCallbackArg: TuJsHtml_Callback ,...args: RecursiveNode[]): SuperElementClass<TElement>;
-//     (SuperElementClassArg: SuperElementClass<HTMLElement>,...args: RecursiveNode[]): SuperElementClass<TElement>;
-//     //(firstArg: ConfigureAttributes<TElement>): SuperElementClass<TElement>;
-// }
-
-declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(configArg: ConfigureAttributes<TElement>, ...args: (string | number | Node | TuJsHtml_Callback<HTMLElement>)[]): SuperElementClass<TElement>;
-declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(...args: (string | number | Node | TuJsHtml_Callback<HTMLElement>)[]): SuperElementClass<TElement>;
-declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(tuJsHtmlInstance?: TuJsHtml_Callback<TElement>, ...args: RecursiveNode$1[]): SuperElementClass<TElement>;
-declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(element?: SuperElementClass<HTMLElement>, ...args: RecursiveNode$1[]): SuperElementClass<TElement>;
-declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(nodeElement?: InstanceNode, ...args: RecursiveNode$1[]): SuperElementClass<TElement>;
-declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(callback?: FunctionLike, ...args: RecursiveNode$1[]): SuperElementClass<TElement>;
-declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(templateStringLiteral: TemplateStringsArray, ...args: RecursiveNode$1[]): SuperElementClass<TElement>;
-declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(configArg: ConfigureAttributes<TElement>): SuperElementClass<TElement>;
-declare function RecursiveTag$1<TElement extends HTMLElement = HTMLElement>(firstArg?: string | number, ...args: RecursiveNode$1[]): SuperElementClass<TElement>;
-
-
-type RecursiveTagFunction<TElement extends HTMLElement> = typeof RecursiveTag$1<TElement>;
-
-
-// export function RecursiveTagAppend<TElement extends HTMLElement = HTMLElement>(tuJsHtmlInstance?: TuJsHtml_Callback<TElement>, ...args: RecursiveNode[]): HTMLElement|DocumentFragment;
-// export function RecursiveTagAppend<TElement extends HTMLElement = HTMLElement>(element?: SuperElementClass<HTMLElement>, ...args: RecursiveNode[]): HTMLElement|DocumentFragment;
-// export function RecursiveTagAppend<TElement extends HTMLElement = HTMLElement>(nodeElement?: InstanceNode, ...args: RecursiveNode[]): HTMLElement|DocumentFragment;
-// export function RecursiveTagAppend<TElement extends HTMLElement = HTMLElement>(callback?: FunctionLike, ...args: RecursiveNode[]): HTMLElement|DocumentFragment;
-// export function RecursiveTagAppend<TElement extends HTMLElement = HTMLElement>(templateStringLiteral: TemplateStringsArray, ...args: RecursiveNode[]): HTMLElement|DocumentFragment;
-// export function RecursiveTagAppend<TElement extends HTMLElement = HTMLElement>(firstArg?: string | number, ...args: RecursiveNode[]): HTMLElement|DocumentFragment;
-
-// Declaras una sola función con sobrecargas
-/**
- * Appends content to the current TuJsHtml root element and returns the root
- * where the tag chain was originally defined (e.g. the container passed to `html(...)`).
- *
- * When used as:
- *   html(...args) → returns the root container where `html` was created.
- *
- * @param arg - Optional callback, element class, instance node, function, template string, or string/number.
- * @param args - Child nodes or strings to append.
- * @returns The root HTMLElement or DocumentFragment where this tag chain is defined.
- */
-declare function RecursiveTagAppend<TElement extends HTMLElement = HTMLElement>(
-  arg?: TuJsHtml_Callback<TElement> | SuperElementClass<HTMLElement> | InstanceNode | FunctionLike | TemplateStringsArray | string | number,
-  ...args: RecursiveNode$1[]
-): HTMLElement | DocumentFragment;
-declare function RecursiveTagAppend<TElement extends HTMLElement = HTMLElement>(
-  ...args: (string | number | Node | TuJsHtml_Callback<HTMLElement>)[]
-): HTMLElement | DocumentFragment;
-type RecursiveTagAppendFunction = typeof RecursiveTagAppend<HTMLElement>;
-
-//export function RecursiveTagArray<TElement extends HTMLElement = HTMLElement>(tuJsHtmlInstance?: TuJsHtml_Callback<TElement>, ...args: RecursiveNode[]): Node[];
-// export function RecursiveTagArray<TElement extends Node = Node>(firstArg?: TElement): TElement[];
-// export function RecursiveTagArray<TElement extends Node = Node>(element?: SuperElementClass<HTMLElement>, ...args: RecursiveNode[]): Node[];
-// export function RecursiveTagArray<TElement extends Node = Node>(nodeElement?: InstanceNode, ...args: RecursiveNode[]): Node[];
-// export function RecursiveTagArray<TElement extends Node = Node>(callback?: FunctionLike, ...args: RecursiveNode[]): Node[];
-// export function RecursiveTagArray<TElement extends Node = Node>(firstArg?: Node, ...args: RecursiveNode[]): Node[];
-
-// type RecursiveTagFunctionArray<TElement extends Node> = typeof RecursiveTagArray<TElement>;
-
-
-
-
-/**
- * Propiedad especial que, cuando se desestructura en un callback de tag,
- * proporciona un objeto de almacenamiento local para el elemento actual.
- * Por defecto, usa un Symbol como clave interna para el padre11.
- *
- * @example
- * tags.div(({p, $store}) => { $store.count = 0; p`${$store.count}`; });
- * const root = tags.div(({p, "$store:__customVar":vars}) => { vars.count = 0; p`${root.__customVars.count}`; });
- */
 interface StoreObject {
-  /**
-   * @example
-   * tags.div(({p, $store}) => { $store.count = 0; p`${$store.count}`; });
-   * const root = tags.div(
-   *             ({p, "$store:__customVar":vars}) 
-   *             => { vars.count = 0; p`${root.__customVars.count}`; 
-   * });
-   */
   [key: string]: unknown;
 }
-// export type RecursiveTag<TElement extends HTMLElement = HTMLElement> =
-//     (firstArg: ConfigureAttributes<TElement> | RecursiveNode, ...args: RecursiveNode[]) => SuperElementClass<TElement>;
-
-// type RestrictedInterface = {
-//   [key: string]:typeof RecursiveTag | Function;
-// } & {
-//   // El '?' hace que estas propiedades no sean obligatorias.
-//   // La clave es que SI existen, su tipo DEBE ser 'never'.
-//   [K in ForbiddenKeys]?: never;
-// };
-/**
- * ssdsdsd
- */
 type StoreProperty = StoreObject;
-// 2. Definición del Tipo Mapeado
-// type TagDefinitions = {
-//     [Tag in keyof HTMLElementTagNameMap]: RecursiveTagFunction<HTMLElementTagNameMap[Tag]>;
-// };
 
-// 1. Tipos de Prefijos y Clases de Elementos
-type SelectorPrefix = '.' | '#' | '[' | '{';
-// inspirado en Emmet
-type DynamicTagPatterns_emmet = {
-  [key: `input${SelectorPrefix}${string}`]: RecursiveTagFunction<HTMLInputElementExtended>;
-}
-  & {
-  // K es la clave final generada (por ejemplo, 'div.clase', 'a#id')
-  [Tag in keyof HTMLElementTagNameMap as
-  // Itera sobre el nombre del tag (P)
-  Tag extends Tag ? // Truco para forzar la distribución de la unión de claves
-  // Genera las claves de patrón: TagName + Prefix + string
-  `${Tag}${SelectorPrefix}${string}`
-  : never
-  ]: RecursiveTagFunction<HTMLElementTagNameMap[Tag]>;
-}
-type ExecuteAfterRender = () => void;
+// ============================================
+// 3. CORE TAGS ARCHITECTURE / ARQUITECTURA CORE DE ETIQUETAS
+// ============================================
+
 /**
- * **Fábrica de elementos HTML fluida** - Parte del sistema `TuJsHtml`.
- * Interfaz para representar las etiquetas HTML5 extendidas.
- * Esta interfaz incluye etiquetas HTML5 comunes, como div, p, h1, pre, code, etc.,
- * ### 1. **Creación + Contexto**
- * ```ts
- * tags.p("Texto ", ctx => { ctx.b("negrita"); }); // HTMLParagraphElement
- * ```
- * ## Comportamientos mágicos
- * 
- * ### 1. **Creación + Contexto**
- * ```ts
- * tags.p("Texto ", ctx => { ctx.b("negrita"); }); // HTMLParagraphElement
- * ```
- * 
- * ### 2. **Template literals** (contexto activo)
- * ```ts
- * const ctx = tags.div(); // HTMLDivElement + contexto
- * ctx`Hola ${ctx.span("inline")}`; // Añade al div
- * ```
- * 
- * ### 3. **Callback mágico** - Se auto-activa como contexto
- * ```ts
- * tags.div("Inicio", tags.p`Párrafo dinámico`); // tags.p actúa como contexto
- * ```
- * 
- * ### 4. **Chaining con tipos exactos**
- * ```ts
- * tags.button("Click").style.background = "blue"; // HTMLButtonElement
- * ```
- * 
- * ## Flujo completo
- * ```ts
- * const demo = new TuJsHtml(tags => {
- *   const main = tags.main(ctx => {
- *     ctx.h1("Título").className = "title";           // HTMLHeadingElement
- *     ctx.section(tags.article`Contenido`);           // Callback mágico
- *   }); // HTMLMainElement
- *   main.style.padding = "20px";
- * });
- * ```
- * 
- * **Tipado preciso**: Cada función retorna **su HTMLElement específico** + activa **contexto fluido**.
- * 
+ * Defines the generic invocation behavior of the `tags` object.
+ * Depending on the current `TRoot`, it acts as a factory or an append utility.
+ * @es Define el comportamiento de invocación genérica del objeto `tags`.
+ * Dependiendo del `TRoot` actual, actúa como fábrica o como utilidad para adjuntar nodos.
  */
-type TuJsHtml_Tags = {
+interface TuJsHtml_TagsCallable<TRoot extends HTMLElement | DocumentFragment | SVGElement | MathMLElement = HTMLElement> {
+  // Overload 1: Configuration attributes (only valid if TRoot is an HTMLElement)
+  (
+    config: TRoot extends HTMLElement ? ConfigureAttributes<TRoot> : never,
+    ...args: RecursiveNode$1<TRoot>[]
+  ): TRoot;
+
+  // Overload 2: Standard nodes and callbacks
+  (...args: RecursiveNode$1<TRoot>[]): TRoot;
+
+  // Overload 3: Tagged Template Literal support
+  (template: TemplateStringsArray, ...values: unknown[]): TRoot;
+  // =========================================================================
+  // 🛑 LIMPIEZA DE AUTOCOMPLETADO (FUNCTION SHADOWING)
+  // =========================================================================
+  /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+  prototype: never;
+  /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+  apply: never;
+  /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+  call: never;
+  /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+  bind: never;
+  /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+  length: never;
+  /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+  name: never;
+  /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+  arguments: never;
+  /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+  caller: never;
+  /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+  toString: never;
+}
+
+/**
+ * 📝 **Metadata Element Factory (With Children)**
+ * Defines `<head>` tags that accept internal content (e.g., script, style, title).
+ * Supports configuration objects, direct text strings, or template literals.
+ * @es 📝 **Fábrica de Metadatos (Con Hijos)**
+ * Define etiquetas del `<head>` que admiten contenido interno (ej. script, style, title).
+ * Soporta objetos de configuración, texto directo, o template literals.
+ */
+interface MetadataTagFunction<TElement extends HTMLElement> {
+
+  //(config: OmitUIEvents<ConfigureAttributes<TElement>>, ...args: RecursiveNode<TElement>[]): SuperElementClass<TElement>;
   /**
-   * Crea una **API fluida de etiquetas HTML** que trabaja en el **contexto activo actual**.
-   * El `contexto` es un **proxy mágico** que:
-   * - Permite **template literals** HTML: `` `texto ${ctx.b("negrita")}` ``
-   * - **Añade contenido** al elemento padre sin romper el chaining
-   * - Retorna **siempre el mismo contexto** para fluidez total
-   * **Flujo paso a paso**:
-   * 1. `tags.div("hola ")` ← Crea `<div>hola </div>` + **contexto activo = div**
-   * 2. `divContext(" texto ", ctx=>...)` ← **Añade** " texto " + sub-contexto
-   * 3. `ctx.i´cursiva´` ← **Dentro** del sub-contexto crea `<i>cursiva</i>`
-   * 4. `divContext´texto ${...}´` ← **Vuelve** al div principal, añade más
-   * 5. `.style.color` ← **Estiliza** el elemento raíz del contexto
-   * 
+   * 🎨 **Render with Configuration / Renderiza con Configuración**
    * @example
-   * ```js
-   * const demo = new TuJsHtml( tags=> {
-   *  tags.div("hola ",divContext=>{
-   *      divContext(" texto ",ctx=> { ctx.i`cursiva`;});
-   *      divContext` texto ${divContext.b("negrita")}`.style.color="red" 
-   *  });
-   * });
-   * // <div style="color: red">hola texto <i>cursiva</i> texto <b>negrita</b></div>
-   * ```
-   * ```html
-   * <div style="color: red">hola texto <i>cursiva</i> texto <b>negrita</b></div>
-   * ```
-   * @returns The root HTMLElement or DocumentFragment where this tag chain is defined.
+   * // <script type="module">console.log("ok")</script>
+   * script({ type: "module" }, "console.log('ok')")
    */
-  (...args: Parameters<RecursiveTagAppendFunction>): ReturnType<RecursiveTagAppendFunction>;
+  <TConfig extends Record<string, unknown>>(
+    config: ValidatedConfig<TConfig, TElement>,
+    ...args: RecursiveNode$1<TElement>[]
+  ): SuperElementClass<TElement>;
   /**
-   * Proporciona acceso a un objeto de almacenamiento local persistente vinculado al elemento.
-   * El almacén se inicializa como un objeto puro (`Object.create(null)`), lo que garantiza 
-   * que no existan propiedades heredadas del prototipo que puedan colisionar con tus datos.
-   * Los datos en el `$store` sobreviven a los ciclos de re-renderizado del bloque o fragmento,
-   * permitiendo mantener el estado interno (contadores, flags, caches) de forma privada.
-   * @returns {StoreObject} Un objeto JavaScript plano vinculado internamente al elemento mediante un Symbol.
-   * @example 
-   * tags.div(({p, $store}) => { $store.count = 0; p`${$store.count}`; });
-   * const root = tags.div(({p, "$store:__customVar":vars}) => { vars.count = 0; p`${root.__customVars.count}`; });
-   * 
-   * @example 
-   * // Uso básico: $store comparte el almacenamiento por defecto del elemento.
-   * tags.div(({p, $store}) => { 
-   * $store.count ??= 0; // Inicialización persistente
-   * tags.button({ onclick: () => $store.count++ }, "Incrementar");
-   * p`Contador local: ${$store.count}`; 
-   * });
+   * 🎨 **Render Content Directly / Renderiza Contenido Directamente**
    * @example
-   * // Uso avanzado con prefijos: permite separar diferentes contextos de datos (Namespacing).
-   * tags.div(({p, "$store:config": conf, "$store:stats": stats}) => { 
-   * conf.theme = 'dark';
-   * stats.views = (stats.views || 0) + 1;
-   * p`Vistas de este nodo: ${stats.views}`;
-   * });
-   * @example
-   * // Uso con espacios de nombres (Namespacing) para organizar múltiples estados.
-   * tags.section(({ "$store:ui": ui, "$store:data": data }) => { 
-   * ui.collapsed = true;
-   * data.items = [...];
-   * });
+   * title("Welcome ",2,`TuJsHtml`)
    */
-  $store: StoreProperty;
+  (...args: RecursiveNode$1<TElement>[]): SuperElementClass<TElement>;
   /**
-   * Acceso dinámico a almacenes con nombre específico.
-   * Permite segmentar la lógica de persistencia dentro de un mismo elemento.
-   * @example 
-   * tags.div(({p, $store}) => { $store.count = 0; p`${$store.count}`; });
-   * const root = tags.div(({p, "$store:__customVar":vars}) => { vars.count = 0; p`${root.__customVars.count}`; });
+   * 🎨 **Render with Template Literals / Renderiza con Template Literals**
+   * @example
+   * style`
+   *   body { background: #000; color: #fff; }
+   *   .btn { padding: 10px; }
+   * `
    */
-  [key: `$store:${string}`]: StoreProperty;
+  (template: TemplateStringsArray, ...values: unknown[]): SuperElementClass<TElement>;
+}
+
+/**
+ * 🛑 **Void Metadata Element Factory**
+ * Function for metadata tags that DO NOT accept children under any circumstances (e.g., meta, link, base).
+ * @es 🛑 **Fábrica de Metadatos Vacíos (Void)**
+ * Función para etiquetas de Metadatos que NO admiten hijos bajo ninguna circunstancia (ej. meta, link, base).
+ */
+interface VoidMetadataTagFunction<TElement extends HTMLElement> {
+  //(config?: OmitUIEvents<ConfigureAttributes<TElement>>): SuperElementClass<TElement>;
+  /**
+   * 🎨 **Render with Configuration / Renderiza con Configuración**
+   * @example
+   * meta({ name: "viewport", content: "width=device-width, initial-scale=1" })
+   * @example
+   * link({ rel: "stylesheet", href: "/assets/main.css" })
+   */
+  <TConfig extends Record<string, unknown>>(
+    config?: ValidatedConfig<TConfig, TElement>
+  ): SuperElementClass<TElement>;
+}
+
+/**
+ * 📦 **Specific HTML Element Factory**
+ * Defines the behavior of standard HTML tags (e.g., div, p, section, button).
+ * Notice it DOES NOT inherit TRoot, as each tag creates its own fresh context for its children.
+ * @es 📦 **Fábrica de Elementos HTML Específicos**
+ * Define el comportamiento de etiquetas HTML estándar (ej. div, p, a, button).
+ * Nota que NO hereda TRoot, ya que cada etiqueta crea su propio contexto limpio para sus hijos.
+ */
+interface SpecificTagFunction<TElement extends HTMLElement> {
+  //(config: ConfigureAttributes<TElement>, ...args: RecursiveNode<TElement>[]): SuperElementClass<TElement>;
+  // <TConfig extends Record<string, unknown>>(
+  //   config: ConfigureAttributes<TElement> & CatchExcessProps<TConfig, ConfigureAttributes<TElement>>,
+  //   ...args: RecursiveNode<TElement>[]
+  // ): TElement;
+  /**
+   * 🎨 **Advanced Composition (Config + Children) / Composición Avanzada**
+   * Mix attributes, directives, plain text, nested tags, and template literals in a single call.
+   * @es Mezcla atributos, directivas, texto plano, etiquetas anidadas y template literals en una sola llamada.
+   * @example
+   * // Deep mixing example:
+   * p({ className: "card-text" }, 
+   *   b`Warning: `, 
+   *   "Please click ", 
+   *   a({ href: "/docs", target: "_blank" }, "here"), 
+   *   " to read the rules."
+   * )
+   */
+  <TConfig extends Record<string, unknown>>(
+    config: ValidatedConfig<TConfig, TElement>,
+    ...args: RecursiveNode$1<TElement>[]
+  ): SuperElementClass<TElement>;
+  /**
+   * 🎨 **Direct Composition & Callbacks / Composición Directa y Callbacks**
+   * Skip configuration and deeply nest nodes, strings, or use scoped contexts.
+   * @es Omite la configuración y anida nodos, strings o usa contextos anidados.
+   * @example
+   * // Scoped Context (Builder pattern):
+   * section( ({h2,ul,li}) => {
+   *   h2("User List");
+   *   ul(
+   *     li( _=> _.img({ src: "avatar1.png" }), " Alice" ),
+   *     li( _=> _.img({ src: "avatar2.png" }), " Bob" )
+   *   );
+   * })
+   * @example
+   * // Direct inline nesting:
+   * div( h1`Title`, "Description text", hr() )
+   */
+  (...args: RecursiveNode$1<TElement>[]): SuperElementClass<TElement>;
+  /**
+   * 🎨 **Template Literal Syntax / Sintaxis de Template Literals**
+   * Ultra-compact syntax for text-only nodes.
+   * @es Sintaxis ultracompacta para nodos que solo contienen texto.
+   * @example
+   * h1`Hello World`
+   * button`Submit Form`
+   * html.p` short mode ${button("click here")} ${html.i("italic")} `
+   */
+  (template: TemplateStringsArray, ...values: unknown[]): SuperElementClass<TElement>;
+}
+/**
+ * Void Tag Function (Para etiquetas como input, img, br, hr que NO admiten hijos).
+ * Solo aceptan un objeto de configuración.
+ * @es Función para etiquetas vacías que NO admiten hijos ni texto.
+ */
+interface VoidTagFunction<TElement extends HTMLElement> {
+  // Acepta atributos, pero NO acepta ...args (hijos)
+  (config?: ConfigureAttributes<TElement>): SuperElementClass<TElement>;
+}
+
+
+interface TuJsHtml_TagsSpecials {
+  /**
+   * Creates a render block linked to the reactivity of an object or Signal.
+   * Auto-re-renders when properties change.
+   * @es Crea un bloque de renderizado vinculado a la reactividad de un objeto o Signal.
+   * Se re-renderiza automáticamente cuando cambian las propiedades.
+   * @example 
+   * const block = tags.$block(mySignal, tags => tags.h1("Dynamic"));
+   */
+  $block: (
+    variable: object | null | string | number,
+    callback: (tags: TuJsHtml_Tags<DocumentFragment>) => void,
+    fallback?: (tags: TuJsHtml_Tags<DocumentFragment>) => void | ExecuteAfterRender
+  ) => TuJsHtml;
 
   /**
-   * Crea un fragmento reactivo con soporte para renderizado asíncrono.
-   * Ideal para envolver lógica que requiere `await` (como peticiones Fetch).
-   * 
-   * @param {(tags: TuJsHtml_Tags) => (void | Promise<void>)} callbackRender - Función que define el contenido a renderizar.
-   *        Recibe como argumento el conjunto de etiquetas extendidas (`tags`).
-   * @param {(tags: TuJsHtml_Tags)=> void|ExecuteAfterRender} callbackRenderFallback - Función que define el contenido a renderizar.
-   *        Recibe como argumento el conjunto de etiquetas extendidas (`tags`).
-   * 
-   * @returns {TuJsHtml}
-   * 
-   * @example
-   * const bloque = tags.$fragment(async  function (tags) {
-   *     tags.h3`Ejemplo de título dinámico`;
-   *     await new Promise(finish=>setTimeout(finish,1000))
-   *     tags.p`Contenido dinámico: ${new Date()}`;
-   * },function fallbackView(tags){
-   *    tags.h3`Esperando....`;
+   * Creates a reactive fragment with asynchronous rendering support.
+   * Ideal for fetching data before showing content.
+   * @es Crea un fragmento reactivo con soporte asíncrono. Ideal para Fetch.
+   * @example 
+   * const frag = tags.$fragment(async tags => { 
+   * await fetch(...); 
+   * tags.p("Done"); 
    * });
-   * 
    */
   $fragment: (
-    callbackRender: (tags: TuJsHtml_Tags) => (void | Promise<void>),
-    callbackRenderFallback?: (tags: TuJsHtml_Tags) => void | ExecuteAfterRender
-  ) => TuJsHtml;
-  /**
-   * Alias de {@link $fragment}
-   * Crea un fragmento reactivo con soporte para renderizado asíncrono.
-   * Ideal para envolver lógica que requiere `await` (como peticiones Fetch).
-   * 
-   * @param {(tags: TuJsHtml_Tags) => (void | Promise<void>)} callbackRender - Función que define el contenido a renderizar.
-   *        Recibe como argumento el conjunto de etiquetas extendidas (`tags`).
-   * @param {(tags: TuJsHtml_Tags)=> void|ExecuteAfterRender} callbackRenderFallback - Función que define el contenido a renderizar.
-   *        Recibe como argumento el conjunto de etiquetas extendidas (`tags`).
-   * 
-   * @returns {TuJsHtml}
-   * 
-   * @example
-   * const bloque = tags.$fragment(async  function (tags) {
-   *     tags.h3`Ejemplo de título dinámico`;
-   *     await new Promise(finish=>setTimeout(finish,1000))
-   *     tags.p`Contenido dinámico: ${new Date()}`;
-   * },function fallbackView(tags){
-   *    tags.h3`Esperando....`;
-   * });
-   * 
-   */
-  $f: (
-    callbackRender: (tags: TuJsHtml_Tags) => (void | Promise<void>),
-    callbackRenderFallback?: (tags: TuJsHtml_Tags) => void | ExecuteAfterRender
+    callback: (tags: TuJsHtml_Tags<DocumentFragment>) => void | Promise<void>,
+    fallback?: (tags: TuJsHtml_Tags<DocumentFragment>) => void | ExecuteAfterRender
   ) => TuJsHtml;
 
-  /**
-   * Crea un bloque de renderizado vinculado a la reactividad de un objeto o Signal.
-   * El contenido se re-renderiza automáticamente cuando las propiedades del objeto cambian.
-   * 
-   * @param {object} variable - El objeto que será observado para detectar cambios.
-   * @param {(tags: TuJsHtml_Tags) => void} callbackRender - Función que define el contenido a renderizar.
-   *        Recibe como argumento el conjunto de etiquetas extendidas (`tags`).
-   * @param {(tags: TuJsHtml_Tags)=> void|ExecuteAfterRender} callbackRenderFallback - Función que define el contenido a renderizar.
-   *        Recibe como argumento el conjunto de etiquetas extendidas (`tags`).
-   * 
-   * @returns {TuJsHtml}
-   * 
-   * @example
-   * const bloque = tags.block(variableSignal, function (tags) {
-   *     tags.h3`Ejemplo de título dinámico`;
-   *     tags.p`Contenido dinámico: ${new Date()}`;
-   * });
-   * 
-   * // Re-renderiza automáticamente cada 1 segundo
-   * setInterval(() => {
-   *     bloque.reset();
-   * }, 1000);
-   * 
-   * // O cambia directamente el objeto observado para re-renderizar
-   * setTimeout(() => {
-   *     variable.title = 'Nuevo título dinámico';
-   * }, 2000);
+  /** 
+   * Alias for $fragment 
+   * @es Alias de $fragment 
    */
-  $block: (variable: object | null,
-    callbackRender: (tags: TuJsHtml_Tags) => void,
-    callbackRenderFallback?: (tags: TuJsHtml_Tags) => void | ExecuteAfterRender
-  ) => TuJsHtml;
+  $f: TuJsHtml_TagsSpecials['$fragment'];
+
   /**
-   * 
-   * Genera una plantilla estática en un DocumentFragment independiente.
-   * A diferencia de `$block` o `$fragment`, este contenido no se enlaza al ciclo de vida reactivo del root; 
-   * simplemente devuelve los nodos para ser insertados manualmente.
-   * @param {(tags: TuJsHtml_Tags) => void} callbackRender - Función que define el contenido a renderizar.
-   * @returns {DocumentFragment} Un fragmento de DOM nativo y estático (ligero).
-   * @example 
-   * const miMolde = tags.$tpl( ({h1}) => {
-   *     h1`Elemento de plantilla estático`;
-   * });
-   * document.body.appendChild(miMolde);
+   * Generates a static template in an independent DocumentFragment.
+   * @es Genera una plantilla estática en un DocumentFragment independiente.
    */
   $tpl: (
-    callbackRender: (tags: TuJsHtml_Tags) => void
+    callback: (tags: TuJsHtml_Tags<DocumentFragment>) => void
   ) => DocumentFragment;
 
   /**
-     * Inserta elementos y devuelve una tupla con los tipos exactos procesados.
-     * @param args Elementos, strings o instancias de SuperElementClass.
-     */
-  $insert<T extends unknown[]>(
-    ...args: T
-  ): Flatten<T>;
-  // $insert<T extends unknown[]>(
-  //     ...args: T
-  // ): { [K in keyof T]: MapToDOMNode<T[K]> };
-  /**
-   * Representa cualquier etiqueta o nodo genérico que pueda ser usado
-   * dentro de la función recursiva. Puede aceptar cualquier tipo de argumento.
-   * Esta es la etiqueta genérica y flexible.
+   * Inserts elements and returns a tuple with the exact processed types.
+   * @es Inserta elementos y devuelve una tupla con los tipos exactos procesados.
    */
+  $insert: <T extends unknown[]>(...args: T) => Flatten<T>;
 
-  //[key: string]: RecursiveTag | Function;
-  /* *
-   * Este es un documentFragment y su contenido no se agregar automaticamente, sino que devolver el documentFragment para ser insertado en otro Elemento
-   * @deprecated use TuJsHtml.$block or document.createDocumentFragment()[ELEMENT_UTIL].append((...args:RecursiveNode[]) => void)
+  /**
+   * Persistent local storage linked to the element's lifecycle.
+   * @es Almacenamiento local persistente vinculado al ciclo de vida del elemento.
+   * @example tags.div(({p, $store}) => { $store.count = 0; });
+   */
+  $store: StoreProperty;
+  [key: `$store:${string}`]: StoreProperty;
+
+  /**
+   * Overload 1: Dynamically registers a Custom Element by passing its class.
+   * @es Sobrecarga 1: Registra un Custom Element pasando su clase dinámicamente.
+   * @example const myTag = tags.$custom("custom-el.class", CustomEl);
+   */
+  $custom<T extends HTMLElement = HTMLElement>(
+    selector: string,
+    elementClass?: new () => T
+  ): SpecificTagFunction<T>;
+
+  /**
+   * Overload 2: Registers a Custom Element using its static TAG property.
+   * @es Sobrecarga 2: Registra un Custom Element usando su propiedad estática TAG.
+   * @example const myTag = tags.$custom(CustomEl); // CustomEl.TAG must be defined
+   */
+  $custom<T extends HTMLElement>(
+    elementClass: (new () => T) & { TAG: string }
+  ): SpecificTagFunction<T>;
+
+  /**
+   * Overload 3: Registers a Custom Element from an existing instance (will be cloned).
+   * @es Sobrecarga 3: Registra un Custom Element desde una instancia existente (será clonada).
+   * @example const myTag = tags.$custom(myCustomInstance);
+   */
+  $custom<T extends HTMLElement>(
+    elementInstance: T
+  ): SpecificTagFunction<T>;
+
+  /**
+   * 🎨 **Portal a SVG (Contexto Aislado)**: `$svg`
+   * Crea un lienzo `<svg>` y entra en un contexto estricto de dibujo vectorial.
+   * Dentro de este callback, el objeto inyectado SOLO contiene etiquetas SVG.
+   * @es Crea un espacio de nombres SVG (`createElementNS`).
+   * @experimental ⚠️ Está en pañales, solo para uso interno o testers muy valientes
    * @example
-   * const tpl = fragment( function({p,h1}) {
-   *     h1`Template`
-   *     p`This is inside a div`;
+   * tags.div( ctx => {
+   *   ctx.$svg({ viewBox: "0 0 100 100" }, svg => {
+   *     // 'svg' es TuJsHtml_SvgContext. ¡Aquí no existe svg.div ni svg.$block!
+   *     svg.circle({ cx: 50, cy: 50, r: 40 });
+   *   });
    * });
    */
-  //fragment: (...args: RecursiveNode[]) => DocumentFragment;
-
+  $svg: SvgContainerTagFunction<SVGSVGElement>;
   /**
-   * Representa una etiqueta `<div>`. Las etiquetas div son contenedores de bloque
-   * que se utilizan para agrupar contenido. Pueden contener otras etiquetas de bloque
-   * o en línea y pueden tener atributos como `className`, `id`, `style`, etc.
-   * 
+   * 📐 **Portal a MathML (Contexto Aislado)**: `$math`
+   * Crea un contenedor `<math>` e inyecta un ecosistema estricto de notación matemática.
+   * Dentro de su callback, el objeto inyectado SOLO contiene etiquetas de MathML.
+   * @es 🌉 Puente principal hacia el entorno de ecuaciones matemáticas.
+   * @experimental ⚠️ Está en pañales, solo para uso interno o testers muy valientes
    * @example
-   * div({ className: 'example' }, () => {
-   *     p`This is inside a div`;
+   * // Fórmula: x² + y² = z²
+   * tags.div({ className: "formula-box" }, ctx => {
+   *   ctx.$math({ display: "block" }, math => {
+   *     math.msup( m => { m.mi("x"); m.mn("2"); });
+   *     math.mo("+");
+   *     math.msup( m => { m.mi("y"); m.mn("2"); });
+   *     math.mo("=");
+   *     math.msup( ({mi,mn}) => { mi`z`; mn`2`; });
+   *   });
    * });
    */
-  div: RecursiveTagFunction<HTMLDivElement>;
-
-  /**
-   * Representa una etiqueta `<p>`. Las etiquetas `p` se usan para crear párrafos
-   * de texto. Generalmente, contienen texto o elementos en línea, y son elementos
-   * de bloque. El navegador genera un espacio alrededor de los párrafos.
-   * 
-   * @example
-   * p`This is a paragraph with some text.`;
-   */
-  p: RecursiveTagFunction<HTMLParagraphElement>;
-  /**
-   * Representa una etiqueta `<h1>`. Las etiquetas `h1` son utilizadas para crear
-   * encabezados principales en una página. Son elementos de bloque y suelen tener
-   * un tamaño de fuente más grande por defecto. `h1` es el nivel más alto de encabezado.
-   * 
-   * @example
-   * h1`Main Header`;
-   */
-  h1: RecursiveTagFunction<HTMLHeadingElement>;
-
-  /**
-   * Representa una etiqueta `<h2>`. Las etiquetas `h2` se usan para crear subtítulos
-   * y son de menor importancia que los encabezados `h1`. Son también elementos de bloque.
-   * 
-   * @example
-   * h2`Sub Header`;
-   */
-  h2: RecursiveTagFunction<HTMLHeadingElement>;
-  /**
-   * Representa una etiqueta `<h3>`. Similar a `h2`, pero de menor importancia y tamaño.
-   * 
-   * @example
-   * h3`Sub-sub Header`;
-   */
-  h3: RecursiveTagFunction<HTMLHeadingElement>;
-  /**
-   * Representa una etiqueta `<h4>`. Similar a `h3`, pero de menor importancia y tamaño.
-   * 
-   * @example
-   * h4`Sub-sub Header`;
-   */
-  h4: RecursiveTagFunction<HTMLHeadingElement>;
-  /**
-   * Representa una etiqueta `<h5>`. Similar a `h4`, pero de menor importancia y tamaño.
-   * 
-   * @example
-   * h5`Sub-sub Header`;
-   */
-  h5: RecursiveTagFunction<HTMLHeadingElement>;
-  /**
-   * Representa una etiqueta `<h6>`. Similar a `h5`, pero de menor importancia y tamaño.
-   * 
-   * @example
-   * h6`Sub-sub Header`;
-   */
-  h6: RecursiveTagFunction<HTMLHeadingElement>;
-  /**
-   * Representa una etiqueta `<pre>`. Las etiquetas `pre` se utilizan para representar texto
-   * preformateado. El texto dentro de `pre` se muestra con un formato de fuente monoespaciado
-   * y se preservan los saltos de línea y los espacios en blanco.
-   * 
-   * @example
-   * pre`This is preformatted text.   Spaces and\nnew lines are preserved.`;
-   */
-  pre: RecursiveTagFunction<HTMLPreElement>;
-
-  /**
-   * Representa una etiqueta `<code>`. Las etiquetas `code` se usan para representar fragmentos
-   * de código fuente. Generalmente se utiliza dentro de otras etiquetas como `pre` o `p`.
-   * 
-   * @example
-   * code`console.log('Hello World');`;
-   */
-  code: RecursiveTagFunction<HTMLElementExtended>;
-
-  /**
-   * Representa una etiqueta `<ul>`. Las etiquetas `ul` crean listas no ordenadas,
-   * donde los elementos de la lista están marcados con un bullet point por defecto.
-   * 
-   * @example
-   * ul(() => {
-   *   li`Item 1`;
-   *   li`Item 2`;
-   * });
-   */
-  ul: RecursiveTagFunction<HTMLUListElement>;
-
-  /**
-   * Representa una etiqueta `<ol>`. Las etiquetas `ol` crean listas ordenadas,
-   * donde los elementos están numerados por defecto.
-   * 
-   * @example
-   * ol(() => {
-   *   li`Item 1`;
-   *   li`Item 2`;
-   * });
-   */
-  ol: RecursiveTagFunction<HTMLOListElement>;
-
-  /**
-   * Representa una etiqueta `<li>`. Las etiquetas `li` son elementos de lista que
-   * se usan dentro de `ul` o `ol` para definir elementos individuales en las listas.
-   * 
-   * @example
-   * li`Item in a list`;
-   */
-  li: RecursiveTagFunction<HTMLLIElement>;
-
-  /**
-   * Representa una etiqueta `<a>`. Las etiquetas `a` se usan para definir enlaces de
-   * anclaje, los cuales permiten la navegación hacia otras páginas, secciones o recursos.
-   * Aceptan atributos como `href` para la URL de destino.
-   * 
-   * @example
-   * a({ href: 'https://www.example.com' })`Go to Example`;
-   */
-  a: RecursiveTagFunction<HTMLAnchorElement>;
-
-  /**
-   * Representa una etiqueta `<img>`. Las etiquetas `img` se usan para insertar imágenes
-   * en una página web. Aceptan atributos como `src` para la URL de la imagen y `alt` para
-   * el texto alternativo.
-   * 
-   * @example
-   * img({ src: 'image.jpg', alt: 'An image' });
-   */
-  img: RecursiveTagFunction<HTMLImageElement>;
-
-  /**
-   * Representa una etiqueta `<button>`. Las etiquetas `button` se utilizan para crear botones
-   * interactivos en la interfaz de usuario.
-   * 
-   * @example
-   * button`Click Me!`;
-   */
-  button: RecursiveTagFunction<HTMLButtonElement>;
-
-  /**
-   * Representa una etiqueta `<form>`. Las etiquetas `form` se utilizan para definir formularios
-   * de entrada de datos. Dentro de los formularios se pueden agregar elementos como `input`,
-   * `select`, `textarea`, entre otros.
-   * 
-   * @example
-   * form(() => {
-   *   input({ type: 'text', placeholder: 'Enter text' });
-   *   button`Submit`;
-   * });
-   */
-  form: RecursiveTagFunction<HTMLFormElement>;
-
-  /**
-   * Representa una etiqueta `<input>`. Las etiquetas `input` se usan para crear campos de
-   * entrada de datos. Pueden tener varios tipos como `text`, `password`, `checkbox`, etc.
-   * 
-   * @example
-   * input({ type: 'text', placeholder: 'Enter text' });
-   */
-  input: RecursiveTagFunction<HTMLInputElementExtended>;
-  //input:RecursiveTagFunction<HTMLInputElement>;
-
-  /**
-   * Representa una etiqueta `<select>`. Las etiquetas `select` se usan para crear menús
-   * desplegables con opciones dentro de un formulario.
-   * 
-   * @example
-   * select(() => {
-   *   option({ value: '1' })`Option 1`;
-   *   option({ value: '2' })`Option 2`;
-   * });
-   */
-  select: RecursiveTagFunction<HTMLSelectElement>;
-
-  /**
-   * Representa una etiqueta `<textarea>`. Las etiquetas `textarea` se usan para crear áreas
-   * de texto multilínea dentro de formularios.
-   * 
-   * @example
-   * textarea`Enter multi-line text here.`;
-   */
-  textarea: RecursiveTagFunction<HTMLTextAreaElement>;
-
-  /**
-   * Representa una etiqueta `<span>`. Las etiquetas `span` se usan para agrupar elementos
-   * en línea y aplicarlos con estilos específicos. Son elementos en línea.
-   * 
-   * @example
-   * span`Inline text`;
-   */
-  span: RecursiveTagFunction<HTMLSpanElement>;
-  b: RecursiveTagFunction<HTMLElementExtended>;
-  i: RecursiveTagFunction<HTMLElementExtended>;
-  u: RecursiveTagFunction<HTMLElementExtended>;
-  strike: RecursiveTagFunction<HTMLElementExtended>;
-  blockquote: RecursiveTagFunction<HTMLElementExtended>;
-  br: RecursiveTagFunction<HTMLElementExtended>;
-  hr: RecursiveTagFunction<HTMLElementExtended>;
-  dialog: RecursiveTagFunction<HTMLDialogElement>;
-  details: RecursiveTagFunction<HTMLDetailsElement>;
-  summary: RecursiveTagFunction<HTMLElementExtended>;
-  table: RecursiveTagFunction<HTMLTableElement>;
-  tbody: RecursiveTagFunction<HTMLElementExtended>;
-  tr: RecursiveTagFunction<HTMLTableRowElement>;
-  td: RecursiveTagFunction<HTMLTableCellElement>;
-  th: RecursiveTagFunction<HTMLTableCellElement>;
-  thead: RecursiveTagFunction<HTMLElementExtended>;
-  tfoot: RecursiveTagFunction<HTMLElementExtended>;
-  colgroup: RecursiveTagFunction<HTMLElementExtended>;
-  col: RecursiveTagFunction<HTMLElementExtended>;
-  legend: RecursiveTagFunction<HTMLLegendElement>;
-  fieldset: RecursiveTagFunction<HTMLFieldSetElement>;
-  label: RecursiveTagFunction<HTMLLabelElement>;
-  option: RecursiveTagFunction<HTMLOptionElement>;
-  link: RecursiveTagFunction<HTMLLinkElement>;
-  script: RecursiveTagFunction<HTMLScriptElement>;
-  style: RecursiveTagFunction<HTMLStyleElement>;
-  main: RecursiveTagFunction<HTMLElement>;
-  header: RecursiveTagFunction<HTMLElement>;
-  footer: RecursiveTagFunction<HTMLElement>;
-  article: RecursiveTagFunction<HTMLElement>;
-  section: RecursiveTagFunction<HTMLElement>;
-  aside: RecursiveTagFunction<HTMLElement>;
-  nav: RecursiveTagFunction<HTMLElement>;
-
-  /**
-   * Representa una etiqueta `<webview>`. Las etiquetas `webview` se usan para incrustar
-   * contenido web dentro de una página. Aceptan atributos como `src` para la URL de la webview.
-   * Solo para Electron y NW.js.
-   * @example
-   * webview({ src: 'https://www.example.com' });
-   */
-  webview: RecursiveTagFunction<ChromeWebViewElement>;
-  //webview:RecursiveTagFunction;
-  //webview<TElement extends HTMLElement = HTMLElement>:RecursiveTagFunction<TElement>;
+  $math: MathContainerTagFunction<MathMLElement>;
 }
-  // & {
-  //   // El '?' hace que estas propiedades no sean obligatorias.
-  //   // La clave es que SI existen, su tipo DEBE ser 'never'.
-  //   [K in ForbiddenKeys]?: never;
-  // }
-
-  & {
-  [Tag in keyof HTMLElementTagNameMap]: RecursiveTagFunction<HTMLElementTagNameMap[Tag]>;
-}
-  & DynamicTagPatterns_emmet
-  & {
-    //[K in SelectorPrefix as `${TagName}${K}${string}`]: RecursiveTagFunction<HTMLElementTagNameMap[TagName]>;
-    [key: string]: RecursiveTagFunction<HTMLElementExtended>;
-  }
-  ;
 
 
 
 
 /**
-* Interfaz que representa el callback que se pasa a la clase TuJsHtml.
-* Este callback es el que permite la recursividad, usando las etiquetas
-* definidas en `Tags`.
-* 
-* @param tags - El objeto que contiene las funciones recursivas para crear etiquetas HTML.
-* 
-* @example
-* const tujs = new TuJsHtml((tags: TuJsHtml_Tags) => {
-*   const { div, p, h1 } = tags;
-*   h1`Header One ${new Date().toISOString()}`;
-*   p`Text inside paragraph`;
-*   div({ className: 'nested' }, () => {
-*     h1`Nested Header`;
-*     p`Nested paragraph`;
-*   });
-*   tags["DIV#id.clase1.clase2[title=Es tes algo simple]"]`Contendo`;
-* });
-*/
-type TuJsHtml_Callback<TElement extends HTMLElement = HTMLElement> = {
-  (tags: TuJsHtml_Tags, currentElement?: SuperElementClass<TElement>): SuperElementClass<TElement> | void;
-  //(tags: TuJsHtml_Tags) : SuperElementClass<TElement> | void;
+ * 💡 EXTENSION POINT (HOOK):
+ * Empty interface designed for end-users to extend in their own projects via Declaration Merging.
+ * @es Interfaz vacía diseñada para que el usuario final la extienda mediante Declaration Merging.
+ * @example 
+ * // In a global 'globals.d.ts' file:
+ * declare module './TuJsHtml.d.ts' { 
+ * export interface TuJsHtml_CustomTags { "my-el": TuJsHtml.Types.CustomTag<MyEl> } 
+ * }
+ */
+interface TuJsHtml_CustomTags { }
+
+/**
+ * Safe core interface combining callable traits, specials, standard HTML5, and overrides.
+ * @es Interfaz base segura que combina propiedades llamables, especiales, HTML5 y overrides.
+ */
+interface TuJsHtml_TagsSafe<TRoot extends HTMLElement | DocumentFragment | SVGElement | MathMLElement = HTMLElement>
+  extends TuJsHtml_TagsCallable<TRoot>,
+  TuJsHtml_TagsSpecials,
+  //TuJsHtml_SvgContext,
+  //HtmlTagsMapped,
+  TuJsHtml_NativeTags,
+  TuJsHtml_CustomTags {
+  // Aquí puedes dejar solo los elementos que son Exclusivos de Electron/Framework 
+  // que no pertenecen al HTML estándar:
+  /**
+   * Only for Electron/NwJs
+   * @es Solo para Electron/NwJs
+   */
+  webview: VoidTagFunction<ChromeWebViewElement>;
 }
-//export type TuJsHtml_Callback = (tags: TuJsHtml_Tags, currentElement: SuperElementClass) => SuperElementClass | void;
+
+// ============================================
+// 5. EMMET MAGIC & FINAL EXPORT
+// ============================================
+
+type SelectorPrefix = '.' | '#' | '[' | '{';
+
+/**
+ * Maps Emmet patterns for native tags (e.g., "div.container", "p#main").
+ * @es Mapea patrones Emmet para etiquetas nativas (ej. "div.container").
+ */
+type EmmetStandardTags = {
+  [Tag in keyof HTMLElementTagNameMap as `${Tag}${SelectorPrefix}${string}`]: SpecificTagFunction<HTMLElementTagNameMap[Tag]>;
+};
+
+/**
+ * Maps Emmet patterns for Overridden/Extended tags.
+ * @es Mapea patrones Emmet para etiquetas Extendidas/Sobrescritas.
+ */
+type EmmetSpecialTags = {
+  [Tag in 'webview' as `${Tag}${SelectorPrefix}${string}`]: SpecificTagFunction<ChromeWebViewElement>;
+} & {
+  [Tag in 'input' as `${Tag}${SelectorPrefix}${string}`]: SpecificTagFunction<HTMLInputElementExtended>;
+};
+
+/**
+ * FINAL TYPE: TuJsHtml_Tags
+ * Intersection allowing Emmet and dynamic fallback without crashing TS Server.
+ * @es TIPO FINAL: TuJsHtml_Tags. Intersección que permite Emmet y fallbacks sin romper el TS Server.
+ */
+type TuJsHtml_Tags<TRoot extends HTMLElement | DocumentFragment | SVGElement | MathMLElement = HTMLElement> =
+  TuJsHtml_TagsSafe<TRoot> &
+  EmmetStandardTags &
+  EmmetSpecialTags & {
+    /**
+     * STRICT FALLBACK: Unmapped strings default to HTMLElementExtended.
+     * Prevents TS from marking dynamic components as 'unknown' or breaking autocompletion.
+     * @es FALLBACK ESTRICTO: Strings no mapeados devuelven HTMLElementExtended.
+     * Evita que TS marque componentes dinámicos como 'unknown' o rompa el autocompletado.
+     */
+    [dynamicSelector: string]: SpecificTagFunction<HTMLElementExtended>;
+  };
+
+// ============================================
+// 6. CALLBACKS & MAIN CLASS
+// ============================================
+
+/**
+ * Main callback allowing robust autocomplete. Accepts rest arguments so JS users 
+ * don't get errors if they omit or add unexpected parameters.
+ * @es Callback principal. Acepta argumentos extra (rest) para que los usuarios JS 
+ * no obtengan errores al omitir o añadir parámetros no esperados.
+ */
+type TuJsHtml_Callback<TRoot extends HTMLElement | DocumentFragment | SVGElement | MathMLElement = HTMLElement> = (
+  tags: TuJsHtml_Tags<TRoot>,
+  currentElement: TRoot extends HTMLElement ? SuperElementClass<TRoot> : DocumentFragment,
+  ...extraArgs: unknown[]
+) => unknown;
+
 type TuJsHtml_CallbackExtended = (tags: TuJsHtml_Tags, currentElement: HTMLElement) => void;
 
 /**
- * Sobrecarga 1: Para uso como Tagged Template Literal (ej: AnyNode`hola ${mundo}`)
- * 
- * @example
- * AnyNode`hola ${mundo}`;
- * AnyNode`hola ${signalVar}`;
+ * Template Literal Node Builder.
+ * @es Constructor de fragmentos vía Template Literal nativo.
+ * @example AnyNode`hola ${mundo}`;
  */
 declare function AnyNode(strings: TemplateStringsArray, ...values: unknown[]): DocumentFragment;
 
 /**
- * **Fábrica de elementos HTML fluida**
- * Lienzo donde se dibuja el html
- * @version 4.0.2
+ * Fluid HTML Element Factory.
+ * @es Fábrica de elementos HTML fluida. Lienzo donde se dibuja el HTML.
+ * @version 4.9.0
  * @example
- * ```js
  * const demo = new TuJsHtml(tags => {
- *   const {h1,h2,p} = tags;
- *   const main = tags.main(ctx => {
- *     h1`Titulo 1`;
- *     ctx.h3("Título 3").className = "title";           // HTMLHeadingElement
- *     ctx.section(
- *        tags.article`Contenido`
- *     );           // Callback mágico
- *     ctx.ul( ({li})=>{
- *         [1,2,3].forEach(item => li(item));
- *     })
- *   }); // HTMLMainElement
- *   main.style.padding = "20px";
+ *   tags.main(ctx => {
+ *     ctx.h1`Title`;
+ *     ctx.p("Content");
+ *   });
  * });
- * ```
+ * document.body.append(demo)
  */
 declare class TuJsHtml extends DocumentFragment {
-  /** @type {TuJsHtml_Tags} */
-  static TYPE_TAGS: TuJsHtml_Tags;
+  static TYPE_TAGS: TuJsHtml_Tags<DocumentFragment>;
+
   /**
-   * 
-   * @param callback 
-   * @param callbackFallback Only works if callback== AsyncFunction
+   * Constructor for TuJsHtml rendering engine.
+   * @es Constructor para el motor de renderizado TuJsHtml.
+   * @param callback Main render callback / Render principal.
+   * @param callbackFallback Fallback if async / Fallback (solo útil si el render es asíncrono).
    */
-  constructor(callback: TuJsHtml_Callback, callbackFallback?: TuJsHtml_Callback);
-  /**
-   * @deprecated
-   * @param name 
-   * @param callback 
-   */
+  constructor(
+    callback: (tags: TuJsHtml_Tags<HTMLElement | DocumentFragment>) => void | Promise<void>,
+    callbackFallback?: (tags: TuJsHtml_Tags<HTMLElement | DocumentFragment>) => void | ExecuteAfterRender
+  );
+
+  /** @deprecated */
   set(name: string, callback: TuJsHtml_CallbackExtended): this;
-  /**
-   * Restablece el estado del objeto TuJsHtml, igual a reRender.
+
+  /** Resets the TuJsHtml object state (triggers a re-render).
+   * @es Restablece el estado del objeto TuJsHtml (dispara un re-render).
    */
   reset(): void;
-  /**
-   * elimina todo el contenido dom 
+
+  /** Removes all DOM content attached to this instance.
+   * @es Elimina todo el contenido DOM adjunto a esta instancia.
    */
   remove(): void;
-  /**
-   * Re-renderiza el contenido dom
-   */
-  get tag(): TuJsHtml_Tags;
-  /**
-   * verifica si es parte del DOM
-   */
-  get isConnected(): boolean;
 
+  get tag(): TuJsHtml_Tags<HTMLElement | DocumentFragment>;
+  get isConnected(): boolean;
 }
 
-// /**
-//  * Sobrecarga 2: Para uso con múltiples argumentos (ej: TextNode("hola", "mundo"))
-//  * 
-//  * @example
-//  * TextNode("hellow", "world");
-//  * TextNode("hellow", signalVar);
-//  */
-//export function TextNode(arg1: unknown, arg2: unknown, ...rest: unknown[]): DocumentFragment;
-
-// /**
-//  * 
-//  * @example
-//  * TextNode("hellow");
-//  * TextNode(signalVar);
-//  */
-// export function TextNode(arg1: unknown|SignalOr<string>): Node;
 /**
- * @version 4.0.3
- * @namespace TuJsHtml
- * @description Espacio de nombres que contiene los tipos relacionados con la clase `TuJsHtml`, incluyendo las etiquetas HTML extendidas, el callback de renderizado y otros tipos auxiliares.
+ * Namespace housing all core TuJsHtml types.
+ * @es Espacio de nombres que alberga los tipos core de TuJsHtml.
  */
 declare namespace TuJsHtml {
   export namespace Types {
-    /**
-     * @see TuJsHtml_Tags
-     */
-    export type Tags = TuJsHtml_Tags;
-    /**
-     * @see SuperElementClass
-     */
+    export type Tags<TRoot extends HTMLElement | DocumentFragment = HTMLElement> = TuJsHtml_Tags<TRoot>;
     export type Element<TElement extends HTMLElement = HTMLElement> = SuperElementClass<TElement>;
-    /**
-     * @see RecursiveTag
-     */
-    export type CustomTag<TElement extends HTMLElement = HTMLElement> = typeof RecursiveTag$1<TElement>;
-    /**
-     * @see TuJsHtml_Callback
-     */
-    export type Callback<TElement extends HTMLElement = HTMLElement> = (tags: TuJsHtml_Tags, currentElement?: SuperElementClass<TElement>) => SuperElementClass<TElement> | void;
-  }
+    export type Callback<TElement extends HTMLElement | DocumentFragment = HTMLElement> = TuJsHtml_Callback<TElement>;
 
+    /**
+     * Helper type intended for JSDoc casting in pure JS files.
+     * @es Tipo de ayuda diseñado para castear Custom Elements en archivos JS puros vía JSDoc.
+     * @example 
+     * const { "my-el": el = /** @type {TuJsHtml.Types.CustomTag<MyEl>} *\/ (null) } = tags;
+     */
+    export type CustomTag<TElement extends HTMLElement> = SpecificTagFunction<TElement>;
+    /**
+     * Helper type exposing the configuration object interface for building reusable templates/props.
+     * @es Tipo de ayuda que expone la interfaz de configuración (atributos) para tipar plantillas/props reutilizables.
+     * @example
+     * // * @ type {TuJsHtml.Types.Attributes<HTMLButtonElement>} * /
+     * const btnConfig = { className: "btn-primary", onclick: () => {} };
+     */
+    export type Attributes<TElement extends HTMLElement = HTMLElement> = ConfigureAttributes<TElement>;
+  }
 }
 
 declare class TuTemplateHtml {
