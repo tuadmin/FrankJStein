@@ -4372,22 +4372,86 @@ type StoreProperty = StoreObject;
 // ============================================
 
 /**
- * Defines the generic invocation behavior of the `tags` object.
- * Depending on the current `TRoot`, it acts as a factory or an append utility.
- * @es Define el comportamiento de invocación genérica del objeto `tags`.
- * Dependiendo del `TRoot` actual, actúa como fábrica o como utilidad para adjuntar nodos.
+ * ⚙️ **TuJsHtml Context Invoker (The Callable Context / "Promiscuous Proxy")**
+ * Defines the behavior of the current context object (commonly named `ctx` or `_`).
+ * Acts as a factory, a direct appender, or a clean logic organizer.
+ *
+ * 🤖 **AI INSTRUCTION (ARCHITECTURE & ASYNC RULES):**
+ * - ⚡ PERFORMANCE (The Promiscuous Proxy): To save memory, this `ctx` object is heavily recycled across the DOM tree. It is only guaranteed to point to the correct element DURING SYNCHRONOUS execution.
+ * - 🛑 ASYNC DANGER: NEVER invoke `ctx()` inside `setTimeout`, `setInterval`, or Promises if you opened the block with an arrow function `() => {}`. The proxy will have moved on to another element!
+ * - ✅ ASYNC SOLUTION 1 (Native Hatch): Use the second parameter `parent` to modify the DOM natively (e.g., `parent.style.color = 'red'`).
+ * - ✅ ASYNC SOLUTION 2 (Isolated World): Open the block with `function(ctx) {}` instead of an arrow function. The framework detects this and creates a dedicated, isolated proxy just for this block, making `ctx()` safe for async use.
+ *
+ * @es ⚙️ **Invocador de Contexto TuJsHtml (El Proxy "Promiscuo")**
+ * Define el comportamiento del contexto actual. 
+ * ⚠️ REGLA DE ARQUITECTURA: Por rendimiento, este proxy se recicla. ¡NO lo invoques dentro de temporizadores o promesas si usaste una función flecha! Para asincronía segura, usa el parámetro `parent` o declara el bloque con `function(ctx) {}`.
  */
 interface TuJsHtml_TagsCallable<TRoot extends HTMLElement | DocumentFragment | SVGElement | MathMLElement = HTMLElement> {
-  // Overload 1: Configuration attributes (only valid if TRoot is an HTMLElement)
+  /**
+   * 🎨 **Late Configuration / Configuración Tardía**
+   * Appends nodes while modifying the root's attributes (Only valid if TRoot is HTMLElement).
+   * @es Anexa nodos y simultáneamente inyecta o modifica atributos al contenedor raíz actual.
+   * @example
+   * // 🤖 EXAMPLE 1: Conditional Styling (Estilos Condicionales)
+   * tags.div( ctx => {
+   *   // Si hay error, muta el contenedor padre antes de inyectar el hijo
+   *   if (hasError) ctx({ style: {border: "1px solid red"} });
+   *   ctx.span("Verifique sus datos");
+   * });
+   * @example
+   * // 🤖 EXAMPLE 2: Dynamic ARIA/Attributes (Atributos Dinámicos)
+   * tags.button( ctx => {
+   *   const isLoading = checkStatus();
+   *   // Inyecta el atributo 'disabled' al vuelo según la lógica
+   *   ctx({ disabled: isLoading, "aria-busy": isLoading }, 
+   *      isLoading ? "Cargando..." : "Enviar"
+   *   );
+   * });
+   */
   (
     config: TRoot extends HTMLElement ? ConfigureAttributes<TRoot> : never,
     ...args: RecursiveNode$1<TRoot>[]
   ): TRoot;
 
-  // Overload 2: Standard nodes and callbacks
+  /**
+   * 🎨 **Logic Organizer & Async Sandbox / Organizador Lógico y Sandbox Asíncrono**
+   * Structure complex logic, loops, and handle async mutations based on how you declare the function.
+   * @es Estructura lógica compleja y maneja mutaciones asíncronas dependiendo de cómo declares el callback.
+   * @example
+   * // 🤖 EXAMPLE 1: Async Mutation (The Native Hatch)
+   * tags.p( (ctx, parent) => {
+   *   ctx.span("Cargando...");
+   *   // ✅ GOOD: Using the native parent is always safe with arrow functions
+   *   setTimeout(() => parent.style.color = "green", 3000);
+   * });
+   * @example
+   * // 🤖 EXAMPLE 2: Async Mutation (The Isolated World)
+   * tags.p( function(ctx) {
+   *   ctx.span("Procesando datos...");
+   *   // ✅ GOOD: Standard 'function' forces a unique, safe proxy instance
+   *   setTimeout(() => ctx({ style: "border: 2px solid green" }), 3000);
+   * });
+   * @example
+   * // 🤖 EXAMPLE 3: Clean Synchronous Logic (Evitando Espagueti)
+   * tags.ul( ctx => {
+   *   for (const user of users) {
+   *     ctx.li({ className: "user-item" }, user.name);
+   *   }
+   * });
+   */
   (...args: RecursiveNode$1<TRoot>[]): TRoot;
 
-  // Overload 3: Tagged Template Literal support
+  /**
+   * 🎨 **Direct Template Appender / Anexador Directo por Template Literal**
+   * Instantly appends a text node to the current context.
+   * @es Anexa instantáneamente un nodo de texto al contexto actual.
+   * @example
+   * // 🤖 EXAMPLE: Fluent Text Appending
+   * tags.p( ctx => {
+   *   ctx.strong("Aviso: ");
+   *   ctx`Este texto se añade directamente al párrafo.`;
+   * });
+   */
   (template: TemplateStringsArray, ...values: unknown[]): TRoot;
   // =========================================================================
   // 🛑 LIMPIEZA DE AUTOCOMPLETADO (FUNCTION SHADOWING)
@@ -4745,17 +4809,34 @@ type TuJsHtml_Tags<TRoot extends HTMLElement | DocumentFragment | SVGElement | M
 // ============================================
 
 /**
- * Main callback allowing robust autocomplete. Accepts rest arguments so JS users 
- * don't get errors if they omit or add unexpected parameters.
- * @es Callback principal. Acepta argumentos extra (rest) para que los usuarios JS 
- * no obtengan errores al omitir o añadir parámetros no esperados.
+ * 🫀 **Core Builder Callback (El Corazón Recursivo)**
+ * The fundamental callback that powers the nested builder pattern in TuJsHtml.
+ * It provides the proxy to build children, and the native DOM element for direct manipulation.
+ *
+ * 🤖 **AI INSTRUCTION (DESIGN PHILOSOPHY & PARAMETERS):**
+ * - `Param 1 (tags / ctx)`: The recursive proxy. USE THIS to append children safely. 
+ * *Note: Highly optimized. Do NOT use inside async closures (like setTimeout) if using an arrow function.*
+ * - `Param 2 (currentElement)`: The "Native Escape Hatch". USE THIS when you need raw DOM access (e.g., `element.style`, `element.addEventListener`) or safe asynchronous mutations.
+ * - `Param 3 (...extraArgs)`: Forgiving rest parameter. Ensures pure JS users don't face execution crashes if they pass unexpected arguments.
+ *
+ * @es 🫀 **Callback Constructor Principal**
+ * El callback fundamental que impulsa el patrón recursivo.
+ * Acepta argumentos extra (rest) para que los usuarios JS no obtengan errores al omitir o añadir parámetros.
  */
 type TuJsHtml_Callback<TRoot extends HTMLElement | DocumentFragment | SVGElement | MathMLElement = HTMLElement> = (
   tags: TuJsHtml_Tags<TRoot>,
   currentElement: TRoot extends HTMLElement ? SuperElementClass<TRoot> : DocumentFragment,
   ...extraArgs: unknown[]
 ) => unknown;
-
+/**
+ * 🔒 **Strict HTML Extended Callback**
+ * A non-generic, strict version of the core callback, specifically locked to HTML elements.
+ * 🤖 **AI INSTRUCTION:**
+ * - Use this typing for custom plugins, internal HTML extensions, or strict components that MUST NOT be used inside SVG or MathML contexts.
+ * @es 🔒 **Callback Extendido Estricto (Solo HTML)**
+ * Versión estricta y no genérica bloqueada a elementos HTML. 
+ * Útil para crear plugins o directivas que no deben ejecutarse en SVG/MathML.
+ */
 type TuJsHtml_CallbackExtended = (tags: TuJsHtml_Tags, currentElement: HTMLElement) => void;
 
 /**
