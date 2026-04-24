@@ -862,7 +862,26 @@ type EventOff = () => void;
 type ExecuteAfterRender = () => void;
 type FunctionGeneric$1 = (...args: unknown[]) => unknown;
 
+/*
+ * 🪤 POISON PILL (Strict Excess Property Check):
+ * Intercepts invalid DOM properties and forces a literal string error.
+ * Prevents TypeScript from collapsing the callback inference to 'any'.
+ */
+// export type CatchExcessProps<TConfig, TValid> = {
+//     [K in keyof TConfig]: string extends K
+//     ? unknown // 👈 EL SALVAVIDAS: Si TS infiere 'string' genérico (por culpa de JS), ignora la validación para no romper todo.
+//     : K extends keyof TValid
+//     ? TConfig[K]
+//     : `🛑 Invalid DOM property '${K & string}'. Use 'data-${K & string}' or assign it inside the callback.`;
+// };
+// export type CatchExcessProps<TProvided, TExpected> = {
+//     [K in keyof TProvided]: K extends keyof TExpected
+//     ? unknown
+//     : `🛑 Invalid DOM property '${K & string}'. Use 'data-${K & string}' or assign it inside the callback.`;
+// };
 
+// Y tu ValidatedConfig queda así:
+//export type ValidatedConfig<TConfig, TElement> = ConfigureAttributes<TElement> & CatchExcessProps<TConfig, ConfigureAttributes<TElement>>;
 /**
  * Genera dinámicamente las firmas para selectores tipo Emmet.
  * Soporta: 
@@ -2050,11 +2069,28 @@ type NativeEventAttributes<TElement extends Element> = {
 // =========================================================================
 // 3. DIRECTIVAS REACTIVAS ESPECIALES (`@`)
 // =========================================================================
-
+/**
+ * Sobreescribe el evento nativo de TS para inyectar el elemento exacto 
+ * en el `target` y `currentTarget`, evitando errores ts(2339).
+ */
+type TuJsEvent<TElement extends EventTarget, TEvent extends Event = Event> =
+  Omit<TEvent, 'target' | 'currentTarget'> & {
+    readonly target: TElement;
+    readonly currentTarget: TElement;
+  };
+// export type EventListenerMap<TElement extends Element> = {
+//   [EventType in keyof GetEventMap<TElement>]?: (event: GetEventMap<TElement>[EventType]) => void;
+// };
 type EventListenerMap<TElement extends Element> = {
-  [EventType in keyof GetEventMap<TElement>]?: (event: GetEventMap<TElement>[EventType]) => void;
+  // 1. Mapea todos los eventos oficiales del DOM (click, change, input...)
+  [K in keyof GlobalEventHandlersEventMap]?: (
+    e: TuJsEvent<TElement, GlobalEventHandlersEventMap[K]>
+  ) => void;
+} & {
+  // 2. Fallback para Custom Events o eventos no estándar
+  [customEvent: string]: Function
+  //[customEvent: string]: (e: TuJsEvent<TElement, unknown>) => void; //<-- error en js strict
 };
-
 type FormStateObject = { [key: string]: unknown; };
 
 /**
@@ -2163,7 +2199,7 @@ type DomPropType<T> = T extends { baseVal: infer U } ? U | string | number : T |
 type ValidBaseKeys<T> = {
   //[K in keyof T]-?: NonNullable<T[K]> extends AnyFunction ? never :
   [K in keyof T]-?: NonNullable<T[K]> extends FunctionGeneric$1 ? never :
-  K extends SpecialExclusionsProps | 'style' | 'class' | 'className' ? never :
+  K extends SpecialExclusionsProps | 'dataset' | 'style' | 'class' | 'className' ? never :
   K extends `on${string}` ? never : K // <- ¡Borra los eventos nativos del DOM!
 }[keyof T];
 
@@ -2193,6 +2229,7 @@ type ConfigureAttributes<TElement extends Element = HTMLElement> =
   // 3. Clases y Estilos Optimizados
   {
     style?: StyleObject | SignalOr<string>;
+    dataset?: Record<string, SignalOr<string | number | boolean | null | undefined>>;
     //className?: SignalOr<string>;
   } &
   (TElement extends HTMLElement ? { className?: SignalOr<string> } : {}) & // <-- ¡AQUÍ ESTÁ LA MAGIA!
@@ -2209,18 +2246,24 @@ type ConfigureAttributes<TElement extends Element = HTMLElement> =
 * Intercepts invalid DOM properties and forces a literal string error.
 * Prevents TypeScript from collapsing the callback inference to 'any'.
 */
-type CatchExcessProps<TProvided, TExpected> = {
-  [K in keyof TProvided]: K extends keyof TExpected
-  ? unknown
+type CatchExcessProps<TConfig, TValid> = {
+  [K in keyof TConfig]: string extends K
+  ? unknown // 👈 EL SALVAVIDAS: Si TS infiere 'string' genérico (por culpa de JS), ignora la validación para no romper todo.
+  : K extends keyof TValid
+  ? TConfig[K]
   : `🛑 Invalid DOM property '${K & string}'. Use 'data-${K & string}' or assign it inside the callback.`;
 };
+// export type CatchExcessProps<TProvided, TExpected> = {
+//   [K in keyof TProvided]: K extends keyof TExpected
+//   ? unknown
+//   : `🛑 Invalid DOM property '${K & string}'. Use 'data-${K & string}' or assign it inside the callback.`;
+// };
 /**
  * 🛡️ VALIDATED CONFIGURATION (El Envoltorio Limpio):
  * Combina la configuración permitida con la trampa de propiedades.
  * Esto limpia dramáticamente las firmas de las funciones.
  */
-type ValidatedConfig<TProvided, TElement extends Element> =
-  ConfigureAttributes<TElement> & CatchExcessProps<TProvided, ConfigureAttributes<TElement>>;
+type ValidatedConfig<TConfig, TElement> = ConfigureAttributes<TElement> & CatchExcessProps<TConfig, ConfigureAttributes<TElement>>;
 
 /// <reference lib="dom" />
 // webview.d.ts
@@ -4849,7 +4892,7 @@ declare function AnyNode(strings: TemplateStringsArray, ...values: unknown[]): D
 /**
  * Fluid HTML Element Factory.
  * @es Fábrica de elementos HTML fluida. Lienzo donde se dibuja el HTML.
- * @version 4.9.0
+ * @version 4.9.3
  * @example
  * const demo = new TuJsHtml(tags => {
  *   tags.main(ctx => {
@@ -5402,4 +5445,116 @@ declare const Remote: {
     readonly Global: typeof RemoteGlobalModule;
 };
 
-export { AnyNode, ELEMENT_UTIL, ObservableDraft, ReactiveDraft, Remote, RemoteGlobalModule, RemoteLocalModule, RemoteModule, RemoteSharedModule, TUtils, TuJsHtml, TuTemplateHtml, TuWebUtils, createComputedSignal, createKageBunshinObject, createSignal, createTemplateHtml, debounce, debounceEvents, makeReactive, textSize, textSizeEvents, trim };
+/**
+ * @file TuContainer.d.ts
+ * @description Type definitions for the Sovereign DI Kernel.
+ * @es Definiciones de tipos para el Núcleo de Inyección Soberano.
+ */
+
+/**
+ * @class TuScope
+ * @description Manages a local cache of instances and hierarchical resolution.
+ * @es Gestiona un caché local de instancias y la resolución jerárquica.
+ */
+declare class TuScope {
+    private _cache: Map<unknown, unknown>;
+    private _parent: TuScope | null;
+    private _disposed: boolean;
+
+    constructor(parent?: TuScope | null);
+
+    /**
+     * Resolves a dependency by searching the hierarchy.
+     * @es Resuelve una dependencia buscando en la jerarquía.
+     * @param token The class or token to resolve. /es La clase o token a resolver.
+     * @returns The resolved instance. /es La instancia resuelta.
+     */
+    resolve<T>(token: Token<T>): T;
+
+    /**
+     * Disposes the scope and clears its cache.
+     * @es Dispone el scope y limpia su caché.
+     */
+    dispose(): void;
+}
+
+type Constructor<T = unknown> = new (...args: any[]) => T;
+type Token<T = unknown> = Constructor<T> | string | symbol;
+type Factory<T = unknown> = (ctx: TuScope) => T;
+
+/**
+ * @class TuContainer
+ * @description Central registry for all dependencies and root scope.
+ * @es Registro central para todas las dependencias y scope raíz.
+ */
+declare class TuContainer {
+    static root: TuScope;
+
+    /**
+     * Registers a singleton dependency (One instance for the entire app).
+     * @es Registra una dependencia tipo singleton (Una instancia para toda la app).
+     * @example
+     * TuContainer.addSingleton(AppConfig);
+     * TuContainer.addSingleton(IService, (ctx) => new MyService("apiKey", ctx.resolve(ILogger)));
+     */
+    static addSingleton<T>(token: Token<T>, factory: Factory<T>): void;
+    static addSingleton<T>(token: Token<T>, provider?: Constructor<T>): void;
+
+    /**
+     * Registers a transient dependency (New instance every time).
+     * @es Registra una dependencia tipo transient (Instancia nueva cada vez).
+     */
+    static addTransient<T>(token: Token<T>, factory: Factory<T>): void;
+    static addTransient<T>(token: Token<T>, provider?: Constructor<T>): void;
+
+    /**
+     * Registers a scoped dependency (One instance per Scope hierarchy).
+     * @es Registra una dependencia tipo scope (Una instancia por jerarquía de Scope).
+     */
+    static addScope<T>(token: Token<T>, factory: Factory<T>): void;
+    static addScope<T>(token: Token<T>, provider?: Constructor<T>): void;
+
+    /**
+     * Creates a new child scope.
+     * @es Crea un nuevo scope hijo.
+     * @param callback Optional callback with the new scope. /es Callback opcional con el nuevo scope.
+     * @param parent Custom parent scope. /es Scope padre personalizado.
+     */
+    static createScope(callback?: (scope: TuScope) => unknown, parent?: TuScope | null): TuScope;
+    /**
+     * Checks if a token is registered.
+     * @es Verifica si un token está registrado.
+     */
+    static hasRegistration(token: Token): boolean;
+    /**
+     * Resolves a dependency from the root scope.
+     * @es Resuelve una dependencia desde el scope raíz.
+     */
+    static resolve<T>(token: Token<T>): T;
+}
+
+/**
+ * Lazily injects a dependency. Captured at instantiation time.
+ * @es Inyecta una dependencia de forma diferida (perezosa). Capturado al instanciar.
+ */
+declare function TuLazyInject<T>(tokenProvider: () => Token<T>): T;
+
+/**
+ * Synchronously injects a dependency.
+ * @es Inyecta una dependencia de forma sincrónica.
+ */
+declare function TuInject<T>(token: Token<T>): T;
+
+/**
+ * @namespace DI
+ * @description Grouped access to the DI system.
+ * @es Acceso agrupado al sistema de inyección.
+ */
+declare const DI: {
+    readonly Container: typeof TuContainer;
+    readonly Scope: typeof TuScope;
+    readonly Inject: typeof TuInject;
+    readonly LazyInject: typeof TuLazyInject;
+};
+
+export { AnyNode, DI, ELEMENT_UTIL, ObservableDraft, ReactiveDraft, Remote, RemoteGlobalModule, RemoteLocalModule, RemoteModule, RemoteSharedModule, TUtils, TuContainer, TuInject, TuJsHtml, TuLazyInject, TuScope, TuTemplateHtml, TuWebUtils, createComputedSignal, createKageBunshinObject, createSignal, createTemplateHtml, debounce, debounceEvents, makeReactive, textSize, textSizeEvents, trim };
