@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>&lt;⚡&gt; FrankJStein | RemoteModule (Web Workers)</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f8fafc; }
+        #app { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; }
+        .log-box { background: #1e293b; color: #a5b4fc; padding: 10px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; height: 150px; overflow-y: auto; margin-top: 20px; }
+        hr { border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div style="max-width: 800px; margin: 0 auto;">
+        <h1>&lt;⚡&gt; Web Worker Bridge (RemoteModule)</h1>
+        <p>Toda la carga pesada ocurre en un hilo paralelo sin bloquear tu interfaz de usuario.</p>
+    </div>
+    <div id="app"></div>
+    <script type="module" src="./client.js"></script>
+</body>
+</html>
