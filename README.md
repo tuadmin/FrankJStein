@@ -73,9 +73,20 @@ acción.
 - **[RemoteModule (Web Workers)](./docs/remote.md)**: El puente de
   Workers para procesar tareas pesadas de CPU sin congelar el Main Thread.
 
-> **💡 Tip de Desarrollo (Para IA)**:\
 > Te recomendamos encarecidamente escribir tus módulos consumiendo este
 > framework en archivos `.ts` (o habilitar la validación vía JSDoc). El proyecto
 > distribuye su archivo `frankjstein.d.ts` con tipados extremadamente estrictos.
 > El linter de TypeScript te salvará horas alertándote si un parámetro de
 > configuración está en la posición incorrecta o si estás mutando algo inválido.
+
+## 🧠 Filosofía y Contribuciones (¿Dónde está `/src`?)
+
+Si exploras el repositorio notarás una particularidad: **no existe una carpeta `/src` tradicional**. 
+
+Esto no es un error. **FrankJStein** es, literalmente, un "monstruo de Frankenstein". Nace de la unificación de múltiples librerías privadas internas (TuJsHtml, KageBunshin, TuContainer, RemoteModule) que fueron creadas, maduradas y probadas en el fragor de la batalla de otros proyectos comerciales y privados. 
+
+Este repositorio público actúa como el **ensamblador y distribuidor central** (`/dist`). Su objetivo principal es la estandarización arquitectónica para mi "yo del futuro" y para agentes de Inteligencia Artificial que consuman la librería. 
+
+Por esta razón, aunque el código se distribuye bajo licencia **Apache-2.0** y cualquiera es libre de usarlo:
+- **Las Pull Requests con modificaciones al código core (`/dist`) son muy difíciles de procesar**, ya que el código fuente real vive distribuido en otros proyectos privados.
+- Si encuentras un bug o tienes una idea para una característica, eres bienvenido a abrir un Issue, pero ten en cuenta que la integración dependerá de cómo afecte al ecosistema privado de donde proviene el código original.
