@@ -1,6 +1,7 @@
 <p align="center">
   <img src="./assets/logo-full.svg" alt="FrankJStein Framework Logo" width="500" />
 </p>
+
 # 🧟‍♂️ FrankJStein
 
 > **F**ragment **R**eactive **A**sync **N**ode **K**it **J**avaScript
