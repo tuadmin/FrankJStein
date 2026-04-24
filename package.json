@@ -1,6 +1,6 @@
 {
     "name": "frankjstein",
-    "version": "0.5.1-alpha.2",
+    "version": "0.5.1",
     "publishConfig": {
         "tag": "alpha",
         "access": "public"
@@ -34,7 +34,13 @@
         "ui",
         "builder",
         "workers",
-        "threads"
+        "threads",
+        "dependency-injection",
+        "di",
+        "ioc",
+        "ai-agents",
+        "llm",
+        "agentic"
     ],
     "author": "Victor Choque",
     "license": "Apache-2.0",

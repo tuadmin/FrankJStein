@@ -108,6 +108,12 @@ cualquiera es libre de usarlo:
   bienvenido a abrir un Issue, pero ten en cuenta que la integración dependerá
   de cómo afecte al ecosistema privado de donde proviene el código original.
 
+> [!WARNING]
+> **Estado del Proyecto: Alpha** La arquitectura central es funcional, pero
+> muchas de las guías y directrices para Inteligencia Artificial (AI Skills) son
+> experimentales y no han sido sometidas a pruebas de estrés en producción.
+> Úsalo bajo tu propio riesgo y espera posibles cambios
+
 ## 📄 Licencia
 
 Este proyecto está bajo la Licencia Apache 2.0 - mira el archivo LICENSE para
