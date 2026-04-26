@@ -66,7 +66,7 @@ acción.
 
 ### Módulos y Subsistemas
 
-- **[TuJsHtml (DOM Builder & UI)](./docs/tujshtml.md)**: Construcción de
+- **[TuJsHtml (DOM Builder & UI)](./docs/tujshtml/README.md)**: Construcción de
   interfaces nativas, uso de Template Literals y manipulación de nodos de alto
   rendimiento.
 - **[KageBunshin (Signals & Reactividad)](./docs/kagebunshin.md)**: Reactividad

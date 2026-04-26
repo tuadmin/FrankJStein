@@ -2,13 +2,50 @@
 
 `TuJsHtml` es el motor de renderizado primario. A diferencia de React o Vue, aquí no hay un "Virtual DOM" intermedio. El código interactúa de manera directa y optimizada con el Document Object Model (DOM) real del navegador, usando abstracciones ligeras.
 
+## Documentación Avanzada (Deep Dives)
+- [Suspense y Bloques Reactivos (`$f`, `$block`)](./suspense-and-blocks.md): Para manejo de asincronía y reactividad extrema vinculada a Signals.
+- [Templates y Clonación Masiva (`createTemplateHtml`)](./templates.md): Para optimización de renderizado masivo y reutilización de nodos de alto rendimiento.
+
 ## Template Literals y Tagged Templates
 La construcción idiomática de la UI en FrankJStein es a través de funciones Template Tagged proporcionadas por el framework (`h1`, `p`, `div`, etc.).
 
 ```javascript
 tags.p`Hola mundo, el valor es ${contadorSignal}`;
 ```
-Esto es internamente convertido a operaciones eficientes de TextNodes sin reflows innecesarios.
+Esto es internamente convertido a operaciones eficientes de TextNodes reactivos.
+
+> [!WARNING]
+> **Error Común: String Interpolation vs Tagged Templates**
+> Es muy fácil confundir la sintaxis de invocación de función `()` con la sintaxis de Tagged Template `\``, y la diferencia de rendimiento/comportamiento es abismal.
+> 
+> **Escenario 1: Renderizado Estándar (Reactividad Granular)**
+> Si utilizas paréntesis `()` con interpolación nativa de JavaScript `${}`, JS resuelve el string devolviendo el valor inicial de la Signal y la reactividad **se rompe**.
+> ```javascript
+> // ❌ MAL: JS resuelve el string y muere la reactividad granular.
+> ctx.p(`Clicks actuales: ${count}`);
+> 
+> // ✅ BIEN (Tagged Template): El framework intercepta la Signal y crea un TextNode reactivo.
+> ctx.p`Clicks actuales: ${count}`;
+> ```
+> 
+> **Escenario 2: Nodos DOM Inyectados**
+> NUNCA uses interpolación nativa para inyectar Nodos del DOM, o JS llamará a su método `.toString()` destruyéndolos visualmente.
+> ```javascript
+> // ❌ ERROR CRÍTICO: Imprime "Clicks actuales: [object HTMLElement]"
+> ctx.p(`Clicks actuales: ${ctx.i(count)}`);
+> 
+> // ✅ BIEN: El Tagged Template maneja el objeto Nodo correctamente.
+> ctx.p`Clicks actuales: ${ctx.i(count)}`;
+> ```
+> 
+> **Excepción de Rendimiento: Dentro de un `$block`**
+> Si estás *dentro* de un `$block` reactivo, el bloque entero ya se destruye y re-renderiza con cada cambio. En este caso específico, usar un Tagged Template para un valor primitivo crearía una doble-suscripción redundante (una del bloque, una del nodo de texto). Aquí, **sí se recomienda** usar interpolación nativa para valores primitivos.
+> ```javascript
+> $block(count, (ctx) => {
+>    // ⚡ SUPER RÁPIDO: El bloque maneja la reactividad, el string literal es estático y barato.
+>    ctx.p(`Clicks actuales: ${count}`);
+> });
+> ```
 
 ## Parámetros de Configuración (`ConfigureAttributes`)
 Todo elemento en TuJsHtml recibe un parámetro opcional inicial: un objeto de configuración que se alinea fuertemente con la interfaz de TypeScript `ConfigureAttributes`.
@@ -57,20 +94,7 @@ tags.p(function(ctx) {
     setTimeout(() => ctx.div("ok"), 10);
 });
 ```
-*(Nota: Para asincronía real, se recomienda fuertemente usar el Suspense nativo `$f`, `$fragment` o `$block` en vez de forzar setTimeouts manuales).*
-
-## Suspense (`$f`)
-Permite manejar un estado de espera (Loading) nativo mientras se resuelve asincronía, ideal para componentes funcionales que devuelven Promesas.
-```javascript
-tags.$f(async ({ div }) => {
-    // Tarda en cargar
-    await fetch('/api/data');
-    div`Datos listos!`;
-}, function fallback({ p }) {
-    // Se muestra inmediatamente
-    p`Cargando...`;
-});
-```
+*(Nota: Para asincronía real, se recomienda fuertemente usar el Suspense nativo `$f` o `$block` detallados en la Documentación Avanzada en vez de forzar setTimeouts manuales).*
 
 ## Alias y Selectores CSS Nativos
 El objeto `tags` provee capacidades mágicas al desestructurar. Puedes crear una etiqueta preconfigurada pasándole clases e IDs como si fuera un selector de CSS clásico, ahorrando código.

@@ -51,16 +51,27 @@ de milisegundo en la que se lea por primera vez.
 2. Mejora drásticamente el tiempo de inicio de la aplicación, ya que los
    servicios no se cargan todos juntos al arranque.
 
+> [!WARNING]
+> **El Problema del Tipo `unknown` en TypeScript** En entornos puramente `.js`,
+> el autocompletado funciona mágicamente. Sin embargo, en archivos `.ts`, la
+> inferencia de tipos de funciones anónimas suele resolverse como `unknown`, lo
+> que provocará errores en el linter estricto de TypeScript. **Para evitar esto,
+> debes pasar la clase o interfaz como Genérico explícito al inyectar.**
+
 ```typescript
-import { TuContainer, TuLazyInject } from "frankjstein";
+import { DI, TuContainer, TuLazyInject } from "frankjstein";
 
 class ConfigService {
     token = "123";
 }
 
 class ApiService {
-    // Solo se resuelve la primera vez que se accede a this.config
-    #config = TuLazyInject(() => ConfigService);
+    // REGLA OBLIGATORIA EN TS: Pasar el genérico <ConfigService>
+    // para evitar el error de tipo 'unknown'.
+    #config = TuLazyInject<ConfigService>(() => ConfigService);
+
+    // También funciona con el alias de Namespace
+    #auth = DI.LazyInject<IAuthService>(() => IAuthService);
 
     fetchData() {
         console.log("Token usado:", this.#config.token);
