@@ -142,3 +142,12 @@ borrar/
 
 # AI Exams Anti-Cheat
 tests-ia/**/*.test.ts
+# System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
