@@ -139,3 +139,6 @@ vite.config.ts.timestamp-*
 .npmrc*
 issue*
 borrar/
+
+# AI Exams Anti-Cheat
+tests-ia/**/*.test.ts

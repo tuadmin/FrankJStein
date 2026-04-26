@@ -9,6 +9,9 @@
     "main": "dist/frankjstein.js",
     "types": "dist/frankjstein.d.ts",
     "type": "module",
+    "scripts": {
+        "test:ai": "bun test"
+    },
     "exports": {
         ".": {
             "types": "./dist/frankjstein.d.ts",
@@ -20,6 +23,11 @@
         "README.md",
         "LICENSE"
     ],
+    "devDependencies": {
+        "@happy-dom/global-registrator": "^20.9.0",
+        "@types/bun": "^1.3.13",
+        "happy-dom": "^20.9.0"
+    },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/tuadmin/FrankJStein.git"
