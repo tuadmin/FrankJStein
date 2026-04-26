@@ -65,6 +65,21 @@ FrankJStein is designed for Human-AI coordination.
 - If you are unsure whether to use a Worker, a Service, or a Signal, STOP and
   ask the human orchestrator.
 
+### 5. Architectural Anti-Patterns (NEVER DO)
+
+- **❌ Business Logic in Templates**: Never perform calculations, data transformations, or complex conditional logic inside a `TuJsHtml` builder. Templates are for structure and layout only.
+- **❌ Unsanitized Signal Mutation**: Avoid mutating signals from multiple unrelated places. State updates should be predictable and ideally localized in a service or a smart component's handler.
+- **❌ Crossing Boundary Contexts**: Do not use outer context tags inside async blocks (`$f`, `$block`). Use the internal context provided by the callback.
+- **❌ Deep Relative Paths**: Avoid long relative imports (e.g., `../../../utils.js`). 
+
+### 6. Import Aliases & Project Scalability
+
+For medium-to-large projects, using **Import Aliases** (e.g., `#services/`, `#types/`) is highly recommended to keep the architecture clean.
+
+- **Check First**: Before using aliases, verify if the project has an `import_map.json`, `deno.json`, `tsconfig.json`, or `package.json` with "imports" configured.
+- **Constraint**: If no alias system is detected, stick to standard relative paths.
+- **Suggestion**: If the project is growing and lacks aliases, suggest configuring them to the user (e.g., using Deno's native imports or Node/Bun's "subpath imports").
+
 ## Code Examples
 
 ### Correct Reactivity Flow (Service -> UI)
@@ -93,7 +108,7 @@ export function UserProfile(tags, userService) {
   const [, setUserName] = userName.asTuple;
 
   // The Component owns the reactivity, not the Service
-  userService.fetchUser().then((data) => setUserName(data.name));
+  userService.fetchUser().then((data) => setUserName(data.name ?? "unknown"));
 
   return tags.div(
     tags.h1`Profile`,

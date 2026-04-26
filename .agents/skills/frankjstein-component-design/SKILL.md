@@ -1,12 +1,12 @@
 ---
 name: frankjstein-component-design
 description: >
-  Architectural guidelines and conventions for building UI components in FrankJStein.
-  Trigger: When building, refactoring, or designing UI components, views, or layouts.
+    Architectural guidelines and conventions for building UI components in FrankJStein.
+    Trigger: When building, refactoring, or designing UI components, views, or layouts.
 license: Apache-2.0
 metadata:
-  author: gentleman-programming
-  version: "1.0"
+    author: gentleman-programming
+    version: "1.0"
 ---
 
 ## When to Use
@@ -18,9 +18,14 @@ metadata:
 ## Critical Patterns
 
 ### 1. Mandatory TypeScript / JSDoc Typing & Aliasing
-FrankJStein components are usually pure functions that receive the `tags` builder as their first parameter. To prevent hallucinations and empower the Deno/TS Linter, **you MUST ALWAYS strictly type the `tags` parameter**.
 
-To avoid visual clutter (JSDoc cancer) and save tokens when declaring multiple components in the same file, ALWAYS use a `@typedef` alias at the top of your `.js` files.
+FrankJStein components are usually pure functions that receive the `tags`
+builder as their first parameter. To prevent hallucinations and empower the
+Deno/TS Linter, **you MUST ALWAYS strictly type the `tags` parameter**.
+
+To avoid visual clutter (JSDoc cancer) and save tokens when declaring multiple
+components in the same file, ALWAYS use a `@typedef` alias at the top of your
+`.js` files.
 
 ```javascript
 // At the top of the file
@@ -40,12 +45,15 @@ export function PrimaryButton(tags, config, text) {
 ```
 
 ### 2. Custom Elements (Web Components) Integration
-TuJsHtml fully supports native Web Components, but the TS Linter needs to know about them for autocomplete to work on custom methods. You can extend the base `Tags` type to inject your custom elements using template literal types.
+
+TuJsHtml fully supports native Web Components, but the TS Linter needs to know
+about them for autocomplete to work on custom methods. You can extend the base
+`Tags` type to inject your custom elements using template literal types.
 
 ```javascript
-/** 
+/**
  * Extend the base interface to inject our Custom Element.
- * @typedef {import("frankjstein").TuJsHtml.Types.Tags & { [key: `custom-el${string}`]: import("frankjstein").TuJsHtml.Types.CustomTag<CustomEl>} } MyAppTags 
+ * @typedef {import("frankjstein").TuJsHtml.Types.Tags & { [key: `custom-el${string}`]: import("frankjstein").TuJsHtml.Types.CustomTag<CustomEl>} } MyAppTags
  */
 
 /**
@@ -60,22 +68,74 @@ export function CustomView(tags) {
 ```
 
 ### 3. State Locality (Smart vs. Dumb)
-- **Dumb Components (Preferred for reuse):** Keep small, reusable components as stateless as possible. Pass pure values or Signals down. This guarantees maximum performance and predictability.
-- **Smart/Robust Components:** If a component is highly complex, unique (e.g., a massive DataGrid or an isolated widget), or acts as a Micro-Frontend SPA, it CAN and SHOULD initialize its own internal state (`createSignal`) or inject dependencies via `TuContainer`. 
+
+- **Dumb Components (Preferred for reuse):** Keep small, reusable components as
+  stateless as possible. Pass pure values or Signals down. This guarantees
+  maximum performance and predictability.
+- **Smart/Robust Components:** If a component is highly complex, unique (e.g., a
+  massive DataGrid or an isolated widget), or acts as a Micro-Frontend SPA, it
+  CAN and SHOULD initialize its own internal state (`createSignal`) or inject
+  dependencies via `TuContainer`.
 
 ### 4. CSS Strategy
-Freedom is a double-edged sword. TuJsHtml allows you to create `<style>` tags on the fly, but this can lead to CSS spaghetti.
-- **Default:** Rely on a global CSS architecture (e.g., utility classes or BEM global stylesheets).
-- **Complex/Isolated Components:** If a component is massive and strictly needs isolation, it can dynamically resolve its own path (using `import.meta.url`) to load an adjacent `.css` file or safely inject a scoped `<style>` block. DO NOT do this for simple components.
+
+Freedom is a double-edged sword. TuJsHtml allows you to create `<style>` tags on
+the fly, but this can lead to CSS spaghetti.
+
+- **Default:** Rely on a global CSS architecture (e.g., utility classes or BEM
+  global stylesheets).
+- **Complex/Isolated Components:** If a component is massive and strictly needs
+  isolation, it can dynamically resolve its own path (using `import.meta.url`)
+  to load an adjacent `.css` file or safely inject a scoped `<style>` block. DO
+  NOT do this for simple components.
 
 ### 5. File Structure & Scalability
+
 Adapt to the project's scale:
+
 - **Small projects:** A simple `components/` folder is enough.
-- **Giant projects:** Enforce Atomic Design principles (`atoms/`, `molecules/`, `organisms/`, `templates/`, `pages/`). Always evaluate the project's current structure before generating new files.
+- **Giant projects:** Enforce Atomic Design principles (`atoms/`, `molecules/`,
+  `organisms/`, `templates/`, `pages/`). Always evaluate the project's current
+  structure before generating new files.
+
+### 6. Inversion of Control via Decorators (Binding Logic)
+
+To keep templates "dumb" and reusable, avoid writing handlers directly inside them. Instead, use the **Decorator Pattern**. The template creates a pure element and passes it to a "binder" function (decorator) received via props.
+
+- **The Pattern**: `renderElement(tags, data, bindLogic)`
+- **The Benefit**: The template doesn't know about `signals`, `services`, or `global state`. It only knows it must call `bindLogic(element, data)` for specific interactive parts.
+
+```javascript
+/**
+ * @typedef {import("frankjstein").TuJsHtml.Types.Tags} Tags
+ * @typedef { { id: string, name: string } } User
+ * @typedef { (el: HTMLInputElement, data: User) => void } BindSelection
+ */
+
+/**
+ * Dumb Template with Injected Logic.
+ * @param {Tags} tags
+ * @param {User} user
+ * @param {BindSelection} bindSelection
+ */
+export function UserRow(tags, user, bindSelection) {
+    return tags.tr((ctx) => {
+        ctx.td`ID: ${user.id}`;
+        ctx.td`Name: ${user.name}`;
+        ctx.td((_) => {
+            const cb = ctx.input({ type: "checkbox" });
+            // The template doesn't know WHAT happens on check.
+            // It just delivers the element to the logic binder.
+            bindSelection(cb, user); 
+        });
+    });
+}
+```
 
 ## Code Examples
 
 ### The Pure Presentational Component (Atom)
+
 ```javascript
 /**
  * @typedef {import("frankjstein").TuJsHtml.Types.Tags} Tags
@@ -89,11 +149,15 @@ Adapt to the project's scale:
  */
 export function ActionButton(tags, config, label) {
     // Merge config classes with default classes safely
-    return tags.button({ ...config, className: `action-btn ${config.className || ''}` }, label);
+    return tags.button({
+        ...config,
+        className: `action-btn ${config.className || ""}`,
+    }, label);
 }
 ```
 
 ### The Smart View Component
+
 ```javascript
 import { createSignal } from "frankjstein";
 // Assuming ActionButton and Tags typedef are imported/available
@@ -107,22 +171,27 @@ export function UserProfileView(tags) {
     const [, setLoading] = isLoading.asTuple;
 
     return tags.div({ className: "profile-view" }, (ctx) => {
-        ctx.h2("User Profile");
-        
+        ctx.h2`User Profile`;
+
         // Composing with Dumb components. We pass the 'ctx' (which is the tags proxy)
-        ctx.$insert(ActionButton(ctx, { 
-            "@on": { 
-                click: () => setLoading(true) 
-            } 
+        ctx.$insert(ActionButton(ctx, {
+            "@on": {
+                click: () => setLoading(true),
+            },
         }, "Load Data"));
 
-        ctx.p({ "@classToggle": { "hidden": isLoading } }, "Content goes here...");
+        ctx.p(
+            { "@classToggle": { "hidden": isLoading } },
+            "Content goes here...",
+        );
     });
 }
 ```
 
 ## Resources
 
-- **TuJsHtml Core Rules**: Load `frankjstein-tujshtml` for low-level DOM building rules.
+- **TuJsHtml Core Rules**: Load `frankjstein-tujshtml` for low-level DOM
+  building rules.
 - **Signals**: Load `frankjstein-kagebunshin` for reactivity patterns.
-- **IoC Container**: Load `frankjstein-tucontainer` if the component requires complex service injections.
+- **IoC Container**: Load `frankjstein-tucontainer` if the component requires
+  complex service injections.

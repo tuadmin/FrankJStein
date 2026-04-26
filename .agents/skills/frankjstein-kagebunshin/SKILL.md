@@ -21,25 +21,31 @@ const counter = createSignal(0);
 console.log(counter.value); // Reads the static value
 ```
 
-### 2. Direct Mutation
-Assignment triggers the DOM update magically in the next tick.
+### 2. Direct Mutation (PREFERRED)
+Assignment triggers the DOM update magically in the next tick. For simple logic (counters, toggles), this is the cleanest and most recommended way.
 ```javascript
 counter.value++;
 counter.value = 10;
 ```
 
 ### 3. Destructuring into Tuples (`asTuple`)
-Sometimes (especially inside functions interacting with APIs or if coming from the React ecosystem), it is cleaner to extract an immutable `getter` and `setter`. Use the native `.asTuple` property from the Signal.
+Used when you need to separate the getter from the setter (e.g., React-like patterns, dependency injection, or complex/ambiguous setting logic). 
+
+**Where does `asTuple` shine?**
+- **Semantics and Intent**: Sometimes `setLoading(true)` conveys much more meaning than `isLoading.value = true`. Using an explicit setter can help make the code more readable when the "action" of changing the state is significant.
+- **Complexity and Encapsulation**: If setting requires validation, data sanitization, or triggering side effects, encapsulating that logic in a `setXxx` is preferable to mutating `.value` directly in the component.
+- **Dependency Injection**: Ideal for passing only the setter to child components ("Dumb Components") that don't need to know the current state, only trigger the change.
+
 ```javascript
 const [getCounter, setCounter] = counter.asTuple;
-setCounter(getCounter() + 1);
 
-// If you only need the setter to clean up code:
+// ✅ RECOMMENDED: Use for semantics in complex flows
 const [, setApiResponse] = apiResponse.asTuple;
 
 btnFetch[$].on("click", async () => {
-    setApiResponse("Loading from server...");
-    // ...
+    setApiResponse("Loading from server..."); // Clear intent
+    const data = await fetch(...);
+    setApiResponse(await data.json());
 });
 ```
 
