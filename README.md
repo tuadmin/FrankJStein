@@ -141,7 +141,9 @@ documentación y estandarización del ecosistema de Skills de FrankJStein.
 
 FrankJStein es una librería pensada para humanos, pero construida con una arquitectura clara que facilita la asistencia por Inteligencia Artificial. Si utilizas un Agente de IA para programar, puedes descargar nuestro **Pack de Skills** oficial para que el modelo comprenda instantáneamente los patrones, reglas y convenciones del framework.
 
-- **[Descargar IA Skills (Latest)](https://github.com/tuadmin/FrankJStein/releases/latest/download/ia-frankjstein-skills.zip)**
+- **[Descargar IA Skills (ZIP)](https://github.com/tuadmin/FrankJStein/releases/latest/download/ia-frankjstein-skills.zip)**
+- **[Contexto para LLMs (llms-full.txt)](https://github.com/tuadmin/FrankJStein/releases/latest/download/llms-full.txt)**
+- **[Mapa de Documentación (llms.txt)](https://github.com/tuadmin/FrankJStein/releases/latest/download/llms.txt)**
 
 ---
 
