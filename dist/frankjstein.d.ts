@@ -406,11 +406,57 @@ declare namespace KageBunshin {
             once: (callback: (newValue: T[K], oldValue: T[K]) => void,) => UnsubscribeFunction
         };
     } & T & {
-        (callback: (data: T) => void, isOneTime?: boolean): UnsubscribeFunction;
+        //(callback: (data: T) => void, isOneTime?: boolean): UnsubscribeFunction;
+        (callback: (data: T) => void): UnsubscribeFunction;
     } & Ninjutso<T>
 
     export type createKageBunshinObject = <T extends object>(obj: T, isAliveCallback?: IsAliveCallback) => KageBunshinNoJutsu<T>;
 }
+/**
+ * Creates a reactive Proxy "Clone" of an object (Kage Bunshin No Jutsu).
+ * All clones share experience (state) in real-time with the original source.
+ * Each property is accessible via a '$' prefixed node (Signal) for granular 
+ * observation and seamless UI reactivity.
+ * 
+ * @es Crea un Proxy reactivo "Clon" de un objeto (Kage Bunshin No Jutsu).
+ * Todos los clones comparten experiencia (estado) en tiempo real con la fuente original.
+ * Cada propiedad es accesible vía un nodo con prefijo '$' (Signal) para 
+ * observación granular y reactividad fluida con la UI.
+ * 
+ * @template {object} T
+ * @param {T} obj - The base object to be cloned. / El objeto base a ser clonado.
+ * @returns {KageBunshinNoJutsu<T>} The reactive clone. / El clon reactivo.
+ * 
+ * @example
+ * const naruto = { power: 10 };
+ * const clon1 = createKageBunshinObject(naruto);
+ * 
+ * // --- UI REACTIVITY (TuJsHtml) ---
+ * // ✅ REACTIVE: Binds the Signal. UI updates automatically.
+ * // ✅ REACTIVO: Vincula el Signal. La UI se actualiza automáticamente.
+ * tags.p`Power: ${clon1.$power}`; 
+ * 
+ * // ❌ STATIC: Snapshot only. UI will NOT update.
+ * // ❌ ESTÁTICO: Solo una captura. La UI NO se actualizará.
+ * tags.p`Power: ${clon1.power}`; 
+ * 
+ * // --- OBSERVATION ---
+ * // Property Hook ($ prefix): Observe specific changes.
+ * // Hook de Propiedad (prefijo $): Observa cambios específicos.
+ * clon1.$power((val, old) => console.log(`Power: ${old} -> ${val}`));
+ * 
+ * // One-time Hook: Second parameter 'true' makes it auto-destroy after first run.
+ * // Hook de un solo uso: El segundo parámetro 'true' hace que se auto-destruya tras la primera ejecución.
+ * clon1.$power((val) => console.log("First hit!"), true);
+ * 
+ * // Batch Hook (Callable): Observe any change in the entire object.
+ * // Hook en Lote (Llamable): Observa cualquier cambio en todo el objeto.
+ * clon1((data) => console.log("State updated:", data));
+ * 
+ * // Mutation: Synchronizes all instances immediately.
+ * // Mutación: Sincroniza todas las instancias inmediatamente.
+ * clon1.power = 20; 
+ */
 declare const createKageBunshinObject: KageBunshin.createKageBunshinObject;
 
 /**
@@ -5446,6 +5492,79 @@ declare const Remote: {
 };
 
 /**
+ * FrankJStein: TuDiscovery Type Definitions
+ * 
+ * Functional Service Locator and Module Discovery Hub.
+ * Alternative to Import Map Aliases, ideal for environments with restricted resolution (Workers).
+ * 
+ * @es Localizador de Servicios Funcional y Hub de Descubrimiento de Módulos.
+ * Alternativa a los Import Map Aliases, ideal para entornos con resolución restringida (Workers).
+ */
+
+/**
+ * @template T
+ * A discovery node represents a module that can be resolved lazily.
+ * 
+ * @es Un nodo de descubrimiento representa un módulo que puede resolverse de forma perezosa.
+ */
+type DiscoveryNode<T> = {
+    /** 
+     * Call as a function with an optional callback to use the module once resolved.
+     * @es Llamar como función con un callback opcional para usar el módulo una vez resuelto.
+     * 
+     * @example 
+     * Hub.math(m => m.sum(1, 2));
+     */
+    (cb?: (module: T) => void): Promise<T>;
+} & Promise<T>;
+
+/**
+ * Registry of module loaders.
+ * @es Registro de cargadores de módulos.
+ */
+type DiscoveryRegistry = Record<string, () => Promise<any>>;
+
+/**
+ * Map of discovery nodes based on the registry.
+ * @es Mapa de nodos de descubrimiento basado en el registro.
+ */
+type TuDiscoveryMap<T extends DiscoveryRegistry> = {
+    [K in keyof T]: DiscoveryNode<Awaited<ReturnType<T[K]>>>;
+} & {
+    /** 
+     * Run a smoke test on all registered modules to ensure they are resolvable.
+     * @es Ejecuta una prueba de humo en todos los módulos registrados para asegurar que son resolubles.
+     */
+    "$verify"(): Promise<void>;
+};
+
+declare class TuDiscovery {
+    /**
+     * Creates a discovery hub that lazily loads modules and provides dual-usage (Promise/Callback).
+     * Ideal for maintaining absolute paths and avoiding "Alias Infection" in Workers.
+     * 
+     * @es Crea un hub de descubrimiento que carga módulos de forma perezosa y provee uso dual (Promesa/Callback).
+     * Ideal para mantener rutas absolutas/relativas y evitar la "Infección de Alias" en Workers.
+     * 
+     * @template T
+     * @param registry - Object mapping keys to import() loaders.
+     * 
+     * @example
+     * const Hub = TuDiscovery.create({
+     *   math: () => import("./math.js"),
+     *   auth: () => import("./auth.js")
+     * });
+     * 
+     * // Use as Promise
+     * const m = await Hub.math;
+     * 
+     * // Use as Callback
+     * Hub.math(m => m.sum(1, 2));
+     */
+    static create<T extends DiscoveryRegistry>(registry: T): TuDiscoveryMap<T>;
+}
+
+/**
  * @file TuContainer.d.ts
  * @description Type definitions for the Sovereign DI Kernel.
  * @es Definiciones de tipos para el Núcleo de Inyección Soberano.
@@ -5478,7 +5597,7 @@ declare class TuScope {
     dispose(): void;
 }
 
-type Constructor<T = unknown> = new (...args: any[]) => T;
+type Constructor<T = unknown> = new (...args: unknown[]) => T;
 type Token<T = unknown> = Constructor<T> | string | symbol;
 type Factory<T = unknown> = (ctx: TuScope) => T;
 
@@ -5557,4 +5676,4 @@ declare const DI: {
     readonly LazyInject: typeof TuLazyInject;
 };
 
-export { AnyNode, DI, ELEMENT_UTIL, ObservableDraft, ReactiveDraft, Remote, RemoteGlobalModule, RemoteLocalModule, RemoteModule, RemoteSharedModule, TUtils, TuContainer, TuInject, TuJsHtml, TuLazyInject, TuScope, TuTemplateHtml, TuWebUtils, createComputedSignal, createKageBunshinObject, createSignal, createTemplateHtml, debounce, debounceEvents, makeReactive, textSize, textSizeEvents, trim };
+export { AnyNode, DI, ELEMENT_UTIL, ObservableDraft, ReactiveDraft, Remote, RemoteGlobalModule, RemoteLocalModule, RemoteModule, RemoteSharedModule, TUtils, TuContainer, TuDiscovery, TuInject, TuJsHtml, TuLazyInject, TuScope, TuTemplateHtml, TuWebUtils, createComputedSignal, createKageBunshinObject, createSignal, createTemplateHtml, debounce, debounceEvents, makeReactive, textSize, textSizeEvents, trim };

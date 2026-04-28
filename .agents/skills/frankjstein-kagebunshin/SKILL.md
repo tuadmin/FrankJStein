@@ -67,5 +67,26 @@ const total = createComputedSignal(sig1, sig2, sig3, (v1, v2, v3) => {
 });
 ```
 
+### 5. Reactive Objects (`createKageBunshinObject`)
+Recommended for large objects where creating individual signals for every property would be tedious or memory-intensive.
+
+**The $Signal Pattern (MANDATORY)**:
+- `clon.prop`: Static snapshot (Non-reactive in UI).
+- `clon.$prop`: Reactive Signal (Use this for DOM bindings).
+
+**Caution**: Optimized for flat or medium-complexity objects. Deeply nested graphs are currently under stress-testing; use with discretion for mission-critical deep hierarchies.
+
+```javascript
+const naruto = { name: "Naruto", power: 10 };
+const clon = createKageBunshinObject(naruto);
+
+// ✅ Correct for UI Reactivity
+tags.p`Level: ${clon.$power}`; 
+
+// ✅ MANDATORY: Mutate the CLONE, not the original object
+// This triggers the signals and syncs the root 'naruto' object.
+clon.power = 9000; 
+```
+
 ### 5. AI Hallucination Warning 🚨
 Do NOT assume the existence of standard signal APIs like `effect()`, `watch()`, or implicit tracking inside computed callbacks. Kagebunshin (the signal engine) intentionally omits them to preserve `O(1)` performance and memory safety (clones returning to the root). Stick strictly to the signatures provided in `frankjstein.d.ts`.

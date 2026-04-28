@@ -39,10 +39,34 @@ const sig2 = createSignal(20);
 const total = createComputedSignal(sig1, sig2, (v1, v2) => v1 + v2);
 ```
 
-## Funcionalidades Avanzadas y Origen del Nombre
-El sistema recibe el nombre de **KageBunshin** (Clones de Sombra) debido a cómo maneja sus abstracciones experimentales: **`ReactiveDraft`** y **`ObservableDraft`**. 
+## Objetos Reactivos (`createKageBunshinObject`)
 
-La analogía es directa: permiten crear clones reactivos de estado que comparten la "experiencia" con la raíz, controlando estrictamente la memoria para evitar que queden estados huérfanos dando vueltas, y convergiendo todo de vuelta a la fuente de la verdad.
-*(Estas implementaciones experimentales se encuentran en la definición `.d.ts` pero su uso en producción está a la espera de documentación madura).*
+Cuando tienes un objeto grande o complejo y no quieres crear un Signal por cada propiedad, `createKageBunshinObject` crea un clon Proxy que sincroniza todas las instancias en tiempo real.
+
+### El Patrón de Nodo Reactivo ($)
+
+Para mantener el rendimiento y la claridad, las propiedades de un objeto Bunshin se dividen en dos:
+1.  **`clon.power`**: Devuelve el valor primitivo (Snapshot). **NO** es reactivo en la UI.
+2.  **`clon.$power`**: Devuelve un **Signal** vinculado a esa propiedad. Es lo que debes usar en `TuJsHtml` para que la UI se actualice sola.
+
+```javascript
+import { createKageBunshinObject } from "frankjstein";
+
+const naruto = { name: "Naruto", power: 10 };
+const clon = createKageBunshinObject(naruto);
+
+// ✅ Reactivo: Se actualizará solo cuando cambie el poder
+tags.p`Poder actual: ${clon.$power}`;
+
+// Mutación sincronizada (DEBE hacerse siempre en el clon)
+// Esto dispara los signals y actualiza el objeto raíz 'naruto'
+clon.power = 9000; 
+```
+
+## Borradores e Inmutabilidad (`ReactiveDraft`)
+
+Basado en la misma tecnología de Proxies, `ReactiveDraft` permite crear una copia aislada de un objeto para edición (como un formulario). Los cambios permanecen en el "clon de sombra" y solo viajan al objeto original cuando se llama explícitamente a `.update()`.
+
+*(Esta implementación es el precursor de la convergencia de estado en arquitecturas complejas).*
 
 > **⚠️ Advertencia Arquitectónica**: Los Signals de FrankJStein **NO SON** iguales a los de React, SolidJS o TC39. **No poseen implicit watchers ni `effect()`**. Esto es por diseño para mantener el rendimiento al máximo.

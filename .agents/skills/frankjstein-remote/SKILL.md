@@ -9,9 +9,14 @@ metadata:
   version: "1.0"
 ---
 
-## Critical Patterns for RemoteModule
-
 Never block the Main Thread with heavy calculations, cryptography, or massive array manipulations. Delegate that work to a native transparent Worker using the `RemoteModule` class.
+
+### ⚠️ CRITICAL: The "Alias Infection" Warning
+**NEVER use Import Map Aliases (`#/`, `@/`) inside code that will be loaded by a Worker.** 
+Workers run in a separate context that DOES NOT INHERIT the Import Map from the HTML page. 
+
+- **Symptom**: `Worker Failure: Loading or execution error... Likely due to unsupported Import Map Aliases (#/@)`.
+- **Solution**: Use relative paths (`./`, `../`) or the `TuDiscovery` pattern to resolve dependencies without relying on aliases.
 
 ### 1. The Isolated Service (Worker)
 Create a class that extends `RemoteModule` and expose it at the end of the file by invoking its own inherited static method `register()`. NEVER use `RemoteModule.register()` directly! Always use the child class.
@@ -70,4 +75,31 @@ export class GlobalDBService extends Remote.Local {
 
 // Register using the child class
 GlobalDBService.register(import.meta);
+```
+
+### 4. The TuDiscovery Pattern & Bridge (Worker Safe)
+When your worker needs dependencies, use a central Hub that re-exports FrankJStein utilities using relative paths. This prevents "Alias Infection".
+
+**Example**:
+```javascript
+// hub.js (Project Bridge)
+import { TuDiscovery, Remote } from "./frankjstein.js"; // Relative path!
+
+export const Hub = TuDiscovery.create({
+    repo: () => import("./repositories/DataRepo.js"),
+    math: () => import("./utils/Math.js")
+});
+
+export { Remote };
+
+// worker.js
+import { Hub, Remote } from "./../core/hub.js"; // Only one import!
+
+export class MyService extends Remote.Local {
+    async run() {
+        const repo = await Hub.repo;
+        return repo.fetch();
+    }
+}
+MyService.register(import.meta);
 ```

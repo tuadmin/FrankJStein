@@ -36,7 +36,11 @@ You are working with FrankJStein, a native, no-transpiler JavaScript framework f
    **AGENT RULE**: If you are tasked with creating or refactoring modules using FrankJStein, you MUST ensure a TypeScript linter is active. If the user does not have one configured, you must request or suggest setting one up. The `.d.ts` file is the ultimate internal validator.
 2. **Zero React/JSX**: No Virtual DOM, JSX, Webpack, or Vite required. Do not propose using classic React Hooks (`useState`, `useEffect`).
 3. **Decoupling**: Keep heavy state and network fetching away from the UI. Centralize it in classes registered in the `TuContainer` (Dependency Injection).
-4. **Respect the Main Thread**: Use `RemoteModule` for complex CPU calculations or slow promises.
+4. **Respect the Main Thread**: Use `RemoteModule` for complex CPU calculations.
+5. **Module Discovery**: Use `TuDiscovery` as a central hub for lazy loading and dependency mapping. 
+   - **USE CASE**: Obligatory for Workers/Remote contexts to avoid Import Map Alias issues.
+   - **USE CASE**: Recommended for specific, high-criticality modules or debugging (`.$verify()`).
+   - **ANTI-PATTERN**: Do not use it for everything; standard ES Modules and Aliases are preferred for the main application structure.
 
 ### Sub-Skills Index (Load as needed)
 
