@@ -155,6 +155,12 @@ tags.p(`Clicks: ${tags.i(count)}`);
 // ✅ CORRECT: Tagged Template syntax. The framework intercepts the Signal/Node.
 tags.p`Clicks: ${count}`;
 tags.p`Clicks: ${tags.i(count)}`;
+
+// ❌ HARD RULE: NEVER wrap component calls in JS Template Literals (${}) when nesting.
+// This converts the DOM Node into the string "[object HTMLElement]".
+div({ className: "parent" }, `${span("error")}`); // ❌ FATAL ERROR
+div({ className: "parent" }, span("correct"));   // ✅ CORRECT: Direct nesting
+div({ className: "parent" }, tags.span`correct`); // ✅ CORRECT: Tagged template nesting
 ```
 
 **EXCEPTION FOR PERFORMANCE (`$block`):**

@@ -32,6 +32,9 @@ import { TuContainer } from "frankjstein";
 
 TuContainer.addSingleton(AuthService);
 TuContainer.addTransient(ApiService);
+
+// ⚠️ CRITICAL RULE: Registration MUST occur before any call to .resolve()
+// Ensure the Kernel/Entry point is loaded before your components try to inject.
 ```
 
 ### 2. Recommended Injection: `TuLazyInject`

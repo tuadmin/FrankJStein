@@ -83,10 +83,13 @@ const clon = createKageBunshinObject(naruto);
 // ✅ Correct for UI Reactivity
 tags.p`Level: ${clon.$power}`; 
 
+// ❌ WRONG: Non-reactive. UI will NOT update when power changes.
+tags.p`Level: ${clon.power}`; 
+
 // ✅ MANDATORY: Mutate the CLONE, not the original object
 // This triggers the signals and syncs the root 'naruto' object.
 clon.power = 9000; 
 ```
 
-### 5. AI Hallucination Warning 🚨
+### 6. AI Hallucination Warning 🚨
 Do NOT assume the existence of standard signal APIs like `effect()`, `watch()`, or implicit tracking inside computed callbacks. Kagebunshin (the signal engine) intentionally omits them to preserve `O(1)` performance and memory safety (clones returning to the root). Stick strictly to the signatures provided in `frankjstein.d.ts`.
