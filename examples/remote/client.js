@@ -26,13 +26,13 @@ const app = new TuJsHtml(function (tags) {
 
             //const numInput = input({ type: "number", value: 35, style: "margin-right: 10px; padding: 5px;" });
             const numInput = input({ type: "number", value: 35 });
-            // tujshtml de libertado pero no tanta
+            // TuJsHtml te da libertad pero no tanta, pero se amolda a tu estilo
             numInput.setAttribute("style", "margin-right: 10px; padding: 5px;");
             const btnCalc = button({
                 style: { padding: "5px 10px", cursor: "pointer" }
             }, "Calcular Pesado");
 
-            p({ style: { color: "green", fontWight: "bold" } }, fibResult);
+            p({ style: { color: "green", fontWeight: "bold" } }, fibResult);
 
             btnCalc[$].on("click", async () => {
                 const val = Number(numInput.value);
@@ -64,8 +64,8 @@ const app = new TuJsHtml(function (tags) {
         p`Iniciando el puente de Web Worker...`;
     });
 
-    // Consola de Logs Reactiva, consumiendo el Signal y formatedando los saltos de línea a BRs
-    // no eta implementado aun @innerHTML
+    // Consola de Logs Reactiva, consumiendo el Signal y formateando los saltos de línea a BRs
+    // no está implementado aún @innerHTML
     // div({ class: "log-box", "@innerHTML": createSignal(() => logs.value.replace(/\n/g, '<br>')) });
     div({ className: "log-box" }, (tags, refDiv) => {
         createComputedSignal(logs, value => {
