@@ -76,6 +76,9 @@ acción.
   `TuLazyInject`.
 - **[RemoteModule (Web Workers)](./docs/remote.md)**: El puente de Workers para
   procesar tareas pesadas de CPU sin congelar el Main Thread.
+- **[TuDiscovery (Service Discovery)](./docs/tudiscovery.md)**: Localizador de
+  servicios funcional para gestionar importaciones perezosas y evitar errores de
+  resolución de alias en Workers (Bridge Pattern).
 
 > Te recomendamos encarecidamente escribir tus módulos consumiendo este
 > framework en archivos `.ts` (o habilitar la validación vía JSDoc). El proyecto
@@ -130,10 +133,17 @@ nullilac (Licencia MIT).
 directrices para agentes de Inteligencia Artificial de este proyecto están
 fuertemente inspiradas e impulsadas por el framework de
 [Gentleman Programming (gentle-ai)](https://github.com/Gentleman-Programming/gentle-ai).
-
 **Gemini Antigravity**: Reconocimiento a la IA de Google (Antigravity) por su
 colaboración como Arquitecto de Software en la redacción, formalización de la
 documentación y estandarización del ecosistema de Skills de FrankJStein.
+
+## 🤖 Soporte para Agentes de IA (LLMs)
+
+FrankJStein es una librería pensada para humanos, pero construida con una arquitectura clara que facilita la asistencia por Inteligencia Artificial. Si utilizas un Agente de IA para programar, puedes descargar nuestro **Pack de Skills** oficial para que el modelo comprenda instantáneamente los patrones, reglas y convenciones del framework.
+
+- **[Descargar IA Skills (Latest)](https://github.com/tuadmin/FrankJStein/releases/latest/download/ia-frankjstein-skills.zip)**
+
+---
 
 ## ❤️ Apoya el proyecto
 

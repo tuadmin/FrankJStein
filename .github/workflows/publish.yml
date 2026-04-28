@@ -39,6 +39,11 @@ jobs:
                   node-version: "25"
                   registry-url: "https://registry.npmjs.org/"
 
+            - name: 🥟 Configurar Bun
+              uses: oven-sh/setup-bun@v2
+              with:
+                bun-version: latest
+
             # [TEMPLATE] Si en futuros proyectos el código NO está pre-compilado en el repositorio,
             # descomenta esto para que GitHub compile la carpeta 'dist/' automáticamente.
             # - name: 📦 Compilar proyecto
@@ -75,6 +80,15 @@ jobs:
                   # [TEMPLATE] Cambia 'ejemplos-frankjstein.zip' por el nombre de tu futuro proyecto
                   zip -r ejemplos-frankjstein.zip examples/
 
+            - name: 🧠 Generar Documentación Universal para IAs (llms.txt)
+              run: |
+                  bun scripts/bundle-ai-docs.js
+
+            - name: 🤖 Empaquetar AI Agent Skills
+              run: |
+                  # Comprimimos la carpeta de skills para que las IAs puedan descargarla de un solo ZIP
+                  zip -r ia-frankjstein-skills.zip .agents/skills/
+
             - name: 📢 Crear GitHub Release y Adjuntar Archivos
               uses: softprops/action-gh-release@v2
               with:
@@ -84,6 +98,9 @@ jobs:
                       dist/frankjstein.js
                       dist/frankjstein.d.ts
                       ejemplos-frankjstein.zip
+                      ia-frankjstein-skills.zip
+                      llms.txt
+                      llms-full.txt
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
