@@ -28,63 +28,47 @@ import { createSignal, ELEMENT_UTIL as $, TuJsHtml } from "frankjstein";
 
 ## ✨ Un Vistazo Rápido
 
-FrankJStein se compone de módulos hiper-optimizados que puedes usar en conjunto
-o por separado. Aquí tienes un ejemplo de cómo se ve la construcción de UI
-usando `TuJsHtml`:
+FrankJStein se compone de módulos hiper-optimizados que puedes usar en conjunto o por separado. Observa cómo `TuJsHtml` y `KageBunshin` (Signals) se combinan para crear una UI reactiva sin esfuerzo:
 
 ```javascript
 import { createSignal, ELEMENT_UTIL as $, TuJsHtml } from "frankjstein";
 
-const app = new TuJsHtml(function (tags) {
-  const { div, h1, p, button } = tags;
+/** @param {import("frankjstein").TuJsHtml.Types.Tags} tags */
+const app = new TuJsHtml((tags) => {
   const contador = createSignal(0);
 
-  div(() => {
-    h1`Hola FrankJStein`;
-    p`Clicks: ${contador}`;
-    // Funciona pero no recomiendo
-    /*button("Sumar", (_) => _().style = "margin-top: 10px;")[$].on(
-            "click",
-            () => contador.value++,
-        );/**/
-    button`sumar`.addEventListener("click", (e) => contador.value++);
-    //button({style:{marginTop:"10px"}},'click')[$].on("click",e=>contador.value++)
+  tags.div({ className: "counter-card" }, (ctx) => {
+    ctx.h1`Hola FrankJStein`;
+    ctx.p`Clicks actuales: ${contador}`;
+    
+    ctx.button({ 
+      style: { marginTop: "10px" },
+      "@on": { click: () => contador.value++ }
+    }, "Incrementar");
   });
 });
 
 document.body.append(app);
 ```
 
-## 📚 Documentación y Arquitectura (Hub)
+## 📚 Documentación y Soberanía
 
-Para mantener este archivo limpio, la documentación técnica exhaustiva, patrones
-de arquitectura y guías se encuentran divididas por módulos. En un futuro, estos
-archivos alimentarán nuestro GitHub Pages.
+Para mantener este archivo limpio, la documentación técnica exhaustiva se divide por módulos. Si eres un desarrollador humano o una IA buscando entender las reglas de oro del framework, consulta nuestro manifiesto de soberanía:
 
-Además, te invitamos a explorar la carpeta `examples/` para ver el framework en
-acción.
+- **[AGENTS.md (El Manifiesto)](./AGENTS.md)**: La ley suprema del repositorio y reglas de oro para IAs.
+- **[Project Blueprint (Mapa del Repositorio)](./docs/project-blueprint.md)**: La guía definitiva para entender la estructura, carpetas y filosofía del código.
 
-### Módulos y Subsistemas
+### Módulos y Subsistemas (Índice Técnico)
 
-- **[TuJsHtml (DOM Builder & UI)](./docs/tujshtml/README.md)**: Construcción de
-  interfaces nativas, uso de Template Literals y manipulación de nodos de alto
-  rendimiento.
-- **[KageBunshin (Signals & Reactividad)](./docs/kagebunshin.md)**: Reactividad
-  granular extrema, `createSignal` y tuplas mutables.
-- **[TuContainer (Inyección de Dependencias)](./docs/tucontainer.md)**: El
-  Kernel de DI para separar y aislar tu lógica de negocio de la vista usando
-  `TuLazyInject`.
-- **[RemoteModule (Web Workers)](./docs/remote.md)**: El puente de Workers para
-  procesar tareas pesadas de CPU sin congelar el Main Thread.
-- **[TuDiscovery (Service Discovery)](./docs/tudiscovery.md)**: Localizador de
-  servicios funcional para gestionar importaciones perezosas y evitar errores de
-  resolución de alias en Workers (Bridge Pattern).
+- **[TuJsHtml (DOM Builder & UI)](./docs/tujshtml/README.md)**: Construcción de interfaces nativas, [templates](./docs/tujshtml/templates.md) y [suspense](./docs/tujshtml/suspense-and-blocks.md).
+- **[Component Design (Patrones y Estructura)](./docs/component-design.md)**: Cómo diseñar componentes reutilizables y "Smart Components".
+- **[KageBunshin (Signals & Reactividad)](./docs/kagebunshin.md)**: Reactividad granular extrema y estados mutables.
+- **[TuContainer (Inyección de Dependencias)](./docs/tucontainer.md)**: Kernel de DI para desacoplar lógica de negocio.
+- **[RemoteModule (Web Workers)](./docs/remote.md)**: Multi-threading nativo para tareas pesadas de CPU.
+- **[TuDiscovery (Service Discovery)](./docs/tudiscovery.md)**: Localizador de servicios y patrón Bridge para Workers.
 
-> Te recomendamos encarecidamente escribir tus módulos consumiendo este
-> framework en archivos `.ts` (o habilitar la validación vía JSDoc). El proyecto
-> distribuye su archivo `frankjstein.d.ts` con tipados extremadamente estrictos.
-> El linter de TypeScript te salvará horas alertándote si un parámetro de
-> configuración está en la posición incorrecta o si estás mutando algo inválido.
+> [!TIP]
+> **El Linter es tu mejor amigo.** FrankJStein distribuye un archivo `frankjstein.d.ts` con tipados estrictos. Desarrollar en un entorno con soporte para TypeScript/JSDoc te ahorrará horas de debugging al validar tus configuraciones en tiempo real.
 
 ## 🧠 Filosofía y Contribuciones (¿Dónde está `/src`?)
 

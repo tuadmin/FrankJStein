@@ -25,18 +25,16 @@ para:
 - Servicios de estado efímero (como un formulario que se abre y cierra).
 - Controladores específicos de una vista que no deben compartir datos entre
   ellos.
+- Objetos que deben reiniciarse cada vez que se accede a ellos.
 
 ### Scoped (`addScope`)
 
 Registra una dependencia que mantiene una única instancia _por jerarquía de
-Scope (Contexto)_. Aunque en aplicaciones Web Single-Page (SPA) el Singleton
-suele ser suficiente, el `addScope` brilla en entornos SSR, Bun o servidores
-Node.js.
+Scope (Contexto)_. 
 
-Puedes crear contextos anidados usando `TuContainer.createScope()`. Esto te
-permite aislar instancias por cada petición HTTP (fetch) de un usuario, evitando
-que los datos de la sesión del Usuario A se mezclen con los del Usuario B en el
-mismo servidor.
+**Realidad en la Web:** En aplicaciones Web Single-Page (SPA) tradicionales, el `addScope` casi no tiene utilidad real frente al Singleton, a menos que quieras crear **"Micro Universos"** (aislamiento total de contextos para un módulo específico). Sin embargo, brilla en entornos SSR (Server Side Rendering), Bun o servidores Node.js.
+
+Puedes crear contextos anidados usando `TuContainer.createScope()`. Esto te permite aislar instancias por cada petición HTTP (fetch) de un usuario, evitando que los datos de la sesión del Usuario A se mezclen con los del Usuario B en el mismo servidor.
 
 ## Inyección Lazy (`TuLazyInject`)
 
@@ -81,3 +79,52 @@ class ApiService {
 TuContainer.addSingleton(ConfigService);
 TuContainer.addTransient(ApiService);
 ```
+
+## Desacoplamiento con Clases Abstractas (Tokens)
+Para lograr un desacoplamiento real y facilitar el testing (Mocking), se recomienda usar **clases abstractas** como tokens de inyección. Esto permite inyectar una interfaz y registrar una implementación específica.
+
+```javascript
+// 1. Definición (El Contrato)
+class IApiService { 
+    async getData() { throw new Error("Not implemented"); }
+}
+
+// 2. Implementación Real
+class RealApiService extends IApiService {
+    async getData() { return fetch(...); }
+}
+
+// 3. Inyección (Patrón Lazy)
+class MyComponent {
+    // SIEMPRE usar una arrow function para evitar dependencias circulares
+    #api = TuLazyInject(() => IApiService); 
+}
+
+// 4. Registro Simple
+TuContainer.addSingleton(IApiService, RealApiService);
+```
+## Registros con Factorías (Casos Avanzados)
+
+A veces no basta con pasar la clase; quizás necesitás pasarle parámetros al constructor o resolver otras dependencias de forma manual. Para eso usamos las **Factorías**.
+
+### Factoría Simple
+Útil para pasar configuraciones, tokens o mocks en tests.
+```javascript
+TuContainer.addScope(IApiService, () => new RealApiService("api-key-123", "https://prod.api.com"));
+```
+
+### Factoría con Contexto (DI)
+Podés recibir el contexto del contenedor (`di` o `ctx`) para resolver otras dependencias antes de crear tu instancia.
+```javascript
+TuContainer.addSingleton(IApiService, (di) => {
+    // Resolvemos dependencias manualmente antes de instanciar
+    const config = di.resolve(IConfigService);
+    const http = di.resolve(IHttpClient);
+    
+    return new RealApiService(config.token, http);
+});
+```
+
+
+> [!TIP]
+> Al registrar el par `(Abstracción, Implementación)`, podés cambiar el comportamiento de toda la app (por ejemplo, para tests o entornos de desarrollo) modificando una sola línea en el Kernel.

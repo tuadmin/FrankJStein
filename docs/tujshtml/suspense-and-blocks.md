@@ -114,7 +114,14 @@ btnActualizar[$].on("click", () => {
 });
 ```
 
-## Resumen de Cuándo Usar Qué
-- **Funciones Normales (`div() => {}`)**: Estructuras de la UI estáticas o donde querés que las Signals actualizar.
-- **`$f` / `$fragment`**: Para peticiones a APIs, cargas de módulos o cualquier lógica de inicialización que involucre Promesas.
-- **`$block`**: Cuando una Signal condiciona la adición/eliminación de nodos complejos.
+## 🎯 Resumen: ¿Cuándo usar qué?
+
+| Herramienta | Caso de Uso | Mecanismo |
+| :--- | :--- | :--- |
+| **Funciones (`div(() => {})`)** | Estructura base de la UI. | Renderizado directo. Actualizaciones granulares vía Signals. |
+| **`$f` / `$fragment`** | Carga de datos de API o Módulos. | **Suspense**: Espera una Promesa y muestra un fallback (Skeleton UI). |
+| **`$block`** | Lógica condicional compleja (IF/ELSE). | **Re-renderizado total** del bloque cuando el Signal cambia. |
+| **`$tpl`** | Fragmentos estáticos o pre-construidos. | **Aislamiento**: Crea un DocumentFragment sin inyectarlo al padre. |
+
+> [!IMPORTANT]
+> Para el 90% de los casos de reactividad simple (cambiar un texto, un color o un atributo), **no uses `$block`**. Simplemente inyecta el Signal en un Tagged Template. Reserva el `$block` para cambios estructurales profundos (ej: mostrar un formulario o una lista basada en un estado).

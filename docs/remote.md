@@ -21,6 +21,19 @@ El framework provee clases pre-configuradas (disponibles en el namespace `Remote
 3. **`RemoteSharedModule` (o `Remote.Shared`)**: *Multi-Tab*. Utiliza la API nativa de `SharedWorker`. Permite que varias pestañas o ventanas abiertas compartan exactamente la misma instancia del Worker.
 4. **`RemoteGlobalModule` (o `Remote.Global`)**: *Browser Singleton*. Una única instancia maestra para toda la sesión del navegador en su totalidad.
 
+## ⚠️ El Problema de los "Bare Specifiers" (IMPORTANTE)
+Los Web Workers **no soportan Import Map Aliases** (ej: `#services/`) en la mayoría de los navegadores. 
+- **REGLA DE ORO**: Todo import dentro de un archivo de Worker (o dependencias que el Worker consuma) DEBE usar rutas relativas puras (`./` o `../`).
+- Si ves un error de resolución al hacer `.connect()`, revisa tus imports.
+
+## ¿Qué variante de `Remote` elegir?
+
+| Variante | Cuándo usarla | Beneficio |
+| :--- | :--- | :--- |
+| **`Simple`** | Tareas pesadas únicas y aisladas. | Máximo aislamiento de memoria. |
+| **`Local`** | Procesamiento de datos de la sesión actual (SPA). | Ahorro de recursos al reutilizar el Worker en la pestaña. |
+| **`Shared`** | Sincronización entre múltiples pestañas del mismo sitio. | Estado persistente entre ventanas. |
+
 ## Restricciones y Arquitectura
-- **Datos Transferibles**: Ya que subyace en `postMessage`, los argumentos que envíes a los métodos del Worker deben ser serializables (JSON-friendly o `Transferable` objects como `ArrayBuffer`). No puedes pasar funciones o referencias al DOM.
-- **Aislamiento**: Dentro de la clase `HeavyService` en el worker, NO tienes acceso a `document` o `window`. Debes usar APIs propias de Workers.
+- **Datos Transferibles**: Los argumentos deben ser serializables. No puedes pasar funciones o referencias al DOM.
+- **Aislamiento**: Dentro del worker, NO tienes acceso a `document` o `window`.

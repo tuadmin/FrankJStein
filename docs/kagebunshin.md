@@ -28,15 +28,29 @@ setContador(getContador() + 1);
 A diferencia de React, Vue o las propuestas actuales de TC39 donde los computed tienen "watchers automáticos mágicos", en FrankJStein **las dependencias deben declararse explícitamente como argumentos antes del callback**. 
 
 Esto tiene dos beneficios brutales:
-1. Permite un autocompletado y tipado perfecto en TypeScript, dándole conciencia plena al linter.
-2. Evita la pérdida de rendimiento masiva que genera el escaneo profundo de dependencias implícitas.
+1. **Rendimiento O(1)**: El motor sabe exactamente a qué suscribirse sin escaneo profundo de dependencias implícitas (que es costoso).
+2. **Conciencia del Linter**: Autocompletado y validación perfecta de los valores inyectados en el callback.
 
 ```javascript
 const sig1 = createSignal(10);
 const sig2 = createSignal(20);
 
-// Se declaran explícitamente y se inyectan en el callback al final
+// Declaración explícita -> Inyección en el callback
 const total = createComputedSignal(sig1, sig2, (v1, v2) => v1 + v2);
+```
+
+## La Frontera Signal-UI (Sin Effects)
+A diferencia de otros frameworks, los Signals de FrankJStein **no tienen una función `effect()`** genérica por diseño. La reactividad se consume de dos formas:
+
+1. **Inyección en el DOM (Vía TuJsHtml)**: Al pasar un Signal a un Tagged Template (ej: `` tags.p`${count}` ``), el framework crea automáticamente un vínculo granular.
+2. **Suscripción Manual**: Para efectos secundarios no-visuales (logs, sincronización externa), usa `.subscribe()`.
+
+```javascript
+// ✅ Correcto para UI (Granular y Automático)
+tags.p`Contador: ${count}`;
+
+// ✅ Correcto para efectos secundarios (Manual)
+count.subscribe(val => console.log("Cambió a:", val));
 ```
 
 ## Objetos Reactivos (`createKageBunshinObject`)
@@ -69,4 +83,6 @@ Basado en la misma tecnología de Proxies, `ReactiveDraft` permite crear una cop
 
 *(Esta implementación es el precursor de la convergencia de estado en arquitecturas complejas).*
 
-> **⚠️ Advertencia Arquitectónica**: Los Signals de FrankJStein **NO SON** iguales a los de React, SolidJS o TC39. **No poseen implicit watchers ni `effect()`**. Esto es por diseño para mantener el rendimiento al máximo.
+> [!CAUTION]
+> **Advertencia Arquitectónica**: Los Signals de FrankJStein **NO SON** iguales a los de React, SolidJS o la propuesta actual de TC39. **No poseen implicit watchers ni `effect()` automáticos**. 
+> Si vienes de otros frameworks, evita el error de intentar usar reactividad implícita. Aquí todo es explícito y granular para garantizar el máximo rendimiento y control total sobre el Event Loop.
