@@ -1,6 +1,6 @@
 {
     "name": "frankjstein",
-    "version": "0.5.3",
+    "version": "0.5.4",
     "publishConfig": {
         "tag": "alpha",
         "access": "public"
