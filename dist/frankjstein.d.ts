@@ -5233,7 +5233,7 @@ declare function createTemplateHtml<T>(
  * Optimized for Bundled Services, Shared States, and Micro-threads.
  * @author Victor Choque (tuadmin)
  * @package Threading
- * @version 4.1.0
+ * @version 2.1.2
  */
 
 /** Extracts literal values from an object constants */
@@ -5370,7 +5370,7 @@ interface ConnectOptions {
 /**
  * RemoteModule - High-performance Web Worker Bridge
  * Optimized for Bundled Services, Shared States, and Micro-threads.
- * @version 4.1.0
+ * @version 2.1.2
  * @author Victor Choque (tuadmin)
  * @package Threading
  */
@@ -5405,6 +5405,7 @@ type RemoteLink<T, E = undefined> = {
  * **EN:** Standard Worker bridge. Each `connect()` creates a fresh, isolated instance.
  * 
  * **ES:** Puente de Worker estándar. Cada `connect()` crea una instancia nueva y aislada.
+ * @version 2.1
  */
 declare class RemoteModule {
     /** 
@@ -5597,7 +5598,10 @@ declare class TuScope {
     dispose(): void;
 }
 
-type Constructor<T = unknown> = new (...args: unknown[]) => T;
+//export type Constructor<T = unknown> = new (...args: unknown[]) => T;
+// 1. Cambiamos 'new' por 'abstract new'
+type Constructor<T = unknown> = abstract new (...args: unknown[]) => T;
+// 2. El Token automáticamente heredará la capacidad de ser una clase abstracta
 type Token<T = unknown> = Constructor<T> | string | symbol;
 type Factory<T = unknown> = (ctx: TuScope) => T;
 
