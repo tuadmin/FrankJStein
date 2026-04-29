@@ -87,15 +87,12 @@ import { createKageBunshinObject, createSignal } from "frankjstein";
 const count = createSignal(0);
 const user = createKageBunshinObject({ name: "Naruto" });
 
-// ❌ WRONG: Non-reactive. UI will NOT update when power changes.
-tags.p`Level: ${clon.power}`; 
-
 // ✅ CORRECT
 tags.div((ctx) => {
     ctx.p`Counter: ${count}`;        // Standalone Signal
     ctx.p`User: ${user.$name}`;      // Bunshin Object Property
 });
-
+```
 // ✅ MANDATORY: Mutate the CLONE, not the original object
 // This triggers the signals and syncs the root 'naruto' object.
 clon.power = 9000; 

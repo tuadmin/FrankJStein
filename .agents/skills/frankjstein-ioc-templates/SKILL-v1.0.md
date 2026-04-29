@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
     author: gentleman-programming
-    version: "1.1"
+    version: "1.0"
 ---
 
 ## When to Use
@@ -42,18 +42,11 @@ export class IApiService {
 import { DI, TuContainer } from "frankjstein";
 import { RealApiService } from "./RealApiService.js";
 
-// SIMPLE REGISTRATION (Recommended): If the constructor has no parameters or dependencies.
+// SIMPLE REGISTRATION (Recommended): If the constructor has no parameters or doesn't need manual DI.
 TuContainer.addSingleton(IApiService, RealApiService);
 
 // FACTORY REGISTRATION: Use ONLY if you must manually pass parameters to the constructor.
-// Useful for tests (mocks/fakes) or passing configuration strings.
-TuContainer.addScope(IApiService, () => new RealApiService("apikey-xxx", "https://api.dev"));
-
-// CONTEXT-AWARE FACTORY: Use the 'di' context to resolve other dependencies manually.
-TuContainer.addSingleton(IApiService, (di) => {
-    const config = di.resolve(IConfigService);
-    return new RealApiService(config.apiKey, config.url, di.resolve(IHttpClient));
-});
+// TuContainer.addSingleton(IApiService, (ctx) => new RealApiService("apikey", ctx.resolve(IOtherService)));
 
 // Alternatively using the DI alias:
 // DI.Container.addSingleton(IApiService, RealApiService);

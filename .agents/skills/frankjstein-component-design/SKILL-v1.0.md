@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
     author: gentleman-programming
-    version: "1.1"
+    version: "1.0"
 ---
 
 ## When to Use
@@ -159,8 +159,7 @@ export function ActionButton(tags, config, label) {
 ### The Smart View Component
 
 ```javascript
-import { createSignal, TuLazyInject } from "frankjstein";
-import { IAuthService } from "../interfaces/IAuthService.js";
+import { createSignal } from "frankjstein";
 // Assuming ActionButton and Tags typedef are imported/available
 
 /**

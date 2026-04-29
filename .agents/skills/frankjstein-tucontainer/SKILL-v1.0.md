@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "1.1"
+  version: "1.0"
 ---
 
 ## Critical Patterns for TuContainer (DI)
@@ -32,9 +32,6 @@ import { TuContainer } from "frankjstein";
 
 TuContainer.addSingleton(AuthService);
 TuContainer.addTransient(ApiService);
-
-// ⚠️ CRITICAL RULE: Registration MUST occur before any call to .resolve()
-// Ensure the Kernel/Entry point is loaded before your components try to inject.
 ```
 
 ### 2. Recommended Injection: `TuLazyInject`
@@ -57,17 +54,17 @@ circular references during instantiation.
 > import { DI, TuLazyInject } from "frankjstein";
 >
 > export class ApiService {
->   // ✅ CORRECT: Injecting via Abstract Token
+>   // TS explicitly typed (Option A)
 >   #auth = TuLazyInject<IAuthService>(() => IAuthService);
 >
->   // ✅ CORRECT: Decoupled from implementation
+>   // TS explicitly typed using the DI namespace (Option B)
 >   #config = DI.LazyInject<IConfigService>(() => IConfigService);
 > }
 > ```
 
 ```javascript
 import { TuLazyInject } from "frankjstein";
-import { IAuthService } from "./interfaces/IAuthService.js";
+import { AuthService } from "./auth.service";
 
 export class ApiService {
   // RECOMMENDED: Lazy injection via Abstract Token
@@ -88,7 +85,7 @@ To access the master service and its data from the UI builder function
 
 ```javascript
 import { TuContainer } from "frankjstein";
-import { ApiService } from "./services.js";
+import { ApiService } from "./services";
 
 // Get the instance configured and tracked by the Kernel
 const api = TuContainer.resolve(ApiService);

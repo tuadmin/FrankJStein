@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "1.1"
+  version: "1.0"
 ---
 
 ## When to Use
@@ -112,7 +112,7 @@ export function UserProfile(tags, userService) {
 
   return tags.div(
     tags.h1`Profile`,
-    tags.p`Name: ${userName}`, // UI reacts to the Signal
+    tags.p("Name: ", userName), // UI reacts to the Signal
   );
 }
 ```
