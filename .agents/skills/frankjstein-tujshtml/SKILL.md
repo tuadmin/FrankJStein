@@ -100,19 +100,24 @@ tags.$f(async ({ h2 }) => {
 });
 ```
 
-### 6. Avoid @innerHTML (Not Yet Implemented)
+### 6. Native Property Reactivity (`innerHTML`, `textContent`, etc.)
 
-If you need to inject pure reactive HTML from a Signal, the framework does not
-yet support the `@innerHTML` binding. The idiomatic and high-performance way to
-achieve this is by capturing the node reference in the tag's callback and
-mutating it manually with a `createComputedSignal`:
+You do NOT need special `@` directives for standard DOM properties. Thanks to the framework's strict typing (`ConfigureAttributes` and `CatchExcessProps`), **any writable native property accepts a `Signal` directly**.
+
+When you pass a Signal to a native property (like `textContent`, `innerHTML`, `id`, `disabled`), Kagebunshin automatically binds it to the DOM node.
+
+> [!NOTE]
+> The linter's `SpecialExclusionsProps` actively blocks read-only, complex, or internal DOM properties (like `childNodes` or `outerHTML`). But standard writable properties are natively reactive!
 
 ```javascript
-// CORRECT
-div({ className: "log-box" }, (tags, refDiv) => {
-  createComputedSignal(logs, (value) => {
-    refDiv.innerHTML = value.replace(/\n/g, "<br>");
-  });
+const userHtml = createSignal("<b>Loading...</b>");
+const isDisabled = createSignal(true);
+
+// ✅ CORRECT: Just pass the Signal directly to the native property! No @ needed.
+button({ 
+  innerHTML: userHtml, 
+  disabled: isDisabled,
+  className: "btn"
 });
 ```
 
@@ -218,3 +223,233 @@ Card(() => {
 });
 ```
 This pattern minimizes code duplication and improves semantic readability without the overhead of full component classes.
+
+### 11. Configuration Directives (`@`) — Complete Reference
+
+All configuration keys starting with `@` are **special TuJsHtml directives**. They appear in the first argument (config object) of any tag. They are defined in `DirectiveAttributes<TElement>` in `frankjstein.d.ts`.
+
+Most directives accept `SignalOr<T>` — meaning the value can be **either static or a Signal**. When a Signal is passed, the directive becomes reactive and updates automatically. When a static value is passed, it is evaluated once at render time.
+
+```typescript
+// From the d.ts — SignalOr<T> definition:
+type SignalOr<T> = T | TuSignal<T> | Subscribable<T>;
+// → pass T directly (static) OR pass a Signal<T> (reactive)
+```
+
+#### Directive Reference Table
+
+| Directive | Type | Description |
+|-----------|------|-------------|
+| `@classToggle` | `{ [className]: SignalOr<boolean> }` | Toggle one or more CSS classes. Each key is a class name; the value is a static boolean or a Signal. |
+| `@addClass` | `SignalOr<string>` | Appends one or more class names to the element. Combines with existing classes. |
+| `@attrs` | `GetRawAttributesMap<TElement>` | Set raw HTML/SVG/MathML attributes (type-safe per element). Also accepts `data-*` and `aria-*`. |
+| `@on` | `EventListenerMap<TElement>` | Attach persistent event listeners. |
+| `@one` / `@once` | `EventListenerMap<TElement>` | Attach one-time event listeners (fire once, then remove). |
+| `@bind:value` | `SignalOr<string \| number \| string[]>` | Two-way binding for input value. |
+| `@bind:checked` | `SignalOr<boolean>` | Two-way binding for checkbox/radio checked state. |
+| `@bind:form` | `SignalOr<FormStateObject>` | Captures form submit data into a Signal. Prevents default submission. |
+
+
+#### `@classToggle` — Static vs Reactive
+
+`@classToggle` is the most commonly misused directive. It is intentionally flexible:
+
+```javascript
+// ✅ STATIC: Condition set once at render — never changes
+div({ "@classToggle": { "is-admin": user.isAdmin } });    // boolean from data
+
+// ✅ REACTIVE: Signal — class toggles automatically on every change
+div({ "@classToggle": { "active": isActiveSignal } });
+
+// ✅ MULTIPLE CLASSES — mix static and reactive freely
+div({
+    "@classToggle": {
+        "card":        true,               // always applied (static)
+        "card--error": hasErrorSignal,     // reactive Signal
+        "card--large": config.largeMode,   // static config boolean
+    }
+});
+
+// ⚠️ TRAP: !signal evaluates the signal object itself (truthy) → always false
+div({ "@classToggle": { "hidden": !isLoadingSignal } });   // ❌ static false
+
+// ✅ CORRECT: Use createComputedSignal for reactive negation
+div({ "@classToggle": { "hidden": createComputedSignal(isLoadingSignal, v => !v) } });
+```
+
+#### `@attrs` — Raw Attribute Access
+
+Use `@attrs` when the standard config object doesn't expose the attribute you need (SVG, MathML, ARIA attributes, or very specific HTML attributes). Every value in `@attrs` also accepts `SignalOr<T>`.
+
+```javascript
+// SVG attributes not exposed at top level
+svg.circle({ "@attrs": { cx: 50, cy: 50, r: radiusSignal } });
+
+// ARIA attributes
+div({ "@attrs": { "aria-label": labelSignal, "aria-expanded": isOpenSignal } });
+
+// data-* also works at top level (no @attrs needed)
+div({ "data-user-id": userId, "data-role": "admin" });
+```
+
+#### `@bind:*` — Two-Way Reactive Binding
+
+```javascript
+const query = createSignal("");
+
+// @bind:value keeps the signal in sync with the input automatically
+input({ "@bind:value": query, type: "search" });
+
+// @bind:checked for checkboxes
+const agreed = createSignal(false);
+input({ "@bind:checked": agreed, type: "checkbox" });
+
+// @bind:form — captures all form fields on submit
+const formData = createSignal({});
+form({
+    "@bind:form": formData,
+    "@on": { submit: () => console.log(formData.value) }
+});
+```
+
+### 12. N-Arguments in the Tags Proxy (Inline vs Callback Children)
+
+The `tags` Proxy accepts **N children arguments** directly. You are NOT forced to use a single callback for children — you can pass nodes inline, mix them, or use callbacks only when you need access to the parent DOM element.
+
+```javascript
+// ✅ EQUIVALENT: Both produce the same DOM structure
+tags.p(tags.b("algo"), tags.i("otro"));
+
+tags.p(
+    (childs) => childs.b("algo"),
+    (childs) => childs.i("otro")
+);
+
+// ✅ MIXED: Inline node + callback (both valid children)
+tags.p(
+    tags.span("label"),
+    (childs) => childs.strong("value")
+);
+```
+
+**When to use a callback vs inline:**
+
+| Approach | When to Use |
+|----------|-------------|
+| `tags.p(child1, child2)` | Static children, no parent DOM reference needed. Clean and flat. |
+| `tags.p((ctx, parentEl) => { ... })` | When you need `parentEl` (the DOM element itself), e.g., to call `.classList`, `.focus()`, or add native listeners. |
+| `tags.p(function(ctx, parentEl) { ... })` | Same as above, AND the children contain async operations (`setTimeout`, `fetch`) — the `function` keyword creates an isolated context pointer. |
+
+> [!IMPORTANT]
+> **The nested callback `(ctx, parentEl)` gives you access to the parent DOM element as the second parameter.** This is the idiomatic way to attach native DOM APIs without polluting the declarative builder pattern.
+
+```javascript
+// ✅ ACCESSING THE PARENT ELEMENT
+tags.div({ className: "input-wrapper" }, (ctx, wrapperEl) => {
+    const input = ctx.input({ type: "text" });
+    // Access to the actual HTMLDivElement
+    wrapperEl.classList.add("initialized");
+    input.focus();
+});
+```
+
+### 12. Context API — Special Methods and What Does NOT Exist
+
+The `ctx` (context/tags) object is a Proxy over the DOM builder. It supports any valid HTML tag plus these **special extension methods**:
+
+| Method | Description |
+|--------|-------------|
+| `ctx.$block(signal, fn)` | Reactive block. Destroys and recreates its DOM subtree whenever `signal` changes. |
+| `ctx.$f(asyncFn, fallbackFn?)` | Async Suspense. Executes `asyncFn` without blocking the DOM hierarchy. Shows `fallbackFn` while waiting. |
+| `ctx.$fragment(fn)` | Isolated fragment. Groups nodes without a wrapper element. |
+| `ctx.$insert(node)` | Inserts an **already-created external** DOM node (Text, Fragment, HTMLElement). |
+
+> [!CAUTION]
+> **These methods do NOT exist on the context. Do NOT invent them.**
+>
+> ```javascript
+> ctx.forEach(...)   // ❌ Does NOT exist
+> ctx.map(...)       // ❌ Does NOT exist
+> ctx.each(...)      // ❌ Does NOT exist
+> ctx.repeat(...)    // ❌ Does NOT exist
+> ctx.if(...)        // ❌ Does NOT exist
+> ```
+>
+> FrankJStein intentionally does NOT replace native JavaScript. Use `for...of`, `Array.prototype.forEach`, etc., **inside** a `$block` callback where you have the reactive context already resolved.
+
+```javascript
+// ✅ CORRECT: Native iteration inside $block
+ctx.$block(listSignal, (ctxBlock) => {
+    for (const item of listSignal.value) {
+        ctxBlock.li(item.name);
+    }
+});
+
+// ✅ ALSO CORRECT: Native forEach inside $block
+ctx.$block(listSignal, (ctxBlock) => {
+    listSignal.value.forEach(item => ctxBlock.li(item.name));
+});
+```
+
+### 13. `$insert` — When to Use and When NOT To
+
+`$insert` is for injecting **externally-created or externally-owned** DOM nodes into the current tree.
+
+```javascript
+// ✅ VALID: External DOM node not created by this context
+const legacy = document.getElementById("legacy-widget");
+ctx.$insert(legacy);
+
+// ✅ VALID: Raw Text node
+ctx.$insert(new Text("dynamic text"));
+
+// ✅ VALID: A DocumentFragment from another source
+ctx.$insert(templateEl.content.cloneNode(true));
+```
+
+> [!WARNING]
+> **Do NOT use `$insert` for components you are already building in the same flow.**
+> When you pass `ctx` (or any tags proxy) as `tags` to a component function, that component renders **directly into `ctx`**. Wrapping it in `$insert` is redundant and misleading.
+
+```javascript
+// ❌ UNNECESSARY: MyComponent already builds inside ctx
+ctx.$insert(MyComponent(ctx));
+
+// ✅ CORRECT: Call directly — it builds in-place
+MyComponent(ctx);
+```
+
+### 14. Deep Async Nesting — `$f` inside `$block` (and vice versa)
+
+When combining async blocks, **always use the innermost context to build DOM**. Each `$block`, `$f`, or `$fragment` creates its own context pointer. Crossing to an outer context inside an async block will silently inject nodes into the wrong DOM parent.
+
+```javascript
+// ❌ WRONG: Using outer ctx inside $block's $f
+ctx.$block(versionSignal, (ctxBlock) => {
+    ctx.$f(async (ctxF) => {     // ❌ ctx is outer — DOM goes to the wrong place
+        ctxF.p("data loaded");
+    });
+});
+
+// ✅ CORRECT: Each level uses ITS OWN context
+ctx.$block(versionSignal, (ctxBlock) => {
+    ctxBlock.$f(async (ctxF) => {   // ✅ $f lives inside ctxBlock
+        ctxF.p("data loaded");
+    });
+});
+
+// ✅ CORRECT: $block inside $f (opposite nesting)
+ctx.$f(async (ctxAsync) => {
+    const data = await fetchSomething();
+    ctxAsync.$block(filterSignal, (ctxBlock) => {
+        for (const item of data.filter(filterFn)) {
+            ctxBlock.li(item.name);
+        }
+    });
+}, function fallback(ctxFallback) {
+    ctxFallback.p`Loading...`;
+});
+```
+
+> **Mnemonic rule**: *"The context closest to your hand is the one you must use."*
+> If you destructured `{ h2, $f }` from the outer `tags`, and you're now inside a `section()` callback, using that destructured `h2` still works **synchronously** because all of them share the same pointer at that moment. But the moment you enter an async boundary (`$f`, `setTimeout`, `fetch`), the shared pointer has moved on — you MUST use the callback's own context.

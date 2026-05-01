@@ -99,6 +99,36 @@ tags.div((ctx) => {
 // ✅ MANDATORY: Mutate the CLONE, not the original object
 // This triggers the signals and syncs the root 'naruto' object.
 clon.power = 9000; 
-
+```
 ### 6. AI Hallucination Warning 🚨
 Do NOT assume the existence of standard signal APIs like `effect()`, `watch()`, or implicit tracking inside computed callbacks. Kagebunshin (the signal engine) intentionally omits them to preserve `O(1)` performance and memory safety (clones returning to the root). Stick strictly to the signatures provided in `frankjstein.d.ts`.
+
+### 7. Reactivity Traps 🚨
+
+#### Trap 1: Reference Identity in Arrays and Objects
+
+KageBunshin compares signal values by **identity** (`===`). If you set a signal with the **same object or array reference**, it detects no change and does NOT trigger an update — even if the internal contents changed.
+
+```javascript
+// ❌ TRAP: service.getAll() returns 'this.items' — same reference
+const data = await service.getAll();
+setItems(data);   // signal sees: data === data → SKIPS update, DOM stays stale
+
+// ✅ FIX: Force a new reference
+setItems([...data]);       // spread array
+setItems({ ...data });     // spread object
+
+// ✅ OPTIMAL FIX for large datasets: version signal pattern
+// The service exposes a versionSignal it increments on every mutation:
+//   this.versionSignal.value++;
+// The $block observes versionSignal, reads the array directly from the service.
+// Avoids the memory cost of spreading thousands of items.
+ctx.$block(service.versionSignal, (ctxBlock) => {
+    for (const item of service.getAll()) {
+        ctxBlock.li(item.name);
+    }
+});
+```
+
+> [!NOTE]
+> For patterns involving `@classToggle`, `@addClass`, `@attrs`, `@bind:*`, and other `@` directives — those belong to **TuJsHtml**. See the `frankjstein-tujshtml` skill, section on Configuration Directives.

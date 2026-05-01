@@ -57,11 +57,11 @@ circular references during instantiation.
 > import { DI, TuLazyInject } from "frankjstein";
 >
 > export class ApiService {
->   // ✅ CORRECT: Injecting via Abstract Token
+>   // ✅ CORRECT: Injecting via Abstract Token (Interface simulation)
 >   #auth = TuLazyInject<IAuthService>(() => IAuthService);
 >
->   // ✅ CORRECT: Decoupled from implementation
->   #config = DI.LazyInject<IConfigService>(() => IConfigService);
+>   // ✅ CORRECT: Injecting via Concrete Token (Pragmatic approach)
+>   #config = TuLazyInject<AppConfig>(() => AppConfig);
 > }
 > ```
 
@@ -81,19 +81,82 @@ export class ApiService {
 }
 ```
 
-### 3. Resolution from the UI (Views/Controllers)
+### 3. Injection Methods Comparison — `TuLazyInject` vs `TuInject` vs `TuContainer.resolve()`
 
-To access the master service and its data from the UI builder function
-(`TuJsHtml`), use the direct synchronous resolution method from the Kernel.
+> [!IMPORTANT]
+> **`TuLazyInject` is NOT restricted to classes.** It works in any context — classes, functions, module scope — because it is **lazy**: it defers resolution until the first time the value is actually accessed. This makes it **safer and preferable** to `TuContainer.resolve()` even inside UI component functions.
+
+| Method | Resolves | Works in | Fails if registration is after? |
+|--------|----------|----------|----------------------------------|
+| `TuLazyInject(() => Token)` | On first access | Anywhere (class, function, module) | ❌ No — lazy, waits |
+| `TuInject(Token)` | Immediately | Anywhere | ✅ Yes — resolves at call site |
+| `TuContainer.resolve(Token)` | Immediately | Anywhere | ✅ Yes — resolves at call site |
 
 ```javascript
-import { TuContainer } from "frankjstein";
-import { ApiService } from "./services.js";
+// ✅ IN A CLASS (canonical pattern — using private field # syntax)
+export class ApiService {
+  #auth = TuLazyInject(() => IAuthService);  // # is class-only JS syntax
+}
 
-// Get the instance configured and tracked by the Kernel
-const api = TuContainer.resolve(ApiService);
+// ✅ IN A FUNCTION/COMPONENT — also valid, even preferred over resolve()
+export function MyComponent(tags) {
+  // TuLazyInject works here — resolves lazily on first use, not at this line
+  const service = TuLazyInject(() => IMyService);  // ✅ no # needed, just const
+  return tags.div(() => { /* use service here */ });
+}
 
-btnFetch[$].on("click", async () => {
-  const data = await api.fetchDashboard();
-});
+// ⚠️  TuInject — resolves immediately, order-sensitive
+export function MyComponent(tags) {
+  const service = TuInject(IMyService);  // ⚠️ registration MUST have happened before this line
+}
+
+// ⚠️  TuContainer.resolve() — same behavior as TuInject, order-sensitive
+export function MyComponent(tags) {
+  const service = TuContainer.resolve(IMyService);  // ⚠️ same constraint
+}
+```
+
+> [!CAUTION]
+> **The `#field` syntax is JavaScript private class field syntax — it is NOT part of `TuLazyInject`.** It only exists inside `class` bodies. If you try to use `#varname =` inside a plain function you will get:
+> ```
+> Uncaught SyntaxError: Private field '#varname' must be declared in an enclosing class
+> ```
+> The fix is simple: drop the `#` and use a regular `const` or `let`. `TuLazyInject` itself is perfectly valid outside a class.
+>
+> ```javascript
+> // ❌ JS SyntaxError — # is class-only syntax
+> export function MyComponent(tags) {
+>     #service = TuLazyInject(() => IMyService);  // 💥 SyntaxError (the # is the problem)
+> }
+>
+> // ✅ CORRECT — same TuLazyInject, no # needed
+> export function MyComponent(tags) {
+>     const service = TuLazyInject(() => IMyService);  // ✅ Works perfectly
+> }
+> ```
+
+### 4. Resolution from the UI (Views/Controllers)
+
+To access a service from the UI builder function (`TuJsHtml`), prefer `TuLazyInject`
+over `TuContainer.resolve()` — the lazy resolution gives more flexibility on
+registration order and is safer for dynamic module loading scenarios.
+
+```javascript
+import { TuLazyInject } from "frankjstein";
+import { IApiService } from "./services.js";
+
+export function DashboardView(tags) {
+  // ✅ PREFERRED: lazy, order-independent
+  const api = TuLazyInject(() => IApiService);
+
+  // ✅ ALSO VALID: immediate, but registration must precede this
+  // const api = TuContainer.resolve(IApiService);
+
+  return tags.div(function(ctx) {
+    ctx.$f(async (ctxAsync) => {
+      const data = await api.fetchDashboard();
+      ctxAsync.p(data.title);
+    });
+  });
+}
 ```

@@ -20,11 +20,11 @@ metadata:
 
 ### 1. Abstract Classes as Interfaces (Tokens)
 
-JavaScript lacks native Interfaces. To provide the TS Linter and AI agents with
-robust autocomplete without executing code, **simulate interfaces using Abstract
-Classes prefixed with `I`**. These classes serve as BOTH the TypeScript
-interface AND the `TuContainer` registration token. Avoid using Strings as
-tokens unless interacting with external/legacy code.
+JavaScript lacks native Interfaces. To provide the TS Linter and AI agents with robust autocomplete without executing code, **simulate interfaces using Abstract Classes prefixed with `I`**. These classes serve as BOTH the TypeScript interface AND the `TuContainer` registration token. 
+
+> [!NOTE]
+> **Concrete Classes as Tokens (The Pragmatic Approach):** 
+> You are NOT strictly forced to use Abstract Classes. Injecting a concrete class directly (e.g., `AppConfig`) is a 100% valid, highly pragmatic pattern in FrankJStein. Because of the container's IoC nature, if you ever need to change the implementation in the future, you can simply override it in the Kernel: `TuContainer.addSingleton(AppConfig, AppConfigV2)`. All dependent files will automatically receive `AppConfigV2` without needing any refactoring.
 
 ```javascript
 /**
