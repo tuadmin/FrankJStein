@@ -2161,7 +2161,6 @@ type DirectiveAttributes<TElement extends Element> = {
   "@once"?: EventListenerMap<TElement>;
   "@bind:value"?: SignalOr<string | number | string[]>;
   "@bind:checked"?: SignalOr<boolean>;
-  "@innerHTML"?: SignalOr<string>;
   /**
    * [DIRECTIVA] Captura los datos de un formulario en el evento de envío,
    * los convierte en un objeto y los guarda en la señal proporcionada.
@@ -2204,7 +2203,7 @@ type SpecialExclusionsProps =
   // | 'x' | 'y' // son porta de algunos SVG
 
   // 📝 4. Inserción de Contenido (Manejado por las directivas del Framework)
-  | 'innerHTML' | 'outerHTML' | 'textContent' | 'nodeValue'
+  | 'outerHTML' | 'nodeValue'
 
   // 🎨 5. Atributos Complejos y Mapas de Estilo (Manejados por ConfigureAttributes)
   | 'classList' //| 'dataset' | 'style' 
@@ -4938,7 +4937,7 @@ declare function AnyNode(strings: TemplateStringsArray, ...values: unknown[]): D
 /**
  * Fluid HTML Element Factory.
  * @es Fábrica de elementos HTML fluida. Lienzo donde se dibuja el HTML.
- * @version 4.9.3
+ * @version 4.9.4
  * @example
  * const demo = new TuJsHtml(tags => {
  *   tags.main(ctx => {
