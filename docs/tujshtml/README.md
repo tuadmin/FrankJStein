@@ -106,11 +106,23 @@ sectionHero({ className: "extra-class" }, () => { ... });
 ```
 
 ## Directivas Especiales (`@`)
-Dentro del objeto de configuración, FrankJStein provee directivas especiales prefijadas con `@` para manejar casos de uso complejos de forma declarativa con Signals o funciones:
-- **`@attrs`**: Setea atributos puros usando `setAttribute()` (muy útil para ARIA o data-attributes).
-- **`@on` / `@one` / `@once`**: Bindea eventos nativos fácilmente (`@on: { click: (e) => ... }`).
-- **`@classToggle`**: Añade o remueve clases dinámicamente basado en valores booleanos o Signals.
-- **`@addClass`**: Añade una o múltiples clases.
+Dentro del objeto de configuración, FrankJStein provee directivas especiales prefijadas con `@` para manejar casos de uso complejos de forma declarativa:
+- **`@classToggle`**: Añade o remueve clases dinámicamente. Acepta un mapa donde los valores pueden ser booleanos estáticos o Signals.
+- **`@addClass`**: Añade una o múltiples clases, combinándose con `className`.
+- **`@attrs`**: Setea atributos puros usando `setAttribute()` (muy útil para SVG, MathML, ARIA o `data-attributes`). Todo aquí soporta Signals.
+- **`@on` / `@one` / `@once`**: Bindea eventos nativos o custom.
+- **`@bind:*`** (`@bind:value`, `@bind:checked`, `@bind:form`): Enlace bidireccional (Two-way binding) automático para inputs y formularios con Signals.
+
+> [!TIP]
+> **Atributos Nativos Reactivos (El poder del motor sin magia)**
+> No necesitas directivas especiales para propiedades mutables del DOM. Gracias a la inferencia del framework, **las propiedades de escritura estándar del DOM (no excluidas por el linter)** aceptan Signals directamente. 
+> 
+> *Nota Arquitectónica:* Esto es posible porque el tipado de `TuJsHtml` bloquea propiedades inseguras, de solo lectura o internas (como `outerHTML`, `childNodes`, o `nodeValue`) usando una lista negra (`SpecialExclusionsProps`). Pero las propiedades útiles y seguras como `innerHTML`, `textContent`, `id` o `disabled` se benefician del motor reactivo sin parches:
+> ```javascript
+> const textSignal = createSignal("Cargando...");
+> tags.button({ textContent: textSignal, disabled: true }); // ⚡ Funciona nativamente
+> ```
+
 
 ## Multiverso de Renderizado (HTML, SVG, MathML)
 FrankJStein aisla estrictamente los contextos (Namespaces) del DOM para evitar mutaciones inválidas. El motor `TuJsHtml` posee tres multiversos:

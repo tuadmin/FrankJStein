@@ -53,6 +53,24 @@ tags.p`Contador: ${count}`;
 count.subscribe(val => console.log("Cambió a:", val));
 ```
 
+## Trampas de Reactividad (Identidad Referencial)
+
+KageBunshin compara los valores de los Signals mediante **identidad estricta (`===`)** por razones de rendimiento. Si actualizas un Signal con la **misma referencia de memoria** de un array u objeto, el motor asume que no hubo cambios y **no actualizará la UI**, aunque hayas mutado sus propiedades internas.
+
+```javascript
+const itemsSignal = createSignal([]);
+
+// ❌ ERROR: Mutar el array original y asignarlo de nuevo
+const data = itemsSignal.value;
+data.push("Nuevo item");
+itemsSignal.value = data; // Kagebunshin dice: data === data -> SKIPS UPDATE
+
+// ✅ SOLUCIÓN: Forzar una nueva referencia (Spread)
+itemsSignal.value = [...data];
+```
+*(Nota: Para evitar el costo de memoria de clonar arrays gigantes, considera usar el patrón `Version Signal` donde solo incrementas un contador cuando la data subyacente muta).*
+
+
 ## Objetos Reactivos (`createKageBunshinObject`)
 
 Cuando tienes un objeto grande o complejo y no quieres crear un Signal por cada propiedad, `createKageBunshinObject` crea un clon Proxy que sincroniza todas las instancias en tiempo real.

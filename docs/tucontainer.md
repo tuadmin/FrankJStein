@@ -39,9 +39,11 @@ Puedes crear contextos anidados usando `TuContainer.createScope()`. Esto te perm
 ## Inyección Lazy (`TuLazyInject`)
 
 La característica más fuerte de `TuContainer` es su capacidad de inyección
-perezosa mediante `TuLazyInject`. Esto permite que una clase declare sus
-dependencias, pero el framework solo las instanciará o resolverá en la fracción
-de milisegundo en la que se lea por primera vez.
+perezosa mediante `TuLazyInject`. Esto permite que un módulo, clase o función 
+declare sus dependencias, pero el framework solo las instanciará o resolverá 
+en la fracción de milisegundo en la que se lea por primera vez.
+
+A diferencia de otros métodos de resolución, **`TuLazyInject` funciona perfectamente tanto en clases como en funciones regulares** (componentes UI), siendo el patrón preferido para evitar problemas de orden de inicialización en arquitecturas complejas.
 
 **Beneficios Técnicos:**
 
@@ -50,34 +52,45 @@ de milisegundo en la que se lea por primera vez.
    servicios no se cargan todos juntos al arranque.
 
 > [!WARNING]
-> **El Problema del Tipo `unknown` en TypeScript** En entornos puramente `.js`,
-> el autocompletado funciona mágicamente. Sin embargo, en archivos `.ts`, la
-> inferencia de tipos de funciones anónimas suele resolverse como `unknown`, lo
-> que provocará errores en el linter estricto de TypeScript. **Para evitar esto,
-> debes pasar la clase o interfaz como Genérico explícito al inyectar.**
+> **Trade-off: Verbosidad vs Autocompletado (TS vs JS)**
+> 
+> En entornos puramente `.js`, el autocompletado funciona mágicamente porque JSDoc/TS infiere el tipo de retorno de la función `() => IConfigService`. **En JavaScript, `TuLazyInject` nunca es verboso.**
+> 
+> Sin embargo, en archivos `.ts`, la inferencia de tipos de funciones anónimas que devuelven abstracciones suele resolverse como `unknown`. Para tener autocompletado en TS tienes dos opciones:
+> 1. **(Recomendado) Usar `TuLazyInject<IConfigService>(...)`**: Es verboso porque requiere pasar el Genérico `<T>`, pero **mantiene la magia del Lazy Evaluation** (evita dependencias circulares y acelera el inicio).
+> 2. **Usar `TuInject(IConfigService)` o `TuContainer.resolve(IConfigService)`**: No es verboso (TS infiere el tipo por el constructor) y da autocompletado perfecto. Pero **pierdes el Lazy Evaluation**, lo que puede causar errores si la dependencia aún no ha sido registrada o si hay dependencias circulares.
+
+### Uso en Clases vs Funciones (Tokens Abstractos vs Concretos)
+
+Puedes inyectar **Interfaces/Clases Abstractas** (para un desacoplamiento formal) o directamente **Clases Concretas**. 
+
+> [!NOTE]
+> **La magia del Override:** No es obligatorio usar interfaces (`IConfigService`). Puedes inyectar una clase concreta (`AppConfig`). Si en 5 años necesitas cambiar la lógica, no tienes que modificar los cientos de archivos que inyectan `AppConfig`. Simplemente cambias el Kernel: `TuContainer.addSingleton(AppConfig, AppConfigV2030)`. El contenedor inyectará la nueva versión automáticamente.
 
 ```typescript
 import { DI, TuContainer, TuLazyInject } from "frankjstein";
 
-class ConfigService {
-    token = "123";
-}
-
+// --- USO EN CLASES (Patrón Convencional) ---
 class ApiService {
-    // REGLA OBLIGATORIA EN TS: Pasar el genérico <ConfigService>
-    // para evitar el error de tipo 'unknown'.
-    #config = TuLazyInject<ConfigService>(() => ConfigService);
-
-    // También funciona con el alias de Namespace
-    #auth = DI.LazyInject<IAuthService>(() => IAuthService);
+    // REGLA OBLIGATORIA EN TS: Pasar el genérico <IConfigService>
+    // En JS puro, el genérico no es necesario: const config = TuLazyInject(() => IConfigService)
+    #config = TuLazyInject<IConfigService>(() => IConfigService);
 
     fetchData() {
-        console.log("Token usado:", this.#config.token);
+        console.log("Token:", this.#config.token);
     }
 }
 
-TuContainer.addSingleton(ConfigService);
-TuContainer.addTransient(ApiService);
+// --- USO EN FUNCIONES / COMPONENTES UI (TuJsHtml) ---
+export function MyComponent(tags) {
+    // Fuera de una clase usamos 'const'. No usamos '#' ya que es sintaxis privada de clase JS.
+    const config = TuLazyInject<IConfigService>(() => IConfigService);
+
+    return tags.div(() => {
+        // La dependencia se instanciará RECIÉN en este punto de renderizado
+        tags.p(`El token actual es: ${config.token}`);
+    });
+}
 ```
 
 ## Desacoplamiento con Clases Abstractas (Tokens)
