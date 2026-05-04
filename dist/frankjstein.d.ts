@@ -22,7 +22,7 @@
  * Es una función que, al ser llamada, se devuelve a sí misma.
  * @internal - Este tipo es un detalle de implementación y no debe ser usado directamente.
  */
-type Repeatable<F extends (...args: unknown[]) => unknown> = {
+type Repeatable<F extends (...args: any[]) => any> = {
   (...args: Parameters<F>): Repeatable<F>;
 };
 /**
@@ -84,7 +84,7 @@ declare class TUtils {
    * @param fn La función a ejecutar en cada llamada.
    * @returns Una nueva función que puede ser llamada en cadena.
    */
-  static repeatCall<F extends (...args: unknown[]) => unknown>(fn: F): Repeatable<F>;
+  static repeatCall<F extends (...args: any[]) => any>(fn: F): Repeatable<F>;
 
   /**
   * Define una propiedad 'lazy' en un objeto. Su valor es calculado solo al ser accedido por primera vez.
@@ -790,10 +790,10 @@ declare function createSignal<T>(initialValue: T): MySignal.Signal<T>;
  * Crea un Signal computado, basado en otros Signals.
  * @template T El tipo de valor que manejará el Signal computado.
  * @param {...MySignal.Signal<T>} args Los Signals de entrada.
- * @param {(values: T[]) => R} computed La función de computación.
+ * @param {(...values: T[]) => R} computed La función de computación.
  * @returns {MySignal.Signal<R>} Una nueva instancia de Signal computado.
  */
-declare function createComputedSignal<T, R>(...args: [...MySignal.Signal<T>[], (values: T[]) => R]): MySignal.Signal<R>;
+declare function createComputedSignal<T, R>(...args: [...MySignal.Signal<T>[], (...values: T[]) => R]): MySignal.Signal<R>;
 
 /**
  * A plugin factory that creates a debouncing effect.
@@ -4937,7 +4937,7 @@ declare function AnyNode(strings: TemplateStringsArray, ...values: unknown[]): D
 /**
  * Fluid HTML Element Factory.
  * @es Fábrica de elementos HTML fluida. Lienzo donde se dibuja el HTML.
- * @version 4.9.4
+ * @version 4.9.5
  * @example
  * const demo = new TuJsHtml(tags => {
  *   tags.main(ctx => {
@@ -4948,7 +4948,7 @@ declare function AnyNode(strings: TemplateStringsArray, ...values: unknown[]): D
  * document.body.append(demo)
  */
 declare class TuJsHtml extends DocumentFragment {
-  static TYPE_TAGS: TuJsHtml_Tags<DocumentFragment>;
+  //static TYPE_TAGS: TuJsHtml_Tags<DocumentFragment>;
 
   /**
    * Constructor for TuJsHtml rendering engine.
@@ -4974,7 +4974,10 @@ declare class TuJsHtml extends DocumentFragment {
    */
   remove(): void;
 
-  get tag(): TuJsHtml_Tags<HTMLElement | DocumentFragment>;
+  /** Returns the tags proxy for the main document context.
+   * @es Retorna el proxy de etiquetas para el contexto del documento principal.
+   */
+  get tags(): TuJsHtml_Tags<HTMLElement | DocumentFragment>;
   get isConnected(): boolean;
 }
 
@@ -5535,7 +5538,7 @@ type TuDiscoveryMap<T extends DiscoveryRegistry> = {
      * Run a smoke test on all registered modules to ensure they are resolvable.
      * @es Ejecuta una prueba de humo en todos los módulos registrados para asegurar que son resolubles.
      */
-    "$verify"(): Promise<void>;
+    "$verify"(): Promise<Record<string, string>>;
 };
 
 declare class TuDiscovery {
