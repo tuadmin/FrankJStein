@@ -77,6 +77,7 @@ customElements.define("my-widget", MyWidget);
 1. **Propiedad de Contexto**: Siempre usa el `ctx` inyectado en los callbacks hijos para evitar corromper la jerarquía del DOM.
 2. **Silo de Reactividad**: No mezcles lógica de red o de base de datos dentro del renderizado. Para eso están los **Servicios** en `TuContainer`.
 3. **Inmutabilidad de Tags**: No intentes modificar el objeto `tags` global; úsalo solo para construir.
+4. **Escape Hatch Nativo**: Usa siempre el segundo parámetro del callback (`(ctx, el) => ...`) si necesitas manipular el elemento directamente o inyectarlo en librerías de terceros.
 
 ---
 *FrankJStein: Arquitectura para el rendimiento, libertad para el desarrollador.*

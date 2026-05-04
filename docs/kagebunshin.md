@@ -53,6 +53,9 @@ tags.p`Contador: ${count}`;
 count.subscribe(val => console.log("Cambió a:", val));
 ```
 
+### Sincronización Bidireccional
+Por defecto, la reactividad es **de salida** (Signal -> DOM). Para habilitar la sincronización bidireccional (DOM -> Signal), FrankJStein utiliza directivas en el motor de renderizado. Consulta la documentación de [TuJsHtml: Directivas @bind](./tujshtml/README.md#directivas-especiales-) para más detalles.
+
 ## Trampas de Reactividad (Identidad Referencial)
 
 KageBunshin compara los valores de los Signals mediante **identidad estricta (`===`)** por razones de rendimiento. Si actualizas un Signal con la **misma referencia de memoria** de un array u objeto, el motor asume que no hubo cambios y **no actualizará la UI**, aunque hayas mutado sus propiedades internas.
@@ -104,3 +107,11 @@ Basado en la misma tecnología de Proxies, `ReactiveDraft` permite crear una cop
 > [!CAUTION]
 > **Advertencia Arquitectónica**: Los Signals de FrankJStein **NO SON** iguales a los de React, SolidJS o la propuesta actual de TC39. **No poseen implicit watchers ni `effect()` automáticos**. 
 > Si vienes de otros frameworks, evita el error de intentar usar reactividad implícita. Aquí todo es explícito y granular para garantizar el máximo rendimiento y control total sobre el Event Loop.
+
+## La Trampa del Proxy (MANDATORIO)
+Casi todas las herramientas de KageBunshin (`createKageBunshinObject`, `TuLazyInject`, etc.) devuelven un **Proxy**. 
+- **Regla**: El Proxy se comporta como el objeto real para accesos a propiedades y llamadas a métodos.
+- **Limitación CRÍTICA**: Los chequeos de identidad como `instanceof` **fallarán**. 
+    - *Prueba Empírica*: Un objeto creado con `createKageBunshinObject(realUser)` devolverá `false` al hacer `instanceof User`.
+    - *Razón*: El Proxy es una entidad distinta que no preserva la cadena de prototipos nativa para el operador `instanceof`. 
+- **Solución**: Si necesitas validación de tipos estricta, usa propiedades de marca o el constructor directamente (`obj.constructor === User`).

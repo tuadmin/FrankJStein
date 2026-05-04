@@ -21,7 +21,7 @@ El código compilado y listo para producción.
 - **Soberanía**: FrankJStein se distribuye como un único archivo `.js` para maximizar la compatibilidad y simplicidad, acompañado de su `.d.ts`.
 
 ### 📚 `docs/` (The Knowledge Base)
-Documentación técnica profunda en español. A diferencia de las skills (que son reglas para la IA), los docs son guías conceptuales para el entendimiento humano y el contexto de alto nivel de las IAs.
+Documentación técnica profunda en español. A diferencia de las skills (que son reglas para la IA), los docs son guías conceptuales para el entendimiento humano y el contexto de alto nivel de las IAs. Cubre desde el núcleo de UI hasta utilidades de alto rendimiento (`TUtils`, `TuWebUtils`).
 
 ### 🧪 `examples/` (The Proof of Life)
 Implementaciones de referencia. Cada ejemplo es una prueba viviente de que el framework funciona de forma nativa en el navegador sin herramientas de construcción complejas.

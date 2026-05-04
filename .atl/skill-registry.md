@@ -17,6 +17,7 @@ See `_shared/skill-resolver.md` for the full resolution protocol.
 | Dependency Injection, Kernel | frankjstein-tucontainer | .agents/skills/frankjstein-tucontainer/SKILL.md |
 | Lazy Loading, Hubs, Service Locator | frankjstein-tudiscovery | .agents/skills/frankjstein-tudiscovery/SKILL.md |
 | DOM construction, Templates | frankjstein-tujshtml | .agents/skills/frankjstein-tujshtml/SKILL.md |
+| Caching, Time Slicing, Forms | frankjstein-utils | .agents/skills/frankjstein-utils/SKILL.md |
 
 ## Compact Rules
 
@@ -63,6 +64,13 @@ Pre-digested rules per skill. Delegators copy matching blocks into sub-agent pro
 - Mandatory Typing: Always type the `tags` parameter as `Tags` (or use `@typedef` alias).
 - Decorator Pattern: Pass a `bindLogic(el, data)` callback to dumb templates to keep them pure and reusable.
 - Atomic Design: Atoms (Dumb/Stateless), Molecules/Organisms (Smart/Stateful).
+
+### frankjstein-utils
+- Always use `TUtils.cachedAsync` for data/imports inside components to prevent redundant fetches.
+- Use `TUtils.safe(promise)` for Go-style error handling `[err, data]`. Avoid try/catch.
+- For lists >1000 items: Use `TuWebUtils.forEachAsync` with `batchSize` to prevent UI freezing.
+- Forms: Use `TuWebUtils.formToObject` to handle validation and `name[]` array grouping.
+- Performance: Use `TUtils.scheduleTask` for non-critical work and `TuWebUtils.debounce` for high-frequency events.
 
 ## Project Conventions
 

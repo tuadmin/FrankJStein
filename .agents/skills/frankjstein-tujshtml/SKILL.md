@@ -6,10 +6,49 @@ description: >
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "1.0"
+  version: "1.2"
 ---
 
 ## Critical Patterns for TuJsHtml
+
+### 0. Binding vs Output Reactivity (MANDATORY)
+This is the most frequent source of AI errors. You MUST distinguish between **Output-Only Reactivity** and **Two-Way Binding**.
+
+- **Output-Only (Native Property)**: Assigning a Signal to a native property (e.g., `value`, `disabled`, `textContent`). The DOM listens to the Signal. If the Signal changes, the DOM updates. **But the Signal does NOT listen to the DOM.**
+- **Two-Way Binding (`@bind`)**: Using `@bind:value` or `@bind:checked`. This creates a bidirectional link. If the user types or clicks, the Signal updates. If the Signal updates, the DOM follows.
+
+```javascript
+const query = createSignal("initial");
+
+// ❌ WRONG: One-way only. The Signal never updates when the user types.
+input({ value: query }); 
+
+// ✅ CORRECT: Two-way binding. The Signal stays in sync with user input.
+input({ "@bind:value": query });
+```
+
+### 0.1 The Async Closure Trap (CRITICAL)
+The `ctx` (tags proxy) is **highly optimized for synchronous execution**. 
+- **Rule**: NEVER use the `ctx` object inside a `setTimeout`, `setInterval`, or an `async` block that was not initiated by `$f`.
+- **Reason**: The internal builder state might have changed or been cleared by the time the async closure executes.
+- **Solution**: Use the **Native Escape Hatch** (2nd parameter) for any async or direct DOM manipulation.
+
+### 0.2 The Native Escape Hatch (2nd Parameter)
+The builder callback receives a second parameter: the **raw DOM element** currently being built.
+
+```javascript
+tags.div((ctx, el) => {
+    // ctx: Use for building children (Synchronous)
+    // el: The actual HTMLDivElement (Safe for anything)
+
+    ctx.p`Hello`;
+
+    // ✅ SAFE: Using the element directly for async logic
+    setTimeout(() => {
+        el.style.backgroundColor = "red";
+    }, 1000);
+});
+```
 
 ### 1. Tagged Template Literals (HIGHLY PREFERRED)
 Use Tagged Template Literals for all text content, whether it contains signals or not. This reduces visual noise, avoids "callback hell" feeling, and prepares the code for future nesting (e.g., adding `strong` or `i` inside).
@@ -353,7 +392,7 @@ tags.div({ className: "input-wrapper" }, (ctx, wrapperEl) => {
 });
 ```
 
-### 12. Context API — Special Methods and What Does NOT Exist
+### 13. Context API — Special Methods and What Does NOT Exist
 
 The `ctx` (context/tags) object is a Proxy over the DOM builder. It supports any valid HTML tag plus these **special extension methods**:
 
@@ -391,7 +430,7 @@ ctx.$block(listSignal, (ctxBlock) => {
 });
 ```
 
-### 13. `$insert` — When to Use and When NOT To
+### 14. `$insert` — When to Use and When NOT To
 
 `$insert` is for injecting **externally-created or externally-owned** DOM nodes into the current tree.
 
@@ -401,7 +440,7 @@ const legacy = document.getElementById("legacy-widget");
 ctx.$insert(legacy);
 
 // ✅ VALID: Raw Text node
-ctx.$insert(new Text("dynamic text"));
+ctx.$insert(document.createTextNode("dynamic text"));
 
 // ✅ VALID: A DocumentFragment from another source
 ctx.$insert(templateEl.content.cloneNode(true));
@@ -419,7 +458,7 @@ ctx.$insert(MyComponent(ctx));
 MyComponent(ctx);
 ```
 
-### 14. Deep Async Nesting — `$f` inside `$block` (and vice versa)
+### 15. Deep Async Nesting — `$f` inside `$block` (and vice versa)
 
 When combining async blocks, **always use the innermost context to build DOM**. Each `$block`, `$f`, or `$fragment` creates its own context pointer. Crossing to an outer context inside an async block will silently inject nodes into the wrong DOM parent.
 

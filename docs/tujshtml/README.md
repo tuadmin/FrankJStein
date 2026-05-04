@@ -94,6 +94,21 @@ tags.p(function(ctx) {
     setTimeout(() => ctx.div("ok"), 10);
 });
 ```
+
+### El Escape Hatch Nativo (2do Parámetro)
+Todos los callbacks de `TuJsHtml` reciben un segundo parámetro opcional: la **instancia real del elemento DOM** que se está construyendo. Este es el "escape hatch" oficial para manipulaciones de bajo nivel o asincronía segura.
+
+```javascript
+tags.div((ctx, el) => {
+    // ctx: Proxy para hijos (Síncrono)
+    // el: El objeto HTMLDivElement real
+
+    // ✅ Ideal para librerías externas o timers
+    setTimeout(() => {
+        el.classList.add("fade-in");
+    }, 100);
+});
+```
 *(Nota: Para asincronía real, se recomienda fuertemente usar el Suspense nativo `$f` o `$block` detallados en la Documentación Avanzada en vez de forzar setTimeouts manuales).*
 
 ## Alias y Selectores CSS Nativos
@@ -111,7 +126,11 @@ Dentro del objeto de configuración, FrankJStein provee directivas especiales pr
 - **`@addClass`**: Añade una o múltiples clases, combinándose con `className`.
 - **`@attrs`**: Setea atributos puros usando `setAttribute()` (muy útil para SVG, MathML, ARIA o `data-attributes`). Todo aquí soporta Signals.
 - **`@on` / `@one` / `@once`**: Bindea eventos nativos o custom.
-- **`@bind:*`** (`@bind:value`, `@bind:checked`, `@bind:form`): Enlace bidireccional (Two-way binding) automático para inputs y formularios con Signals.
+- **`@bind:*`** (`@bind:value`, `@bind:checked`, `@bind:form`): Enlace bidireccional (Two-way binding) automático. 
+
+> [!IMPORTANT]
+> **Reactividad Nativa vs Binding**: 
+> Si asignas un Signal a una propiedad nativa (`input({ value: mySignal })`), la reactividad es **solo de salida** (Si el signal cambia, el input se actualiza). Para que el input **también actualice el Signal** al escribir, DEBES usar la directiva `@bind:value`.
 
 > [!TIP]
 > **Atributos Nativos Reactivos (El poder del motor sin magia)**

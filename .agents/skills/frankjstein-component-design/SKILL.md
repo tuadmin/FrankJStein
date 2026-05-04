@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
     author: gentleman-programming
-    version: "1.1"
+    version: "1.2"
 ---
 
 ## When to Use
@@ -77,6 +77,8 @@ export function CustomView(tags) {
   CAN and SHOULD initialize its own internal state (`createSignal`) or inject
   dependencies via `TuContainer`.
 
+- **The Proxy Trap (TuLazyInject)**: Be aware that `TuLazyInject` returns a **Proxy**. It looks and behaves like the real instance, but if you need to perform `instanceof` checks or pass it to low-level libraries that don't support Proxies, you might need to access a property to trigger resolution. For 99% of UI cases, it is transparent.
+
 ### 4. CSS Strategy
 
 Freedom is a double-edged sword. TuJsHtml allows you to create `<style>` tags on
@@ -119,14 +121,14 @@ To keep templates "dumb" and reusable, avoid writing handlers directly inside th
  * @param {BindSelection} bindSelection
  */
 export function UserRow(tags, user, bindSelection) {
-    return tags.tr((ctx) => {
+    return tags.tr((ctx, el) => {
         ctx.td`ID: ${user.id}`;
         ctx.td`Name: ${user.name}`;
-        ctx.td((_) => {
-            const cb = ctx.input({ type: "checkbox" });
-            // The template doesn't know WHAT happens on check.
-            // It just delivers the element to the logic binder.
-            bindSelection(cb, user); 
+        ctx.td((ctxTd) => {
+            // ✅ BEST PRACTICE: Use the second param (el) to bind logic
+            ctxTd.input({ type: "checkbox" }, (ctxInp, elInp) => {
+                bindSelection(elInp, user); 
+            });
         });
     });
 }

@@ -19,6 +19,7 @@ The repository contains specialized instructions for different architectural pil
 | **DI / Kernel** | [.agents/skills/frankjstein-tucontainer/SKILL.md](.agents/skills/frankjstein-tucontainer/SKILL.md) | Service registration & Lazy Injection. |
 | **IoC Patterns** | [.agents/skills/frankjstein-ioc-templates/SKILL.md](.agents/skills/frankjstein-ioc-templates/SKILL.md) | Service/Repository interfaces & DI logic. |
 | **Discovery** | [.agents/skills/frankjstein-tudiscovery/SKILL.md](.agents/skills/frankjstein-tudiscovery/SKILL.md) | Lazy Loading & Service Locators. |
+| **Utils & Performance** | [.agents/skills/frankjstein-utils/SKILL.md](.agents/skills/frankjstein-utils/SKILL.md) | Async caching, Time Slicing & Form handling. |
 
 ## ⚠️ The "Golden Rules" (Non-Negotiable)
 

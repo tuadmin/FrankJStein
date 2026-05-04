@@ -66,6 +66,8 @@ Para mantener este archivo limpio, la documentación técnica exhaustiva se divi
 - **[TuContainer (Inyección de Dependencias)](./docs/tucontainer.md)**: Kernel de DI para desacoplar lógica de negocio.
 - **[RemoteModule (Web Workers)](./docs/remote.md)**: Multi-threading nativo para tareas pesadas de CPU.
 - **[TuDiscovery (Service Discovery)](./docs/tudiscovery.md)**: Localizador de servicios y patrón Bridge para Workers.
+- **[TUtils (Utilidades Core)](./docs/tutils.md)**: Caching asíncrono, manejo de errores y control del loop.
+- **[TuWebUtils (Utilidades Web)](./docs/tuwebutils.md)**: Time-slicing para datos masivos, formularios y visibilidad.
 
 > [!TIP]
 > **El Linter es tu mejor amigo.** FrankJStein distribuye un archivo `frankjstein.d.ts` con tipados estrictos. Desarrollar en un entorno con soporte para TypeScript/JSDoc te ahorrará horas de debugging al validar tus configuraciones en tiempo real.

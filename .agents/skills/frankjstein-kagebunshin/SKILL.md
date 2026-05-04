@@ -6,14 +6,31 @@ description: >
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "1.0"
+  version: "1.2"
 ---
 
 ## Critical Patterns for KageBunshin (Signals)
 
 Reactivity in FrankJStein is **hyper-granular**. Mutating a signal NEVER re-renders the entire component; it only repaints the specific text node or attribute tied to the signal in the DOM.
 
+### 0. The Two-Way Binding Paradox (MANDATORY)
+FrankJStein is **explicit**. Do NOT assume that because a property is reactive (Signal), it will automatically update when the user interacts with the DOM (like in Vue or Angular).
+
+- **Signals handle State-to-UI flow** (Output).
+- **Directives handle UI-to-State flow** (Input/Binding).
+
+If you want a Signal to stay in sync with an `<input>`, you MUST use the `@bind:value` directive from `TuJsHtml`. Simply assigning a Signal to `input({ value: signal })` only creates a one-way output.
+
+```javascript
+// ❌ WRONG: Static/One-way suposition from other frameworks
+input({ value: mySignal });
+
+// ✅ CORRECT: Explicit binding
+input({ "@bind:value": mySignal });
+```
+
 ### 1. Creation and Basic Reading
+
 ```javascript
 import { createSignal } from "frankjstein";
 
@@ -70,7 +87,7 @@ const total = createComputedSignal(sig1, sig2, sig3, (v1, v2, v3) => {
 ### 5. Reactive Objects (`createKageBunshinObject`)
 Recommended for large objects where creating individual signals for every property would be tedious or memory-intensive.
 
-### The Reactive Node Pattern ($) for Objects
+### 5.1 The Reactive Node Pattern ($) for Objects
 
 When using `createKageBunshinObject`, properties are accessed in two ways:
 1.  **`clon.power`**: Primitive value (Static Snapshot).
@@ -104,9 +121,9 @@ clon.power = 9000;
 Do NOT assume the existence of standard signal APIs like `effect()`, `watch()`, or implicit tracking inside computed callbacks. Kagebunshin (the signal engine) intentionally omits them to preserve `O(1)` performance and memory safety (clones returning to the root). Stick strictly to the signatures provided in `frankjstein.d.ts`.
 
 ### 7. Reactivity Traps 🚨
+Here are common pitfalls when working with KageBunshin.
 
 #### Trap 1: Reference Identity in Arrays and Objects
-
 KageBunshin compares signal values by **identity** (`===`). If you set a signal with the **same object or array reference**, it detects no change and does NOT trigger an update — even if the internal contents changed.
 
 ```javascript
@@ -117,12 +134,27 @@ setItems(data);   // signal sees: data === data → SKIPS update, DOM stays stal
 // ✅ FIX: Force a new reference
 setItems([...data]);       // spread array
 setItems({ ...data });     // spread object
+```
 
-// ✅ OPTIMAL FIX for large datasets: version signal pattern
-// The service exposes a versionSignal it increments on every mutation:
-//   this.versionSignal.value++;
-// The $block observes versionSignal, reads the array directly from the service.
-// Avoids the memory cost of spreading thousands of items.
+#### Trap 2: Proxy Identity and `instanceof`
+Most KageBunshin tools (`createKageBunshinObject`, `TuLazyInject`) return a **Proxy**.
+- **The Problem**: Proxies do NOT pass `instanceof` checks against their target class in this framework.
+- **The Fix**: Use duck-typing, brand properties, or `obj.constructor === TargetClass`. Avoid relying on `instanceof` for reactive objects.
+
+```javascript
+const userProxy = createKageBunshinObject(new User());
+
+// ❌ FAILS: Returns false
+console.log(userProxy instanceof User); 
+
+// ✅ WORKS: Reliable check
+console.log(userProxy.constructor === User);
+```
+
+### 8. Optimal Fix for Large Datasets: Version Signal Pattern
+The service exposes a versionSignal it increments on every mutation: `this.versionSignal.value++`. The `$block` observes versionSignal and reads the array directly from the service.
+
+```javascript
 ctx.$block(service.versionSignal, (ctxBlock) => {
     for (const item of service.getAll()) {
         ctxBlock.li(item.name);
