@@ -34,6 +34,7 @@ export const BUNDLE_CONFIG = {
     ROOT: process.cwd(),
     DOCS_DIR: "docs",
     SKILLS_DIR: ".agents/skills",
+    WORKFLOWS_DIR: ".agents/workflows",
     REGISTRY_PATH: ".atl/skill-registry.md",
     OUTPUT_FULL: "llms-full.txt",
     OUTPUT_INDEX: "llms.txt"

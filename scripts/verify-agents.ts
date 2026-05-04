@@ -3,12 +3,12 @@
  * @description Sovereign Auditor Entry Point.
  * Orchestrates the self-validation of the FrankJStein ecosystem using its own
  * Dependency Injection kernel.
- * 
+ *
  * "The snake that eats itself": Architectural integrity verified by the framework itself.
  */
 import { TuContainer as DependencyInjection } from "../dist/frankjstein.js";
-import { IAuditLogger, IAuditService } from "./verify/audit.types.ts";
 import { CliLogger as CliAuditLogger } from "./shared/cli-logger.ts";
+import { IAuditLogger, IAuditService } from "./verify/audit.types.ts";
 import { AuditEngine } from "./verify/audit-engine.ts";
 
 /**
@@ -32,10 +32,9 @@ async function bootstrap(): Promise<void> {
          */
         const auditor = DependencyInjection.resolve(IAuditService);
         const isConsistent = await auditor.run();
-        
+
         // Signal success/failure to the parent environment
         process.exit(isConsistent ? 0 : 1);
-        
     } catch (error) {
         console.error("FATAL: Sovereign Audit Engine failed during bootstrap sequence.");
         console.error(error);

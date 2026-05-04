@@ -78,13 +78,14 @@
         import exampleReactive from "./reactive.js";
         import exampleSuspense from "./suspense.js";
         import exampleSuspenseComplexLazyFunction from "./suspense-complex.js";
+
         
         const app = document.getElementById("app");
         const btnReactive = document.getElementById("btn-reactive");
         const btnSuspense = document.getElementById("btn-suspense");
         const btnSuspenseComplex = document.getElementById("btn-suspense-complex"); 
         
-        window.renderExample = function(type) {
+        window.renderExample = (type) => {
             // Limpiamos el contenedor
             app.innerHTML = "";
             switch(type){

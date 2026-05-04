@@ -5,10 +5,10 @@
  */
 import { TuContainer as DependencyInjection } from "../dist/frankjstein.js";
 import { IBundleService, IRegistryParser } from "./bundle/bundle.types.ts";
-import { IScriptLogger } from "./shared/logger.types.ts";
-import { CliLogger } from "./shared/cli-logger.ts";
-import { SovereignRegistryParser } from "./bundle/registry-parser.ts";
 import { BundleEngine } from "./bundle/bundle-engine.ts";
+import { SovereignRegistryParser } from "./bundle/registry-parser.ts";
+import { CliLogger } from "./shared/cli-logger.ts";
+import { IScriptLogger } from "./shared/logger.types.ts";
 
 /**
  * Bootstraps the Bundling Strategy.
@@ -30,7 +30,6 @@ async function bootstrap(): Promise<void> {
          */
         const bundler = DependencyInjection.resolve(IBundleService);
         await bundler.run();
-        
     } catch (error) {
         console.error("FATAL: AI Documentation Bundler failed during bootstrap sequence.");
         if (error instanceof Error) {

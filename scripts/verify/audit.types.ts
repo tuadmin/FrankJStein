@@ -2,12 +2,13 @@
  * @file audit.types.ts
  * @description Sovereign audit abstractions for the FrankJStein ecosystem.
  * Defines the contracts and protocols that govern the framework's self-verification.
- * 
+ *
  * @author Gemini Antigravity (Sovereign Architect)
  * @version 0.5.3
  */
 
 import { IScriptLogger as IAuditLogger } from "../shared/logger.types.ts";
+
 export { IAuditLogger };
 
 /**

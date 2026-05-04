@@ -38,7 +38,7 @@ export class ApiService {
 
         console.log(`[ApiService] Haciendo petición como: ${this.auth.user.name}`);
         // Simulando delay de red
-        await new Promise(r => setTimeout(r, 1000));
+        await new Promise((r) => setTimeout(r, 1000));
 
         return `Datos súper secretos del servidor para el usuario ${this.auth.user.name}.`;
     }

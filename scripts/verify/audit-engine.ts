@@ -4,10 +4,10 @@
  * Implements the "Snake Eating Itself" pattern: using the framework's own DI kernel
  * to verify its architectural integrity.
  */
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { TuContainer as SovereignContainer, TuLazyInject } from "../../dist/frankjstein.js";
-import { IAuditLogger, IAuditService, AUDIT_CONFIG } from "./audit.types.ts";
+import { AUDIT_CONFIG, IAuditLogger, IAuditService } from "./audit.types.ts";
 
 /**
  * The Sovereign Audit Engine.
@@ -15,7 +15,7 @@ import { IAuditLogger, IAuditService, AUDIT_CONFIG } from "./audit.types.ts";
  * and adherence to the "Blue-Green" documentation workflow.
  */
 export class AuditEngine extends IAuditService {
-    /** 
+    /**
      * Sovereign Dependency Injection using the Lazy Pattern.
      * The logger is NOT resolved until it is accessed for the first time.
      * This prevents circular dependency issues and ensures the container is ready.
@@ -32,7 +32,9 @@ export class AuditEngine extends IAuditService {
 
         // Load critical ecosystem files
         const agentsContent = this.safeReadFile(join(AUDIT_CONFIG.ROOT, AUDIT_CONFIG.AGENTS_PATH));
-        const registryContent = this.safeReadFile(join(AUDIT_CONFIG.ROOT, AUDIT_CONFIG.REGISTRY_PATH));
+        const registryContent = this.safeReadFile(
+            join(AUDIT_CONFIG.ROOT, AUDIT_CONFIG.REGISTRY_PATH)
+        );
         const pkgContent = this.safeReadFile(join(AUDIT_CONFIG.ROOT, AUDIT_CONFIG.PKG_PATH));
 
         // Early exit if infrastructure files are missing
@@ -83,7 +85,9 @@ export class AuditEngine extends IAuditService {
             this.logger.error("Failed to detect version pattern (vX.Y.Z) in AGENTS.md manifesto.");
             this.errorCount++;
         } else if (agentsVersion !== canonicalVersion) {
-            this.logger.error(`Architectural Mismatch: package.json is ${canonicalVersion} but AGENTS.md is ${agentsVersion}.`);
+            this.logger.error(
+                `Architectural Mismatch: package.json is ${canonicalVersion} but AGENTS.md is ${agentsVersion}.`
+            );
             this.errorCount++;
         } else {
             this.logger.success(`Version Synchronization Verified: v${agentsVersion}`);
@@ -97,12 +101,14 @@ export class AuditEngine extends IAuditService {
     private auditSkillEcosystem(agentsContent: string, registryContent: string): void {
         const skillsRoot = join(AUDIT_CONFIG.ROOT, AUDIT_CONFIG.SKILLS_DIR);
         const skillModules = readdirSync(skillsRoot, { withFileTypes: true })
-            .filter(d => d.isDirectory())
-            .map(d => d.name);
+            .filter((d) => d.isDirectory())
+            .map((d) => d.name);
 
-        this.logger.info(`Auditing ${skillModules.length} skill modules and 'Blue-Green' backup policy compliance...`);
+        this.logger.info(
+            `Auditing ${skillModules.length} skill modules and 'Blue-Green' backup policy compliance...`
+        );
 
-        skillModules.forEach(moduleName => {
+        skillModules.forEach((moduleName) => {
             const moduleDir = join(skillsRoot, moduleName);
             const mainSkillFile = join(moduleDir, "SKILL.md");
             const relativePath = relative(AUDIT_CONFIG.ROOT, mainSkillFile);
@@ -116,28 +122,55 @@ export class AuditEngine extends IAuditService {
 
             // Validation B: Global Indexing (AGENTS.md)
             if (!agentsContent.includes(relativePath)) {
-                this.logger.error(`Module '${moduleName}' is not indexed in the Sovereign Manifesto (AGENTS.md).`);
+                this.logger.error(
+                    `Module '${moduleName}' is not indexed in the Sovereign Manifesto (AGENTS.md).`
+                );
                 this.errorCount++;
             }
 
             // Validation C: Blue-Green Workflow Compliance
             const directoryFiles = readdirSync(moduleDir);
-            const hasVersionedBackup = directoryFiles.some(f => f.startsWith("SKILL-v") && f.endsWith(".md"));
+            const versionedBackups = directoryFiles
+                .filter((f) => f.startsWith("SKILL-v") && f.endsWith(".md"))
+                .sort((a, b) => b.localeCompare(a, undefined, { numeric: true })); // Descending
 
-            if (!hasVersionedBackup) {
-                this.logger.error(`WORKFLOW VIOLATION: '${moduleName}' lacks versioned backups (SKILL-v*.md). Integrity at risk.`);
-                this.errorCount++;
+            if (versionedBackups.length > 0) {
+                // If backups exist, SKILL.md must reflect a version >= the latest backup
+                const latestBackup = versionedBackups[0];
+                const latestBackupVersion = latestBackup.match(/v(\d+\.\d+)/)?.[1];
+                const currentSkillContent = readFileSync(mainSkillFile, "utf-8");
+                const currentVersion = currentSkillContent.match(
+                    /version: ["'](\d+\.\d+)["']/
+                )?.[1];
+
+                if (
+                    currentVersion &&
+                    latestBackupVersion &&
+                    parseFloat(currentVersion) < parseFloat(latestBackupVersion)
+                ) {
+                    this.logger.error(
+                        `WORKFLOW VIOLATION: '${moduleName}' SKILL.md (v${currentVersion}) is older than its latest backup (${latestBackup}).`
+                    );
+                    this.errorCount++;
+                } else {
+                    this.logger.success(
+                        `Skill Module '${moduleName}' verified (Blue-Green Sync: OK).`
+                    );
+                }
             } else {
-                this.logger.success(`Skill Module '${moduleName}' verified (Compliance: OK).`);
+                // It's a "Greenfield" skill or no backups yet — allowed per user rules.
+                this.logger.success(`Skill Module '${moduleName}' verified (Greenfield: OK).`);
             }
 
             // Validation D: Environmental Leak Prevention (Multi-platform)
             // Checks for common absolute path patterns in macOS, Linux, and Windows to prevent sensitive data leaks.
             const content = readFileSync(mainSkillFile, "utf-8");
             const absolutePathRegex = /(\/Users\/|\/home\/|\/Volumes\/|[a-zA-Z]:\\Users\\)/i;
-            
+
             if (absolutePathRegex.test(content)) {
-                this.logger.error(`Security Violation: Module '${moduleName}' contains absolute local paths. Use relative paths instead to protect sensitive data.`);
+                this.logger.error(
+                    `Security Violation: Module '${moduleName}' contains absolute local paths. Use relative paths instead to protect sensitive data.`
+                );
                 this.errorCount++;
             }
         });

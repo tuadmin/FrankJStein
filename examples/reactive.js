@@ -1,6 +1,6 @@
-import { TuJsHtml, ELEMENT_UTIL as $, createSignal } from "../dist/frankjstein.js";
+import { ELEMENT_UTIL as $, createSignal, TuJsHtml } from "../dist/frankjstein.js";
 
-const app = new TuJsHtml(function (tags) {
+const app = new TuJsHtml((tags) => {
     const { div, h3, p, button, span } = tags;
 
     // 1. Creamos el Signal con un valor inicial de 0

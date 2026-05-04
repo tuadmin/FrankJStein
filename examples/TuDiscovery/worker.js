@@ -1,6 +1,6 @@
 /**
  * EL WORKER
- * 
+ *
  * Solo importa el Hub. No necesita conocer FrankJStein directamente
  * ni usar alias que romperían la ejecución.
  */
@@ -12,10 +12,10 @@ export class DiscoveryWorker extends Remote.Simple {
      */
     async doWork(n) {
         console.log("[Worker] Resolviendo módulo math a través del Hub...");
-        
+
         // Obtenemos el módulo perezoso sin usar alias
         const math = await Hub.math;
-        
+
         const result = math.calculateHeavy(n);
         return {
             result,
