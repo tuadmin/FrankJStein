@@ -10,7 +10,12 @@
     "types": "dist/frankjstein.d.ts",
     "type": "module",
     "scripts": {
-        "test:ai": "bun test"
+        "test": "bun test tests/",
+        "test:ia": "bun test tests-ia/",
+        "test:all": "bun test",
+        "lint": "biome lint .",
+        "lint:fix": "biome check --apply .",
+        "format": "biome format --write ."
     },
     "exports": {
         ".": {
@@ -24,6 +29,7 @@
         "LICENSE"
     ],
     "devDependencies": {
+        "@biomejs/biome": "^2.4.14",
         "@happy-dom/global-registrator": "^20.9.0",
         "@types/bun": "^1.3.13",
         "happy-dom": "^20.9.0"
