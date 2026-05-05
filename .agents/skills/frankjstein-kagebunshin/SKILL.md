@@ -132,12 +132,13 @@ Recommended for large objects where creating individual signals for every proper
 #### The Reactive Node Pattern ($) for Objects
 When using `createKageBunshinObject`, properties are accessed in two ways:
 1.  **`clon.power`**: Primitive value (Static Snapshot).
-2.  **`clon.$power`**: The **Signal** linked to that property. Use this in `TuJsHtml`.
+2.  **`clon.$power`**: **Subscribable (Reactive Node)**. Use this in `TuJsHtml`.
 
 > [!IMPORTANT]
 > **Critical Difference**: 
-> - Standalone Signals: Pass the instance **directly** to the template.
-> - Bunshin Object Properties: You **MUST** use the `$` prefix.
+> - Standalone Signals: Pass the instance **directly** to the template (has `.value`).
+> - Bunshin Object Properties (`$`): You **MUST** use the `$` prefix. They are **Subscribables**, NOT Signals.
+> - **NO `.value`**: Reactive nodes (`$`) do NOT have a `.value` property. They are optimized for UI injection only.
 
 ```javascript
 import { createKageBunshinObject, createSignal } from "frankjstein";
@@ -154,8 +155,12 @@ tags.div((ctx) => {
     ctx.p`User: ${user.$name}`;  // Bunshin Object Property
 });
 
-// ✅ MANDATORY: Mutate the CLONE, not the original object
-clon.power = 9000; 
+// ✅ REACTIVITY TRIGGER: Direct mutation on the CLONE is the trigger.
+// By assigning a value, the Proxy detects the change and fires all linked '$' nodes.
+clon.power = 9000; // ⚡ Triggers UI update in ctx.p(user.$power)
+
+// ❌ NEVER mutate the original object directly, as the engine will not detect it.
+// naruto.power = 9000; // 🔇 Silent, non-reactive.
 ```
 
 ### 8. Reactivity Traps 🚨

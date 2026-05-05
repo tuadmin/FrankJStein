@@ -82,7 +82,10 @@ Cuando tienes un objeto grande o complejo y no quieres crear un Signal por cada 
 
 Para mantener el rendimiento y la claridad, las propiedades de un objeto Bunshin se dividen en dos:
 1.  **`clon.power`**: Devuelve el valor primitivo (Snapshot). **NO** es reactivo en la UI.
-2.  **`clon.$power`**: Devuelve un **Signal** vinculado a esa propiedad. Es lo que debes usar en `TuJsHtml` para que la UI se actualice sola.
+2.  **`clon.$power`**: Devuelve un **Nodo de Suscripción (Subscribable)**. Es un objeto que posee un método `.subscribe()` y `.once()`. 
+
+> [!IMPORTANT]
+> **Diferencia con Signals**: A diferencia de un Signal estándar, los nodos `$` **NO tienen la propiedad `.value`**. Son conductos de eventos reactivos optimizados para ser pasados directamente a `TuJsHtml`.
 
 ```javascript
 import { createKageBunshinObject } from "frankjstein";
@@ -90,12 +93,19 @@ import { createKageBunshinObject } from "frankjstein";
 const naruto = { name: "Naruto", power: 10 };
 const clon = createKageBunshinObject(naruto);
 
-// ✅ Reactivo: Se actualizará solo cuando cambie el poder
+// ✅ Correcto: Pasa el nodo directamente a la UI
 tags.p`Poder actual: ${clon.$power}`;
 
-// Mutación sincronizada (DEBE hacerse siempre en el clon)
-// Esto dispara los signals y actualiza el objeto raíz 'naruto'
+// ❌ ERROR: Los nodos '$' no tienen .value
+// console.log(clon.$power.value); 
+
+// ✅ DISPARADOR DE REACTIVIDAD (Trigger): 
+// La mutación SIEMPRE debe hacerse sobre el clon. Al asignar un valor, 
+// el motor detecta el cambio y dispara automáticamente los nodos '$'.
 clon.power = 9000; 
+
+// ❌ ERROR: Mutar el objeto raíz no dispara la reactividad.
+// naruto.power = 9000; 
 ```
 
 ## Borradores e Inmutabilidad (`ReactiveDraft`)

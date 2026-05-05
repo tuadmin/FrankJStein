@@ -69,11 +69,29 @@ console.log("El banner ya es visible, cargando imagen 4k...");
 
 ## 4. Medición y Optimización
 
-### `textSize` y `textSizeEvents`
-Permite medir el tamaño real (en píxeles) que ocupará un texto con una fuente específica antes de renderizarlo, utilizando un canvas oculto por rendimiento.
+### `debounce`
+Crea una versión de la función que retrasa su ejecución hasta que hayan pasado 'wait' milisegundos desde la última vez que fue invocada. Ideal para búsquedas en tiempo real o redimensionamiento de ventanas.
 
-### `debounce` y `debounceEvents`
-Implementación de alto rendimiento del patrón de rebote para eventos de scroll o resize que saturan el hilo principal.
+```javascript
+// ✅ Ejemplo: Filtrar una lista masiva solo cuando el usuario deja de escribir
+const search = TuWebUtils.debounce((query) => {
+   console.log("Buscando en la DB:", query);
+}, 300);
+
+input.oninput = (e) => search(e.target.value);
+```
+
+### `throttle`
+Crea una versión de la función que, al ser invocada repetidamente, solo ejecuta la original como máximo una vez cada 'wait' milisegundos. Perfecta para optimizar eventos de scroll.
+
+```javascript
+// ✅ Ejemplo: Actualizar scroll con alto rendimiento (60fps friendly)
+const onScroll = TuWebUtils.throttle((e) => {
+   console.log("Nueva posición:", window.scrollY);
+}, 100);
+
+window.addEventListener('scroll', onScroll);
+```
 
 ---
 
