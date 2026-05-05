@@ -30,18 +30,18 @@ Pre-digested rules per skill. Delegators copy matching blocks into sub-agent pro
 - Anti-pattern: Never crossing boundary contexts in async blocks (don't use outer tags inside `$f`).
 
 ### frankjstein-tujshtml
-- Tagged Templates preferred for text: `h1`Contenido``.
+- Functional Composition (N-Arguments) is the GOLD STANDARD: `div({class: "x"}, span("A"), p("B"))`.
+- Tagged Templates are STRICTLY for pure text interpolation only: `h1`Title: ${signal}``.
+- FATAL TRAP (Hybrid Nesting): Never use configuration with Tagged Templates (`div({class})`text``). It throws a TypeError.
 - Configuration (attributes/directives) MUST be the first argument: `div({ class: "..." }, ...)`.
-- Context Isolation: Use Arrow Functions for sync building (fast), Traditional Functions for async/timeouts (safe).
-- Golden Rule of Nesting: EITHER a Function call OR a Tagged Template. Never hybrid `div()`"..."``.
-- Never use standard string interpolation `${}` for Nodes/Signals; use Tagged Templates to preserve reactivity.
+- Native Property Reactivity: Writable native properties accept Signals directly (`input({ value: signal })`). No `@` needed.
 
 ### frankjstein-kagebunshin
-- Mutate via `.value` for simple types. Assigning triggers granular DOM updates.
+- State-to-UI uses Signals (`div(count)` or `div(state.$prop)`). UI-to-State uses Bindings (`input({ "@bind:value": signal })`).
+- FATAL TRAP (Computed DOM Signal): Signals ONLY handle primitives. NEVER pass a DOM node through a Computed Signal (it renders "[object HTMLElement]"). For reactive conditional DOM rendering, ALWAYS use `ctx.$block`.
 - Explicit Dependencies: `createComputedSignal(sig1, sig2, (v1, v2) => ...)` - No magic implicit tracking.
 - Reactive Objects: Use `clon.$prop` for UI binding (Signal) and `clon.prop` for logic (Value).
-- Escape Hatch: Use `.subscribe()` for non-DOM side effects (logging, analytics). Returns unsubscribe function.
-- Hallucination Warning: No `effect()`, `watch()`, or implicit tracking.
+- Destructuring: Use `asTuple` for semantic setters (`const [, setLoading] = loading.asTuple`).
 
 ### frankjstein-remote
 - Alias Infection Warning: NEVER use `#` or `@` aliases inside Worker code.

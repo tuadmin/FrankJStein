@@ -54,6 +54,27 @@ async function startProcess() {
     
     console.log("Finished without freezing the tab:", result);
 }
+
+### 2.1 The Connection Race Condition (CRITICAL)
+RemoteModule proxies are created asynchronously via `.connect()`. 
+If you try to render a UI that depends on the worker before the connection is established, the application will CRASH or fail to bind events (e.g., `TypeError: worker.doSomething is not a function`).
+
+**MANDATORY SOLUTION**: Always wrap the worker connection and the UI components that depend on it inside a **`$f` (Suspense)** block. This ensures the proxy is ready before any interaction occurs.
+
+```javascript
+// ✅ CORRECT: Suspense Pattern for Worker initialization
+tags.$f(async (ctx) => {
+    // 1. Wait for connection inside the suspense block
+    const worker = await HeavyService.connect();
+    
+    // 2. Build UI that relies on the worker safely
+    ctx.button({ 
+        "@on": { click: () => worker.processGiantMatrix() } 
+    }, "Start Process");
+}, (ctx) => {
+    ctx.p("Establishing Sovereign Bridge...");
+});
+```
 ```
 
 ### 3. Lifecycle Variants (Namespace `Remote`)

@@ -1,6 +1,6 @@
 # AGENTS.md — FrankJStein Architectural Sovereignty
 
-This document defines the core patterns, constraints, and AI-governance rules for the FrankJStein framework (v0.5.5). **All AI agents MUST strictly adhere to these standards.**
+This document defines the core patterns, constraints, and AI-governance rules for the FrankJStein framework (v0.5.6). **All AI agents MUST strictly adhere to these standards.**
 
 ## 🎯 Project Mission
 FrankJStein is an **AI-First, multi-threaded framework** designed for maximum granularity and performance. It prioritizes explicit reactivity (KageBunshin), robust Dependency Injection (TuContainer), and native Web Worker execution (RemoteModule).

@@ -1,3 +1,7 @@
+---
+description: Este documento define el estándar determinístico para la creación de pruebas de integración en FrankJStein. Tanto humanos como agentes de IA deben seguir estas reglas para garantizar la estabilidad del framework y la veracidad de la documentación.
+---
+
 # Protocolo de Testing Soberano (FrankJStein)
 
 Este documento define el estándar determinístico para la creación de pruebas de integración en FrankJStein. Tanto humanos como agentes de IA deben seguir estas reglas para garantizar la estabilidad del framework y la veracidad de la documentación.

@@ -4,7 +4,7 @@ description: Core and Web utilities for high-performance async orchestration and
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "1.0"
+  version: "1.1"
 ---
 
 ## High-Performance Utilities (TUtils & TuWebUtils)
@@ -18,11 +18,26 @@ These utilities are essential for maintaining O(1) performance and professional-
 // ✅ PREFERRED: The fetch will only run ONCE even if the component re-renders
 const fetchUser = TUtils.cachedAsync((id) => fetch(`/api/user/${id}`).then(r => r.json()));
 
+// ✅ NEW (v1.1): Memoization by arguments (useful for shared pools)
+const fetchProduct = TUtils.cachedAsyncByArgs(
+    (id) => fetch(`/api/p/${id}`).then(r => r.json()),
+    (id) => `product_${id}` // Cache key resolver
+);
+
 $f(async (ctx) => {
     const user = await fetchUser(userId);
     ctx.p(user.name);
 });
 ```
+
+### 1.1 Chainable Execution (`repeatCall`)
+**Rule**: Use `TUtils.repeatCall` for creating fluid logging or event-aggregation chains.
+```javascript
+const log = TUtils.repeatCall((msg) => console.log(msg));
+log("F")("R")("A")("N")("K"); // Executes 5 times, returns self.
+```
+
+---
 
 ### 2. Go-Style Error Handling (`safe`)
 **Rule**: Avoid deep `try/catch` nests. Use `TUtils.safe` to handle promises as tuples.

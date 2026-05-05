@@ -134,6 +134,28 @@ export function UserRow(tags, user, bindSelection) {
 }
 ```
 
+### 7. Single Source of Truth (SSOT) for Fragments
+If a UI fragment (e.g., a set of navigation links, a specific icon composition, or a repeated sub-form) is used in more than one place within the same file or across different views, **do not copy-paste it**. 
+
+- **Extract to a Sub-function**: Pass the `tags` or a specific tag proxy (like `aTag`) to a helper function.
+- **Benefit**: Centralized maintenance. One change updates all occurrences (e.g., Desktop and Mobile menus).
+
+```javascript
+// ✅ CORRECT: Shared fragments logic
+function renderSocialLinks(tags) {
+    tags.a({ href: "https://twitter.com" }, "Twitter");
+    tags.a({ href: "https://github.com" }, "GitHub");
+}
+
+export function Footer(tags) {
+    return tags.footer(ctx => {
+        ctx.div({ className: "social" }, renderSocialLinks(ctx));
+    });
+}
+```
+
+---
+
 ## Code Examples
 
 ### The Pure Presentational Component (Atom)
