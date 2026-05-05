@@ -5221,7 +5221,7 @@ declare function createTemplateHtml<T>(
      * Modifies the original template's exposed nodes.
      * @param modifierFn A function that receives an object with references to the original template's exposed nodes.
      */
-    cloneAsTuple(modifierFn: (refs: T) => void): [HTMLElement | DocumentFragment, T];
+    cloneAsTuple(modifierFn?: (refs: T) => void): [HTMLElement | DocumentFragment, T];
     /**
      * Clones the template and adds the references as a property to the cloned element.
      * @param nameOfProp The name of the property to add to the cloned element. Defaults to 'refs'.
