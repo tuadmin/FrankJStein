@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FrankJStein: Multimode Router (History, Hash, Query)</title>
+    <link rel="stylesheet" href="./index.css">
+</head>
+<body>
+    <div class="container">
+        <header class="app-header">
+            <a href="#" class="brand">🧬 FrankJStein TuRouter</a>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <button id="theme-toggle" class="theme-toggle-btn" title="Cambiar tema">🌙</button>
+                <div class="auth-widget" id="auth-panel">
+                    <span>Cargando sesión...</span>
+                </div>
+            </div>
+        </header>
+
+        <h1>🚀 TuRouter Multimode</h1>
+        <p class="subtitle">Probá el enrutamiento avanzado en sus tres sabores, con inyección y scopes aislados</p>
+
+        <div class="card">
+            <h3>1. Elegir Modo (Adapter)</h3>
+            <div class="controls" id="adapter-toggle">
+                <button data-mode="history" class="active">History (Clean URL)</button>
+                <button data-mode="hash">Hash (#!)</button>
+                <button data-mode="query">Query (?ruta=...)</button>
+            </div>
+            <div class="info" id="adapter-info">
+                Modo actual: <code>HistoryAdapter</code>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>2. Navegar</h3>
+            <div class="nav" id="navigation">
+                <button data-path="/pages/home">🏠 Inicio</button>                
+                <button data-path="/pages/contacto">📞 Contacto</button>
+                <button data-path="/usuarios">👥 Usuarios</button>
+                <button data-path="/pokemons">🐉 PokeList (Vanilla)</button>
+                <button data-path="/ejemplo">🧪 Ejemplo (Sync)</button>
+                <button data-path="/asdf">🚫 404 Test</button>
+                <fieldset>
+                    <legend>Links Protegidos por "login"</legend>
+                    <button data-path="/usuario/123">👤 Usuario 123</button>
+                    <button data-path="/usuario/456">👤 Usuario 456</button>
+                    | 
+                    <button data-path="/pokemon/pikachu">⚡ Pikachu</button>
+                    <button data-path="/pokemon/charizard">🔥 Charizard</button>
+                </fieldset>
+            </div>
+        </div>
+
+        <div class="card view" id="router-view">
+            Cargando...
+        </div>
+
+        <div class="info">
+            <span>Mira la URL del navegador mientras navegas en tiempo real.</span>
+            <code id="route"></code>
+        </div>
+    </div>
+
+    <!-- Import Map para cargar el framework y el addon -->
+    <script type="importmap">
+    {
+        "imports": {
+            "frankjstein": "../../dist/frankjstein.js",
+            "frankjstein/turouter": "../../dist/turouter.js"
+        }
+    }
+    </script>
+
+    <script type="module" src="./app.js"></script>
+</body>
+</html>
