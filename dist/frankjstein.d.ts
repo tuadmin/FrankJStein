@@ -23,30 +23,32 @@
  * @internal - Este tipo es un detalle de implementación y no debe ser usado directamente.
  */
 type Repeatable<F extends (...args: any[]) => any> = {
-  (...args: Parameters<F>): Repeatable<F>;
+    (...args: Parameters<F>): Repeatable<F>;
 };
 /**
  * @version 1.0.0
  */
 declare class TUtils {
-  /**
-   * Creates a cached async function that executes only once, returning the same result on subsequent calls.
-   * Ideal for lazy-loading resources (dynamic imports, fetch calls, etc.) that should be singleton-like.
-   *
-   * @template T - The type of the resolved promise value
-   * @param {(...args: unknown[]) => Promise<T>} asyncFn - The async function to cache
-   * @returns {(...args: unknown[]) => Promise<T>} A function with the same signature that caches the result
-   *
-   * @example // Dynamic import
-   * //// @ type {(id: string) => Promise<{ name: string }>}
-   * const loadLib = TUtils.cachedAsync(() => import('heavy-library'));
-   * const lib = await loadLib(); // Executes once
-   *
-   * @example // API Fetch
-   * const fetchData = TUtils.cachedAsync(() => fetch('/data').then(r => r.json()));
-   */
-  static cachedAsync<T>(asyncFn: (...args: unknown[]) => Promise<T>): (...args: unknown[]) => Promise<T>;
-  /**
+    /**
+     * Creates a cached async function that executes only once, returning the same result on subsequent calls.
+     * Ideal for lazy-loading resources (dynamic imports, fetch calls, etc.) that should be singleton-like.
+     *
+     * @template T - The type of the resolved promise value
+     * @param {(...args: unknown[]) => Promise<T>} asyncFn - The async function to cache
+     * @returns {(...args: unknown[]) => Promise<T>} A function with the same signature that caches the result
+     *
+     * @example // Dynamic import
+     * //// @ type {(id: string) => Promise<{ name: string }>}
+     * const loadLib = TUtils.cachedAsync(() => import('heavy-library'));
+     * const lib = await loadLib(); // Executes once
+     *
+     * @example // API Fetch
+     * const fetchData = TUtils.cachedAsync(() => fetch('/data').then(r => r.json()));
+     */
+    static cachedAsync<T>(
+        asyncFn: (...args: unknown[]) => Promise<T>
+    ): (...args: unknown[]) => Promise<T>;
+    /**
    * Creates a cached async function that stores results by argument signature.
    *
    * @template T - Return type of the async function
@@ -66,59 +68,60 @@ declare class TUtils {
    *   const pikachu = await fetchPokemon(25);
    *   const pikachuCached = await fetchPokemon(25); // ⚡ Usa caché
    */
-  static cachedAsyncByArgs<T, Args extends unknown[]>(asyncFn: (...args: Args) => Promise<T>, keyFn?: (...args: unknown[]) => string): (...args: Args) => Promise<T>;
-  /**
-   * Ejecuta un callback de forma asíncrona, priorizando microtareas.
-   *
-   * @param {Function} callback - La función que se desea ejecutar.
-   * @param {boolean} [isMacroTask] - use true to force a macrotask(setTimeout) instead queueMicrotask
-   * una macrotarea (setTimeout) en lugar de una microtarea (queueMicrotask).
-   * Útil para tareas de baja prioridad que no deben bloquear el renderizado.
-   */
-  static scheduleTask(callback: () => void, isMacroTask?: boolean): void;
-  /**
-   * Transforma una función en una versión que puede ser llamada consecutivamente.
-   * Cada llamada ejecuta la función original y devuelve a sí misma para permitir la siguiente invocación.
-   *
-   * @template F El tipo de la función que se va a hacer repetible.
-   * @param fn La función a ejecutar en cada llamada.
-   * @returns Una nueva función que puede ser llamada en cadena.
-   */
-  static repeatCall<F extends (...args: any[]) => any>(fn: F): Repeatable<F>;
+    static cachedAsyncByArgs<T, Args extends unknown[]>(
+        asyncFn: (...args: Args) => Promise<T>,
+        keyFn?: (...args: unknown[]) => string
+    ): (...args: Args) => Promise<T>;
+    /**
+     * Ejecuta un callback de forma asíncrona, priorizando microtareas.
+     *
+     * @param {Function} callback - La función que se desea ejecutar.
+     * @param {boolean} [isMacroTask] - use true to force a macrotask(setTimeout) instead queueMicrotask
+     * una macrotarea (setTimeout) en lugar de una microtarea (queueMicrotask).
+     * Útil para tareas de baja prioridad que no deben bloquear el renderizado.
+     */
+    static scheduleTask(callback: () => void, isMacroTask?: boolean): void;
+    /**
+     * Transforma una función en una versión que puede ser llamada consecutivamente.
+     * Cada llamada ejecuta la función original y devuelve a sí misma para permitir la siguiente invocación.
+     *
+     * @template F El tipo de la función que se va a hacer repetible.
+     * @param fn La función a ejecutar en cada llamada.
+     * @returns Una nueva función que puede ser llamada en cadena.
+     */
+    static repeatCall<F extends (...args: any[]) => any>(fn: F): Repeatable<F>;
 
-  /**
-  * Define una propiedad 'lazy' en un objeto. Su valor es calculado solo al ser accedido por primera vez.
-  * @param {object} obj - El objeto en el que se definirá la propiedad.
-  * @param {string} key - El nombre de la propiedad.
-  * @param {function} getterFn - La función que retorna el valor final de la propiedad.
-  */
-  static defineLazyPropertyGetter(obj: object, key: string, getterFn: () => unknown): void;
-  /**
-   * Crea una pausa asíncrona que puede ser cancelada inmediatamente mediante un AbortSignal.
-   * @param {number} ms - Tiempo de espera en milisegundos.
-   * @param {AbortSignal} [signal] - Señal opcional para abortar la espera.
-   * @returns {Promise<void>} Se resuelve cuando el tiempo expira o se rechaza si se aborta.
-   * @throws {DOMException} Rechaza con un "AbortError" si la señal se dispara.
-   * @example
-   * // Uso básico
-   * await sleepAsync(1000);
-   * @example
-   * // Uso con cancelación (se detiene a los 500ms)
-   * const controller = new AbortController();
-   * setTimeout(() => controller.abort(), 500);
-   * try {
-   *     await sleepAsync(2000, controller.signal);
-   * } catch (e) {
-   *     console.log("Espera cancelada");
-   * }
-   */
-  static sleepAsync(ms: number, signal?: AbortSignal): Promise<void>;
-  /**
-   * Convierte cualquier Promesa en una tupla [error, data].
-   */
-  static safe<T, E = unknown>(
-    promise: Promise<T>
-  ): Promise<[E, null] | [null, T]>;
+    /**
+     * Define una propiedad 'lazy' en un objeto. Su valor es calculado solo al ser accedido por primera vez.
+     * @param {object} obj - El objeto en el que se definirá la propiedad.
+     * @param {string} key - El nombre de la propiedad.
+     * @param {function} getterFn - La función que retorna el valor final de la propiedad.
+     */
+    static defineLazyPropertyGetter(obj: object, key: string, getterFn: () => unknown): void;
+    /**
+     * Crea una pausa asíncrona que puede ser cancelada inmediatamente mediante un AbortSignal.
+     * @param {number} ms - Tiempo de espera en milisegundos.
+     * @param {AbortSignal} [signal] - Señal opcional para abortar la espera.
+     * @returns {Promise<void>} Se resuelve cuando el tiempo expira o se rechaza si se aborta.
+     * @throws {DOMException} Rechaza con un "AbortError" si la señal se dispara.
+     * @example
+     * // Uso básico
+     * await sleepAsync(1000);
+     * @example
+     * // Uso con cancelación (se detiene a los 500ms)
+     * const controller = new AbortController();
+     * setTimeout(() => controller.abort(), 500);
+     * try {
+     *     await sleepAsync(2000, controller.signal);
+     * } catch (e) {
+     *     console.log("Espera cancelada");
+     * }
+     */
+    static sleepAsync(ms: number, signal?: AbortSignal): Promise<void>;
+    /**
+     * Convierte cualquier Promesa en una tupla [error, data].
+     */
+    static safe<T, E = unknown>(promise: Promise<T>): Promise<[E, null] | [null, T]>;
 }
 
 /**
@@ -141,13 +144,13 @@ interface ForEachAsyncResult {
     elapsedTime: number;
 }
 interface ForEachAsyncOptions<T> {
-    /** 
+    /**
      * Es más seguro. Si el usuario procesa 1,000 archivos y el primero falla por falta de permisos, lo más probable es que los otros 999 también fallen. Detenerse ahorra recursos y evita logs infinitos de errores.
-     * @default true 
+     * @default true
      */
     stopOnError?: boolean;
     /** * Cantidad de elementos a procesar antes de ceder el hilo al navegador.
-     * @default 10 
+     * @default 10
      */
     batchSize?: number;
     /** Señal para cancelar la ejecución de forma externa. */
@@ -157,7 +160,7 @@ interface ForEachAsyncOptions<T> {
     /** Se ejecuta cada vez que un ítem falla, permitiendo auditoría o logs. */
     onItemError?: (error: unknown, item: T, index: number) => void;
     /** * Si es true, utiliza `requestIdleCallback` para procesar solo cuando el navegador esté libre.
-     * @default false 
+     * @default false
      */
     useIdle?: boolean;
 }
@@ -176,36 +179,32 @@ declare class ForEachAsyncError extends Error {
  * Tupla de retorno para el patrón Safe (Error-First).
  * Si hay error, el segundo elemento es null. Si hay éxito, el primero es null.
  */
-type SafeForEachAsyncResult =
-    | [null, ForEachAsyncResult]
-    | [ForEachAsyncError, null];
-
+type SafeForEachAsyncResult = [null, ForEachAsyncResult] | [ForEachAsyncError, null];
 
 /**
  * Función procesadora para cada ítem de la colección.
  * Puede ser síncrona o asíncrona.
- * @returns Opcionalmente una función de "limpieza" o "efecto" que se ejecutará 
+ * @returns Opcionalmente una función de "limpieza" o "efecto" que se ejecutará
  * en el siguiente frame de renderizado (requestAnimationFrame).
  * - `void`: Continúa con el siguiente elemento.
  * - `false`: Detiene la ejecución de la colección inmediatamente (Break).
- * - `() => void`: Función de efecto/limpieza que se ejecutará en el siguiente `requestAnimationFrame`. 
+ * - `() => void`: Función de efecto/limpieza que se ejecutará en el siguiente `requestAnimationFrame`.
  */
 type ItemProcessor<T> = (
     item: T,
     index: number
-) => void | false | Promise<void | false> | (() => void) | Promise<(() => void)>;
-
+) => void | false | Promise<void | false> | (() => void) | Promise<() => void>;
 
 /**
  * Opciones para el comportamiento del estrangulamiento (throttle).
  */
 interface ThrottleOptions {
     /** * Ejecutar la función inmediatamente en el primer disparo.
-     * @default true 
+     * @default true
      */
     leading?: boolean;
     /** * Ejecutar una última vez tras el último disparo si el delay ya pasó.
-     * @default true 
+     * @default true
      */
     trailing?: boolean;
 }
@@ -250,16 +249,16 @@ declare namespace TuWebUtils {
      * await forEachAsync(myItems, (item, i) => {
      *    console.log(`Procesando ${item.id}`);
      * }, { batchSize: 50 });
-     * 
+     *
      * @example
      * // Sobrecarga 3: Uso de Idle (Ideal para tareas de fondo no urgentes)
      * // Úsalo para procesar logs, analíticas o pre-cargar datos sin afectar el scroll o animaciones.
      * await forEachAsync(hugeCollection, (data) => {
      *    backgroundProcess(data);
      *    if(data.id==='id5') return false;
-     * }, { 
-     *    useIdle: true, 
-     *    batchSize: 500 
+     * }, {
+     *    useIdle: true,
+     *    batchSize: 500
      * });
      */
     function forEachAsync<T>(
@@ -301,7 +300,7 @@ declare namespace TuWebUtils {
         callback: ItemProcessor<T>
     ): Promise<SafeForEachAsyncResult>;
     /**
-     * Crea una versión de la función que, al ser invocada repetidamente, 
+     * Crea una versión de la función que, al ser invocada repetidamente,
      * solo ejecuta la original como máximo una vez cada 'wait' milisegundos.
      * * @example
      * // Actualizar scroll con alto rendimiento
@@ -314,14 +313,13 @@ declare namespace TuWebUtils {
      * @param wait - Tiempo de espera en milisegundos.
      * @param options - Configuración de leading/trailing.
      * @returns  Una función con la misma firma que la original.
-     * 
+     *
      */
     function throttle<T extends (...args: unknown[]) => unknown>(
         fn: T,
         wait: number,
         options?: ThrottleOptions
     ): (...args: Parameters<T>) => void;
-
 
     /**
      * Crea una versión de la función que retrasa su ejecución hasta que hayan pasado
@@ -347,13 +345,451 @@ declare namespace TuWebUtils {
     /**
      * Convierte cualquier Promesa en una tupla [error, data].
      */
-    function safe<T, E = unknown>(
-        promise: Promise<T>
-    ): Promise<[E, null] | [null, T]>;
+    function safe<T, E = unknown>(promise: Promise<T>): Promise<[E, null] | [null, T]>;
+}
+
+/**
+ * FrankJStein: TuDiscovery Type Definitions
+ *
+ * Functional Service Locator and Module Discovery Hub.
+ * Alternative to Import Map Aliases, ideal for environments with restricted resolution (Workers).
+ *
+ * @es Localizador de Servicios Funcional y Hub de Descubrimiento de Módulos.
+ * Alternativa a los Import Map Aliases, ideal para entornos con resolución restringida (Workers).
+ */
+
+/**
+ * @template T
+ * A discovery node represents a module that can be resolved lazily.
+ *
+ * @es Un nodo de descubrimiento representa un módulo que puede resolverse de forma perezosa.
+ */
+type DiscoveryNode<T> = {
+    /**
+     * Call as a function with an optional callback to use the module once resolved.
+     * @es Llamar como función con un callback opcional para usar el módulo una vez resuelto.
+     *
+     * @example
+     * Hub.math(m => m.sum(1, 2));
+     */
+    (cb?: (module: T) => void): Promise<T>;
+} & Promise<T>;
+
+/**
+ * Registry of module loaders.
+ * @es Registro de cargadores de módulos.
+ */
+type DiscoveryRegistry = Record<string, () => Promise<any>>;
+
+/**
+ * Map of discovery nodes based on the registry.
+ * @es Mapa de nodos de descubrimiento basado en el registro.
+ */
+type TuDiscoveryMap<T extends DiscoveryRegistry> = {
+    [K in keyof T]: DiscoveryNode<Awaited<ReturnType<T[K]>>>;
+} & {
+    /**
+     * Run a smoke test on all registered modules to ensure they are resolvable.
+     * @es Ejecuta una prueba de humo en todos los módulos registrados para asegurar que son resolubles.
+     */
+    $verify(): Promise<Record<string, string>>;
+};
+
+declare class TuDiscovery {
+    /**
+     * Creates a discovery hub that lazily loads modules and provides dual-usage (Promise/Callback).
+     * Ideal for maintaining absolute paths and avoiding "Alias Infection" in Workers.
+     *
+     * @es Crea un hub de descubrimiento que carga módulos de forma perezosa y provee uso dual (Promesa/Callback).
+     * Ideal para mantener rutas absolutas/relativas y evitar la "Infección de Alias" en Workers.
+     *
+     * @template T
+     * @param registry - Object mapping keys to import() loaders.
+     *
+     * @example
+     * const Hub = TuDiscovery.create({
+     *   math: () => import("./math.js"),
+     *   auth: () => import("./auth.js")
+     * });
+     *
+     * // Use as Promise
+     * const m = await Hub.math;
+     *
+     * // Use as Callback
+     * Hub.math(m => m.sum(1, 2));
+     */
+    static create<T extends DiscoveryRegistry>(registry: T): TuDiscoveryMap<T>;
+}
+
+/**
+ * @file TuContainer.d.ts
+ * @description Type definitions for the Sovereign DI Kernel.
+ * @es Definiciones de tipos para el Núcleo de Inyección Soberano.
+ */
+
+/**
+ * @class TuScope
+ * @description Manages a local cache of instances and hierarchical resolution.
+ * @es Gestiona un caché local de instancias y la resolución jerárquica.
+ */
+declare class TuScope {
+    readonly _cache: Map<unknown, unknown>;
+    //private _parent: TuScope | null;
+    readonly isDisposed: boolean;
+
+    /**
+     * @param parent Parent scope for inheritance. If null, creates a Sovereign (Isolated) scope.
+     * /es Scope padre para herencia. Si es null, crea un scope Soberano (Aislado).
+     */
+    constructor(parent?: TuScope | null);
+
+    /**
+     * Resolves a dependency by searching the hierarchy.
+     * @es Resuelve una dependencia buscando en la jerarquía.
+     * @param token The class or token to resolve. /es La clase o token a resolver.
+     * @returns The resolved instance. /es La instancia resuelta.
+     * @example
+     * const service = scope.resolve(MyService);
+     */
+    resolve<T>(token: Token<T>): T;
+
+    /**
+     * Disposes the scope and clears its cache.
+     * @es Dispone el scope y limpia su caché.
+     */
+    dispose(): void;
+    /**
+     * Links an object to this scope for contextual discovery.
+     * @es Vincula un objeto a este scope para descubrimiento contextual.
+     * @param target The object to link. /es El objeto a vincular.
+     * @returns The linked object. /es El objeto vinculado.
+     * @example
+     * scope.link(view);
+     */
+    link<T>(target: T): T;
+}
+
+/**
+ * Represents a class constructor (including abstract ones).
+ * @es Representa el constructor de una clase (incluyendo clases abstractas).
+ */
+type Constructor<T = unknown> = abstract new (...args: unknown[]) => T;
+
+/**
+ * Valid tokens for dependency identification.
+ * @es Tokens válidos para la identificación de dependencias.
+ */
+type Token<T = unknown> = Constructor<T> | string | symbol;
+
+/**
+ * Factory function for custom dependency resolution.
+ * @es Función fábrica para la resolución personalizada de dependencias.
+ */
+type Factory<T = unknown> = (ctx: TuScope) => T;
+
+/**
+ * @class TuContainer
+ * @description Central registry for all dependencies and root scope.
+ * @es Registro central para todas las dependencias y scope raíz.
+ */
+declare class TuContainer {
+    static root: TuScope;
+
+    /**
+     * Registers a singleton dependency (One instance for the entire app).
+     * @es Registra una dependencia tipo singleton (Una instancia para toda la app).
+     * @example
+     * TuContainer.addSingleton(IAppConfig,AppConfig);
+     * TuContainer.addSingleton(IService, (ctx) => new MyService("apiKey", ctx.resolve(ILogger)));
+     * @param token The class or token to register. /es La clase o token a registrar.
+     * @param factory The factory function to create the instance. /es La función fábrica para crear la instancia.
+     * @param forceOverride If true, allows replacing an existing registration. /es Si es true, permite reemplazar un registro existente.
+     */
+    static addSingleton<T>(token: Token<T>, factory: Factory<T>, forceOverride?: boolean): void;
+    /**
+     * Registers a singleton dependency (One instance for the entire app).
+     * @es Registra una dependencia tipo singleton (Una instancia para toda la app).
+     * @example
+     * TuContainer.addSingleton(IAppConfig,AppConfig);
+     * @param token The class or token to register. /es La clase o token a registrar.
+     * @param provider The class constructor to instantiate. /es El constructor de la clase a instanciar.
+     * @param forceOverride If true, allows replacing an existing registration. /es Si es true, permite reemplazar un registro existente.
+     */
+    static addSingleton<T>(
+        token: Token<T>,
+        provider?: Constructor<T>,
+        forceOverride?: boolean
+    ): void;
+    /**
+     * Registers a transient dependency (New instance every time).
+     *
+     * @es Registra una dependencia tipo transient (Instancia nueva cada vez).
+     * @example
+     * TuContainer.addTransient(ReportGenerator);
+     * @param token The class or token to register. /es La clase o token a registrar.
+     * @param factory The factory function to create the instance. /es La función fábrica para crear la instancia.
+     */
+    static addTransient<T>(token: Token<T>, factory: Factory<T>): void;
+    /**
+     * Registers a transient dependency (New instance every time).
+     *
+     * @param token The class or token to register. /es La clase o token a registrar.
+     * @param provider The class constructor to instantiate. /es El constructor de la clase a instanciar.
+     */
+    static addTransient<T>(token: Token<T>, provider?: Constructor<T>): void;
+
+    /**
+     * Registers a scoped dependency (One instance per Scope hierarchy).
+     * @es Registra una dependencia tipo scope (Una instancia por jerarquía de Scope).
+     * @example
+     * TuContainer.addScope(IUserSession,UserSession);
+     * TuContainer.addScope(IUserSession,ctx=> new UserSession("optionalArg "));
+     * @param token The class or token to register. /es La clase o token a registrar.
+     * @param factory The factory function to create the instance. /es La función fábrica para crear la instancia.
+     */
+    static addScope<T>(token: Token<T>, factory: Factory<T>): void;
+    /**
+     * @param token The class or token to register. /es La clase o token a registrar.
+     * @param provider The class constructor to instantiate. /es El constructor de la clase a instanciar.
+     */
+    static addScope<T>(token: Token<T>, provider?: Constructor<T>): void;
+
+    /**
+     * Creates a new child scope.
+     * @es Crea un nuevo scope hijo.
+     * @param callback Optional callback with the new scope. /es Callback opcional con el nuevo scope.
+     * @param parent Custom parent scope. /es Scope padre personalizado.
+     * @example
+     * const requestScope = TuContainer.createScope();
+     * // or
+     * TuContainer.createScope(scope=>{
+     *   scope.resolve()
+     *   // your code
+     * });
+     */
+    static createScope(callback?: (scope: TuScope) => unknown, parent?: TuScope | null): TuScope;
+    /**
+     * Checks if a token is registered.
+     * @es Verifica si un token está registrado.
+     * @param token The token to check. /es El token a verificar.
+     * @example
+     * if (TuContainer.hasRegistration(MyService)) { ... }
+     */
+    static hasRegistration(token: Token): boolean;
+    /**
+     * Resolves a dependency from the root scope.
+     * @es Resuelve una dependencia desde el scope raíz.
+     * @param token The class or token to resolve. /es La clase o token a resolver.
+     * @example
+     * const config = TuContainer.resolve(AppConfig);
+     */
+    static resolve<T>(token: Token<T>): T;
+    /**
+     * Links an object to a specific scope for contextual discovery.
+     * @es Vincula un objeto a un scope específico para descubrimiento contextual.
+     * @param target The object to link (e.g. a component). /es El objeto a vincular (ej. un componente).
+     * @param scope The scope to associate with. /es El scope al que asociar.
+     * @returns The linked object. /es El objeto vinculado.
+     * @example
+     * TuContainer.link(component, scope);
+     */
+    static link<T>(target: T, scope: TuScope): T;
+}
+interface TuInjectOptions {
+    /**
+     * Optional object to find the associated scope.
+     * @es Objeto opcional para encontrar el scope asociado.
+     */
+    context: object;
+
+    /**
+     * If true, allows falling back to the current scope or Root if the context is not found in the ScopeRegistry.
+     * @es Si es true, permite recurrir al scope actual o al Root si el contexto no se encuentra en el ScopeRegistry.
+     */
+    optional?: boolean;
+}
+/**
+ * Lazily injects a dependency. Captured at instantiation time.
+ * @es Inyecta una dependencia de forma diferida (perezosa). Capturado al instanciar.
+ * @param tokenProvider Function that returns the dependency token. /es Función que retorna el token de la dependencia.
+ * @param options Optional object to find the associated scope. /es Objeto opcional para encontrar el scope asociado.
+ * @example
+ * class Controller {
+ *   #service = TuLazyInject(() => iMyService);
+ *   #service2 = TuLazyInject(() => iMyServiceScope,{context:this,optional:true});
+ * }
+ */
+declare function TuLazyInject<T>(tokenProvider: () => Token<T>, options?: TuInjectOptions): T;
+/**
+ * Lazily injects a dependency. Captured at instantiation time.
+ * @es Inyecta una dependencia de forma diferida (perezosa). Capturado al instanciar.
+ * @param token The dependency token. /es El token de la dependencia.
+ * @param options Optional object to find the associated scope. /es Objeto opcional para encontrar el scope asociado.
+ * @example
+ * const service = TuLazyInject(IMyService);
+ * // other example
+ * scopeInstance.link(this)
+ * setTimeout(()=>{ const otherService =  TuLazyInject(IMyService,{context:this}) },100)
+ * */
+declare function TuLazyInject<T>(token: Token<T>, options?: TuInjectOptions): T;
+
+/**
+ * Synchronously injects a dependency.
+ * @es Inyecta una dependencia de forma sincrónica.
+ * @param token The dependency token. /es El token de la dependencia.
+ * @param options Optional object to find the associated scope. /es Objeto opcional para encontrar el scope asociado.
+ * @example
+ * const service = TuInject(IMyService);
+ * setTimeout(()=>{ const otherService =  TuInject(IMyService,{context:this}) },100)
+ */
+declare function TuInject<T>(token: Token<T>, options?: TuInjectOptions): T;
+
+/**
+ * @namespace DI
+ * @description Grouped access to the DI system.
+ * @es Acceso agrupado al sistema de inyección.
+ */
+declare const DI: {
+    readonly Container: typeof TuContainer;
+    readonly Scope: typeof TuScope;
+    readonly Inject: typeof TuInject;
+    readonly LazyInject: typeof TuLazyInject;
+};
+
+/**
+ * Core Lifecycle & Memory Management
+ */
+
+/**
+ * The unique symbol used for standardizing resource disposal.
+ * Resolves to the native `Symbol.dispose` in modern environments or a global fallback in older ones.
+ *
+ * @es El símbolo único utilizado para estandarizar la limpieza de recursos.
+ * Se resuelve al `Symbol.dispose` nativo en entornos modernos o un fallback global en antiguos.
+ */
+declare const DISPOSE: unique symbol;
+
+/**
+ * Defines a valid resource that can be tracked and destroyed.
+ * It must implement either the `[DISPOSE]()` symbol method or a traditional `dispose()` method.
+ *
+ * @es Define un recurso válido que puede ser rastreado y destruido.
+ * Debe implementar el método del símbolo `[DISPOSE]()` o un método `dispose()` tradicional.
+ */
+type IDisposable = { [DISPOSE]: () => void } | { dispose: () => void };
+
+/**
+ * A centralized store for managing a collection of disposable resources.
+ * Ensures that all registered resources are destroyed together to prevent memory leaks.
+ *
+ * @es Un almacén centralizado para gestionar una colección de recursos desechables.
+ * Garantiza que todos los recursos registrados se destruyan juntos para prevenir fugas de memoria.
+ *
+ * @example
+ * ```javascript
+ * const store = new DisposableStore();
+ *
+ * // Add a standard disposable
+ * store.add(new Timer());
+ *
+ * // Add a custom function wrapped in an object
+ * store.add({ dispose: () => clearInterval(myInterval) });
+ *
+ * // Destroy everything
+ * store[DISPOSE]();
+ */
+declare class DisposableStore {
+    /**
+     * Adds a disposable resource to the store. Validates the object using the Fail-Fast principle.
+     *
+     * @es Agrega un recurso desechable al almacén. Valida el objeto usando el principio Fail-Fast.
+     *
+     * @param disposable The resource object to track. Must implement dispose() or [DISPOSE]()./es El objeto de recurso a rastrear. Debe implementar dispose() o [DISPOSE]().
+     * @returns Returns the same resource passed as an argument, useful for inline assignments./es Retorna el mismo recurso pasado como argumento, útil para asignaciones en línea.
+     *
+     * @throws {TypeError} If the provided object is null or does not implement a valid disposal method./es Si el objeto provisto es nulo o no implementa un método de limpieza válido.
+     */
+    add<T extends IDisposable>(disposable: T): T;
+    /**
+     * Iterates over all stored resources and calls their respective disposal method.
+     * Catches individual errors to ensure the destruction loop is not interrupted.
+     *
+     * @es Itera sobre todos los recursos almacenados y llama a su respectivo método de limpieza.
+     * Atrapa errores individuales para garantizar que el bucle de destrucción no se interrumpa.
+     */
+    [DISPOSE](): void;
+
+    /**
+     * Fallback method for environments or legacy code that do not support symbol methods.
+     * Internally calls `[DISPOSE]()`.
+     *
+     * @es Método de respaldo para entornos o código heredado que no soportan métodos con símbolos.
+     * Llama internamente a `[DISPOSE]()`.
+     */
+    dispose(): void;
+}
+
+/**
+ * Abstract base class that provides out - of - the - box memory management for UI components,services, or complex objects.
+ * @es Clase base abstracta que proporciona gestión de memoria lista para usar para componentes de UI, servicios u objetos complejos.
+ * @example
+ * class MyComponent extends Disposable {
+ *  constructor() {
+ *    super();
+ *    // Registering a child process bound to this instance's lifecycle
+ *    this.subComponenteInstance = this._register(new SubComponent());
+ *  }
+ * }
+ * const comp = new MyComponent();
+ * comp.dispose(); // Destroys the component and its registered SubComponent
+ *
+ */
+declare abstract class Disposable {
+    /**
+     * Indicates whether the instance has already been disposed.
+     *
+     * @es Indica si la instancia ya ha sido destruida.
+     *
+     * @returns {boolean} True if the object was disposed, false otherwise./es True si el objeto fue destruido, false de lo contrario.
+     */
+    get isDisposed(): boolean;
+
+    /**
+     * Protected convention. Registers a disposable resource into the internal store.
+     * Bound to the lifecycle of this instance.
+     *
+     * @es Convención protegida. Registra un recurso desechable en el almacén interno.
+     * Vinculado al ciclo de vida de esta instancia.
+     *
+     * @param disposable The resource to tie to this instance's lifecycle./es El recurso a vincular al ciclo de vida de esta instancia.
+     *
+     * @returns Returns the same resource, allowing for inline assignment./es Retorna el mismo recurso, permitiendo la asignación en línea.
+     *
+     * @throws {Error} If attempting to register a resource after the instance has been disposed./es Si se intenta registrar un recurso después de que la instancia fue destruida.
+     */
+    protected _register<T extends IDisposable>(disposable: T): T;
+
+    /**
+     * Triggers the destruction of all registered resources and marks the instance as disposed.
+     * Safe to call multiple times (idempotent).
+     *
+     * @es Desencadena la destrucción de todos los recursos registrados y marca la instancia como destruida.
+     * Es seguro llamarlo múltiples veces (idempotente).
+     */
+    [DISPOSE](): void;
+
+    /**
+     * Backward-compatible alias for the standard disposal mechanism.
+     * Internally calls `[DISPOSE]()`.
+     *
+     * @es Alias retrocompatible para el mecanismo de limpieza estándar.
+     * Llama internamente a `[DISPOSE]()`.
+     */
+    dispose(): void;
 }
 
 // === Utility Types ===
-type FunctionGeneric$3 = (...args: unknown[]) => unknown
+type FunctionGeneric$3 = (...args: unknown[]) => unknown;
 type ObjectGeneric$2 = { [key: string]: unknown };
 /**
  * Represents a function that can be called to cancel a subscription.
@@ -364,18 +800,18 @@ type UnsubscribeFunction$1 = () => void;
  * A utility type that extracts the keys of T whose values are not functions.
  */
 type KeysWithoutFunctions$2<T> = {
-  [K in keyof T]: T[K] extends FunctionGeneric$3 ? never : K
+    [K in keyof T]: T[K] extends FunctionGeneric$3 ? never : K;
 }[keyof T];
 
 /**
  * Obtiene una unión de todas las claves de un tipo `T` cuyas propiedades NO son una función.
  */
 type KeysWithoutFunctions$1<T> = {
-    [K in keyof T]: T[K] extends FunctionGeneric$3 ? never : K
+    [K in keyof T]: T[K] extends FunctionGeneric$3 ? never : K;
 }[keyof T];
 declare namespace KageBunshin {
     export type IsAliveCallback = () => boolean;
-    export type ListenerCallback = (...args: unknown[]) => void
+    export type ListenerCallback = (...args: unknown[]) => void;
     export type UnsubscribeFunction = () => void;
     export type SubscriberAPI = {
         /**
@@ -390,72 +826,75 @@ declare namespace KageBunshin {
          * @returns {UnsubscribeFunction} Una función para eliminar el listener.
          */
         once: (callback: ListenerCallback) => UnsubscribeFunction;
-    }
+    };
     export type Ninjutso<T extends object> = {
         createShadow: (isAliveCallback: IsAliveCallback) => KageBunshinNoJutsu<T>;
         subscribe: (callback: (data: T) => void, isOneTime?: boolean) => UnsubscribeFunction;
-    }
+    };
     export type KageBunshinNoJutsu<T extends object> = {
         // [K in keyof T & string as `$${K}`]: (
         //     callback: (newValue: T[K], oldValue: T[K]) => void
         // ) => UnsubscribeFunction;
         [K in KeysWithoutFunctions$1<T> & string as `$${K}`]: ((
-            callback: (newValue: T[K], oldValue: T[K]) => void,
+            callback: (newValue: T[K], oldValue: T[K]) => void
         ) => UnsubscribeFunction) & {
-            subscribe: (callback: (newValue: T[K], oldValue: T[K]) => void,) => UnsubscribeFunction;
-            once: (callback: (newValue: T[K], oldValue: T[K]) => void,) => UnsubscribeFunction
+            subscribe: (callback: (newValue: T[K], oldValue: T[K]) => void) => UnsubscribeFunction;
+            once: (callback: (newValue: T[K], oldValue: T[K]) => void) => UnsubscribeFunction;
         };
     } & T & {
-        //(callback: (data: T) => void, isOneTime?: boolean): UnsubscribeFunction;
-        (callback: (data: T) => void): UnsubscribeFunction;
-    } & Ninjutso<T>
+            //(callback: (data: T) => void, isOneTime?: boolean): UnsubscribeFunction;
+            (callback: (data: T) => void): UnsubscribeFunction;
+        } & Ninjutso<T>;
 
-    export type createKageBunshinObject = <T extends object>(obj: T, isAliveCallback?: IsAliveCallback) => KageBunshinNoJutsu<T>;
+    export type createKageBunshinObject = <T extends object>(
+        obj: T,
+        isAliveCallback?: IsAliveCallback
+    ) => KageBunshinNoJutsu<T>;
 }
 /**
  * Creates a reactive Proxy "Clone" of an object (Kage Bunshin No Jutsu).
  * All clones share experience (state) in real-time with the original source.
- * Each property is accessible via a '$' prefixed node (Signal) for granular 
+ * Each property is accessible via a '$' prefixed node (Signal) for granular
  * observation and seamless UI reactivity.
- * 
+ *
  * @es Crea un Proxy reactivo "Clon" de un objeto (Kage Bunshin No Jutsu).
  * Todos los clones comparten experiencia (estado) en tiempo real con la fuente original.
- * Cada propiedad es accesible vía un nodo con prefijo '$' (Signal) para 
+ * Cada propiedad es accesible vía un nodo con prefijo '$' (Signal) para
  * observación granular y reactividad fluida con la UI.
- * 
+ *
  * @template {object} T
  * @param {T} obj - The base object to be cloned. / El objeto base a ser clonado.
  * @returns {KageBunshinNoJutsu<T>} The reactive clone. / El clon reactivo.
- * 
+ *
  * @example
  * const naruto = { power: 10 };
  * const clon1 = createKageBunshinObject(naruto);
- * 
+ *
  * // --- UI REACTIVITY (TuJsHtml) ---
  * // ✅ REACTIVE: Binds the Signal. UI updates automatically.
  * // ✅ REACTIVO: Vincula el Signal. La UI se actualiza automáticamente.
- * tags.p`Power: ${clon1.$power}`; 
- * 
+ * tags.p`Power: ${clon1.$power}`;
+ *
  * // ❌ STATIC: Snapshot only. UI will NOT update.
  * // ❌ ESTÁTICO: Solo una captura. La UI NO se actualizará.
- * tags.p`Power: ${clon1.power}`; 
- * 
+ * tags.p`Power: ${clon1.power}`;
+ *
  * // --- OBSERVATION ---
  * // Property Hook ($ prefix): Observe specific changes.
  * // Hook de Propiedad (prefijo $): Observa cambios específicos.
  * clon1.$power((val, old) => console.log(`Power: ${old} -> ${val}`));
- * 
+ *
  * // One-time Hook: Second parameter 'true' makes it auto-destroy after first run.
  * // Hook de un solo uso: El segundo parámetro 'true' hace que se auto-destruya tras la primera ejecución.
  * clon1.$power((val) => console.log("First hit!"), true);
- * 
+ *
  * // Batch Hook (Callable): Observe any change in the entire object.
  * // Hook en Lote (Llamable): Observa cualquier cambio en todo el objeto.
  * clon1((data) => console.log("State updated:", data));
- * 
+ *
  * // Mutation: Synchronizes all instances immediately.
  * // Mutación: Sincroniza todas las instancias inmediatamente.
- * clon1.power = 20; 
+ * clon1.power = 20;
  */
 declare const createKageBunshinObject: KageBunshin.createKageBunshinObject;
 
@@ -468,7 +907,7 @@ type FunctionGeneric$2 = (...args: unknown[]) => unknown;
  * A utility type that extracts the keys of T whose values are not functions.
  */
 type KeysWithoutFunctions<T> = {
-  [K in keyof T]: T[K] extends FunctionGeneric$2 ? never : K
+    [K in keyof T]: T[K] extends FunctionGeneric$2 ? never : K;
 }[keyof T];
 
 /**
@@ -477,26 +916,26 @@ type KeysWithoutFunctions<T> = {
  * @template V The type of the property value.
  */
 type ReactiveProperty<V> = {
-  /**
-   * Subscribes to changes for this specific property.
-   * @param callback The function to call when the value changes.
-   * @returns A function to call to unsubscribe.
-   */
-  (callback: (newValue: V, oldValue: V) => void): UnsubscribeFunction;
+    /**
+     * Subscribes to changes for this specific property.
+     * @param callback The function to call when the value changes.
+     * @returns A function to call to unsubscribe.
+     */
+    (callback: (newValue: V, oldValue: V) => void): UnsubscribeFunction;
 
-  /**
-   * Subscribes to changes for this specific property.
-   * @param callback The function to call when the value changes.
-   * @returns A function to call to unsubscribe.
-   */
-  subscribe(callback: (newValue: V, oldValue: V) => void): UnsubscribeFunction;
+    /**
+     * Subscribes to changes for this specific property.
+     * @param callback The function to call when the value changes.
+     * @returns A function to call to unsubscribe.
+     */
+    subscribe(callback: (newValue: V, oldValue: V) => void): UnsubscribeFunction;
 
-  /**
-   * Subscribes to only the next change for this property.
-   * The subscription is automatically removed after the first call.
-   * @param callback The function to call when the value changes.
-   */
-  once(callback: (newValue: V, oldValue: V) => void): void;
+    /**
+     * Subscribes to only the next change for this property.
+     * The subscription is automatically removed after the first call.
+     * @param callback The function to call when the value changes.
+     */
+    once(callback: (newValue: V, oldValue: V) => void): void;
 };
 
 /**
@@ -504,78 +943,73 @@ type ReactiveProperty<V> = {
  * It includes the original data properties of T, plus a special `$`-prefixed
  * property for each data property to handle reactivity.
  */
-type ReactiveDraftProps<T extends object> =
-  Pick<T, KeysWithoutFunctions<T>> &
-  {
+type ReactiveDraftProps<T extends object> = Pick<T, KeysWithoutFunctions<T>> & {
     [K in KeysWithoutFunctions<T> & string as `$${K}`]: ReactiveProperty<T[K]>;
-  };
+};
 
 /**
  * A robust class for creating isolated, reactive drafts of an object.
  * Ideal for managing form state without mutating the original object until explicitly committed.
  */
 declare class ReactiveDraft<T extends object> {
-  /**
-   * The reactive properties of the draft.
-   * Interact with this object to get, set, and subscribe to changes.
-   */
-  public props: ReactiveDraftProps<T>;
+    /**
+     * The reactive properties of the draft.
+     * Interact with this object to get, set, and subscribe to changes.
+     */
+    public props: ReactiveDraftProps<T>;
 
-  /**
-   * Creates an instance of a reactive draft.
-   * @param originalObject The source object to create a draft from. It should be an object with data properties.
-   * @param commitTrigger The name of a method on the original object to call after a successful update.
-   */
-  constructor(originalObject: T, commitTrigger?: string);
+    /**
+     * Creates an instance of a reactive draft.
+     * @param originalObject The source object to create a draft from. It should be an object with data properties.
+     * @param commitTrigger The name of a method on the original object to call after a successful update.
+     */
+    constructor(originalObject: T, commitTrigger?: string);
 
-  /**
-   * A factory method to create a new ReactiveDraft instance without using the `new` keyword.
-   * @param originalObject The source object.
-   * @param commitTrigger The name of a method on the original object to call after an update.
-   */
-  static create<T extends object>(originalObject: T, commitTrigger?: string): ReactiveDraft<T>;
+    /**
+     * A factory method to create a new ReactiveDraft instance without using the `new` keyword.
+     * @param originalObject The source object.
+     * @param commitTrigger The name of a method on the original object to call after an update.
+     */
+    static create<T extends object>(originalObject: T, commitTrigger?: string): ReactiveDraft<T>;
 
-  /**
-   * Checks if the draft has any uncommitted changes.
-   * @returns `true` if any property value is different from its initial state.
-   */
-  public readonly isDirty: boolean;
+    /**
+     * Checks if the draft has any uncommitted changes.
+     * @returns `true` if any property value is different from its initial state.
+     */
+    public readonly isDirty: boolean;
 
-  /**
-   * Checks if the original source object has changed since the draft was created.
-   * This is useful for detecting concurrent modifications.
-   * @returns `true` if the source object has been modified externally.
-   */
-  public readonly isStale: boolean;
+    /**
+     * Checks if the original source object has changed since the draft was created.
+     * This is useful for detecting concurrent modifications.
+     * @returns `true` if the source object has been modified externally.
+     */
+    public readonly isStale: boolean;
 
-  /**
-   * Commits the changes from the draft back to the original object.
-   * If a `commitTrigger` was provided, its method will be called.
-   * @returns `true` if an update was performed, `false` otherwise.
-   */
-  public update(): boolean;
+    /**
+     * Commits the changes from the draft back to the original object.
+     * If a `commitTrigger` was provided, its method will be called.
+     * @returns `true` if an update was performed, `false` otherwise.
+     */
+    public update(): boolean;
 
-  /**
-   * Reverts all changes in the draft back to the state when it was first created.
-   */
-  public reset(): void;
+    /**
+     * Reverts all changes in the draft back to the state when it was first created.
+     */
+    public reset(): void;
 
-  /**
-   * Discards all local changes and updates the draft with the latest values from the original object.
-   */
-  public resync(): void;
+    /**
+     * Discards all local changes and updates the draft with the latest values from the original object.
+     */
+    public resync(): void;
 
-  /**
-   * Cleans up all subscriptions and internal references to prevent memory leaks.
-   * Call this method when the draft is no longer needed.
-   */
-  public destroy(): void;
+    /**
+     * Cleans up all subscriptions and internal references to prevent memory leaks.
+     * Call this method when the draft is no longer needed.
+     */
+    public destroy(): void;
 }
 
 // === Utility Types ===
-
-
-
 
 // === Plugin System Contract ===
 
@@ -592,20 +1026,23 @@ interface PluginContext$1<T extends object = object> {
 /**
  * The signature of a plugin function.
  */
-type PluginFunction$1<T extends object = object> = (context: PluginContext$1<T>, next: () => void) => void;
+type PluginFunction$1<T extends object = object> = (
+    context: PluginContext$1<T>,
+    next: () => void
+) => void;
 
 /**
  * A central map of all built-in events and their callback signatures.
  * This interface can be augmented via declaration merging to add custom middleware events.
  */
 interface ObservableDraftEventMap<T extends object> {
-    'dirtychange': (isDirty: boolean) => void;
-    'stalechange': (isStale: boolean) => void;
-    'change': (payload: { key: keyof T, value: unknown }) => void;
-    'commit': () => void;
-    'rollback': () => void;
-    'pull': () => void;
-    'destroy': () => void;
+    dirtychange: (isDirty: boolean) => void;
+    stalechange: (isStale: boolean) => void;
+    change: (payload: { key: keyof T; value: unknown }) => void;
+    commit: () => void;
+    rollback: () => void;
+    pull: () => void;
+    destroy: () => void;
 }
 
 /**
@@ -621,23 +1058,20 @@ type PropertyTools<V> = {
  * A central map of all built-in events and their callback signatures.
  * This interface can be augmented via declaration merging to add custom middleware events.
  */
-type ObservableDraftProps<T extends object> =
-    Pick<T, KeysWithoutFunctions$2<T>> &
-    {
-        [K in KeysWithoutFunctions$2<T> & string as `$${K}`]: PropertyTools<T[K]>;
-    };
+type ObservableDraftProps<T extends object> = Pick<T, KeysWithoutFunctions$2<T>> & {
+    [K in KeysWithoutFunctions$2<T> & string as `$${K}`]: PropertyTools<T[K]>;
+};
 
 // === UNIFIED EVENT MAP (For perfect autocompletion) ===
 /**
  * A comprehensive map of all possible events that an ObservableDraft instance can emit.
  * This combines base events, property-specific events (`$`), and middleware events (`use:`).
  */
-type AllObservableDraftEvents<T extends object> =
-    ObservableDraftEventMap<T> &
-    { [K in KeysWithoutFunctions$2<T> & string as `$${K}`]: (newValue: T[K]) => void }
+type AllObservableDraftEvents<T extends object> = ObservableDraftEventMap<T> & {
+    [K in KeysWithoutFunctions$2<T> & string as `$${K}`]: (newValue: T[K]) => void;
+};
 // ya no se usan los use por que eso ya depende de los PLUGINS
 //& { [K in KeysWithoutFunctions<T> & string as `use:${K}`]: (payload: MiddlewareEventPayload) => void };
-
 
 // === Main Class Definition ===
 
@@ -648,9 +1082,21 @@ declare class ObservableDraft<T extends object, E extends object = ObjectGeneric
      */
     public props: ObservableDraftProps<T>;
 
-    constructor(originalObject: T, commitTrigger?: string, scheduler?: { asap: (cb: () => void) => void; defer: (cb: () => void) => number; cancelDefer: (handle: number) => void; });
+    constructor(
+        originalObject: T,
+        commitTrigger?: string,
+        scheduler?: {
+            asap: (cb: () => void) => void;
+            defer: (cb: () => void) => number;
+            cancelDefer: (handle: number) => void;
+        }
+    );
 
-    static create<T extends object>(originalObject: T, commitTrigger?: string, scheduler?: unknown): ObservableDraft<T>;
+    static create<T extends object>(
+        originalObject: T,
+        commitTrigger?: string,
+        scheduler?: unknown
+    ): ObservableDraft<T>;
 
     public readonly isDirty: boolean;
 
@@ -678,9 +1124,12 @@ declare class ObservableDraft<T extends object, E extends object = ObjectGeneric
     //public use<K extends KeysWithoutFunctions<T> & string>(key: K, ...middlewares: MiddlewareFunction<T>[]): this;
 
     /**
-   * Registers plugin functions for a specific property.
-   */
-    public usePlugins<K extends KeysWithoutFunctions$2<T> & string>(key: K, ...plugins: PluginFunction$1<T>[]): this;
+     * Registers plugin functions for a specific property.
+     */
+    public usePlugins<K extends KeysWithoutFunctions$2<T> & string>(
+        key: K,
+        ...plugins: PluginFunction$1<T>[]
+    ): this;
 
     /**
      * Checks the stale status and emits a `stalechange` event if the status has changed.
@@ -711,72 +1160,71 @@ declare class ObservableDraft<T extends object, E extends object = ObjectGeneric
 
 // signal.d.ts
 declare namespace MySignal {
-  /**
-   * Representa la función para desuscribirse de un Signal.
-   */
-  export type Unsubscribe = () => void;
-
-  /**
-   * Representa la función de un listener que se suscribe a los cambios de un Signal.
-   * @template T El tipo de valor que maneja el Signal.
-   * @param {T} newValue El nuevo valor del Signal después del cambio.
-   * @param {T} oldValue El valor del Signal antes de que comenzara el lote de cambios.
-   */
-  export type Listener<T> = (newValue: T, oldValue: T) => void;
-
-  /**
-   * Un objeto Signal es una función para suscribirse, pero también contiene
-   * métodos para interactuar con el estado que maneja.
-   * @template T El tipo de valor que maneja el Signal.
-   */
-  export type Signal<T> = {
     /**
-     * Obtiene el valor actual del Signal.
-     * @returns {T} El valor actual.
+     * Representa la función para desuscribirse de un Signal.
      */
-    get(): T;
-    /**
-     * Obtiene el valor actual del Signal.
-     * @returns {T} El valor actual.
-     */
-    value: T;
-    /**
-     * Establece un nuevo valor para el Signal. Las notificaciones a los listeners
-     * se agrupan y se ejecutan en un microtask.
-     * @param {T} newValue El nuevo valor.
-     */
-    set(newValue: T): void;
+    export type Unsubscribe = () => void;
 
     /**
-     * Suscribe una función (listener) a los cambios del Signal.
-     * @param {Listener<T>} listener La función que se ejecutará en cada cambio.
-     * @returns {Unsubscribe} Una función para desuscribirse.
+     * Representa la función de un listener que se suscribe a los cambios de un Signal.
+     * @template T El tipo de valor que maneja el Signal.
+     * @param {T} newValue El nuevo valor del Signal después del cambio.
+     * @param {T} oldValue El valor del Signal antes de que comenzara el lote de cambios.
      */
-    subscribe(listener: Listener<T>): Unsubscribe;
+    export type Listener<T> = (newValue: T, oldValue: T) => void;
 
     /**
-     * Desuscribe a todos los listeners a la vez.
+     * Un objeto Signal es una función para suscribirse, pero también contiene
+     * métodos para interactuar con el estado que maneja.
+     * @template T El tipo de valor que maneja el Signal.
      */
-    unsubscribeAll(): void;
+    export type Signal<T> = {
+        /**
+         * Obtiene el valor actual del Signal.
+         * @returns {T} El valor actual.
+         */
+        get(): T;
+        /**
+         * Obtiene el valor actual del Signal.
+         * @returns {T} El valor actual.
+         */
+        value: T;
+        /**
+         * Establece un nuevo valor para el Signal. Las notificaciones a los listeners
+         * se agrupan y se ejecutan en un microtask.
+         * @param {T} newValue El nuevo valor.
+         */
+        set(newValue: T): void;
 
-    /**
-     * Proporciona una tupla inmutable [getter, setter] para una desestructuración
-     * ergonómica, similar a los hooks de React.
-     * 
-     */
-    readonly asTuple: readonly [() => T, (newValue: T) => void] & { (): never };
-    /**
-     * Permite la coerción de tipo del Signal a un primitivo, devolviendo su valor actual.
-     */
-    [Symbol.toPrimitive](): T;
+        /**
+         * Suscribe una función (listener) a los cambios del Signal.
+         * @param {Listener<T>} listener La función que se ejecutará en cada cambio.
+         * @returns {Unsubscribe} Una función para desuscribirse.
+         */
+        subscribe(listener: Listener<T>): Unsubscribe;
 
-    /**
-     * Permite iterar sobre los valores del Signal de forma asíncrona a medida que cambian,
-     * usando un bucle `for await...of`.
-     */
-    [Symbol.asyncIterator](): AsyncGenerator<T, void, unknown>;
+        /**
+         * Desuscribe a todos los listeners a la vez.
+         */
+        unsubscribeAll(): void;
 
-  } & ((listener: Listener<T>) => Unsubscribe); // Esto define al Signal como una función llamable.
+        /**
+         * Proporciona una tupla inmutable [getter, setter] para una desestructuración
+         * ergonómica, similar a los hooks de React.
+         *
+         */
+        readonly asTuple: readonly [() => T, (newValue: T) => void] & { (): never };
+        /**
+         * Permite la coerción de tipo del Signal a un primitivo, devolviendo su valor actual.
+         */
+        [Symbol.toPrimitive](): T;
+
+        /**
+         * Permite iterar sobre los valores del Signal de forma asíncrona a medida que cambian,
+         * usando un bucle `for await...of`.
+         */
+        [Symbol.asyncIterator](): AsyncGenerator<T, void, unknown>;
+    } & ((listener: Listener<T>) => Unsubscribe); // Esto define al Signal como una función llamable.
 }
 /**
  * Crea un Signal, una unidad de estado reactivo.
@@ -793,7 +1241,9 @@ declare function createSignal<T>(initialValue: T): MySignal.Signal<T>;
  * @param {(...values: T[]) => R} computed La función de computación.
  * @returns {MySignal.Signal<R>} Una nueva instancia de Signal computado.
  */
-declare function createComputedSignal<T, R>(...args: [...MySignal.Signal<T>[], (...values: T[]) => R]): MySignal.Signal<R>;
+declare function createComputedSignal<T, R>(
+    ...args: [...MySignal.Signal<T>[], (...values: T[]) => R]
+): MySignal.Signal<R>;
 
 /**
  * A plugin factory that creates a debouncing effect.
@@ -815,10 +1265,7 @@ declare function trim(context: PluginContext, next: () => void): void;
  * @param {{min?: number, max?: number}} options
  * @returns {PluginFunction }
  */
-declare function textSize({ min, max }: {
-    min?: number;
-    max?: number;
-}): PluginFunction;
+declare function textSize({ min, max }: { min?: number; max?: number }): PluginFunction;
 declare namespace debounceEvents {
     function debounced(propKey: string): string;
 }
@@ -835,7 +1282,7 @@ type PluginFunction = PluginFunction$1;
  * const div = document.createElement('div');
  * div[ELEMENT_UTIL]
  */
-declare const ELEMENT_UTIL : unique symbol;
+declare const ELEMENT_UTIL: unique symbol;
 
 /**
  * @fileoverview A function to make an object's property reactive.
@@ -893,12 +1340,14 @@ type ReactiveProperties<K extends string | number | symbol, V> = {
      * @returns A function to unsubscribe.
      */
     subscribe: (callback: (value: V) => void) => () => void;
-} & (K extends 'value' ? ObjectGeneric$1 : {
-    /**
-     * A convenient getter/setter for the reactive property, providing direct access to its value.
-     */
-    value: V;
-});
+} & (K extends "value"
+    ? ObjectGeneric$1
+    : {
+          /**
+           * A convenient getter/setter for the reactive property, providing direct access to its value.
+           */
+          value: V;
+      });
 
 // ==========================================
 // --- common.d.ts ---
@@ -930,7 +1379,7 @@ type FunctionGeneric$1 = (...args: unknown[]) => unknown;
 //export type ValidatedConfig<TConfig, TElement> = ConfigureAttributes<TElement> & CatchExcessProps<TConfig, ConfigureAttributes<TElement>>;
 /**
  * Genera dinámicamente las firmas para selectores tipo Emmet.
- * Soporta: 
+ * Soporta:
  * - Clases: .clase
  * - IDs: #id
  * - Atributos: [attr="val"]
@@ -940,12 +1389,11 @@ type FunctionGeneric$1 = (...args: unknown[]) => unknown;
  */
 type CustomEmmetSelectors<TContext, TKeys extends keyof TContext> = {
     [Tag in TKeys as Tag extends string
-    ? `${Tag}${'.' | '#' | '[' | '{'}${string}` // ¡Añadimos '{' para soportar texto!
-    : never
-    ]: TContext[Tag];
+        ? `${Tag}${"." | "#" | "[" | "{"}${string}` // ¡Añadimos '{' para soportar texto!
+        : never]: TContext[Tag];
 };
 
-// importante para forzar los tipos del DOM 
+// importante para forzar los tipos del DOM
 /// <reference lib="dom" />
 type HtmlInputType =
     | "button"
@@ -970,8 +1418,8 @@ type HtmlInputType =
     | "time"
     | "url"
     | "week";
-declare class HTMLInputElementExtended extends HTMLInputElement{
-    type: HtmlInputType  ;
+declare class HTMLInputElementExtended extends HTMLInputElement {
+    type: HtmlInputType;
     /**
      * Patrón de validación para el input.
      * @example
@@ -979,12 +1427,10 @@ declare class HTMLInputElementExtended extends HTMLInputElement{
      * pattern = "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}";
      */
 }
-declare class HTMLElementExtended extends HTMLElement{
+declare class HTMLElementExtended extends HTMLElement {
     inputMode: "none" | "text" | "decimal" | "numeric" | "tel" | "search" | "email" | "url";
 }
-declare global {
-
-}
+declare global {}
 
 /**
  * Define la firma para un callback que recibe los argumentos que le preceden.
@@ -996,31 +1442,31 @@ type Callback<T> = (...data: T[]) => void;
  * Define la firma para un callback que recibe los argumentos que le preceden.
  * @template T,T2 El tipo de los argumentos.
  */
-type CallbackWithReturn<T,T2> = (...data: T[]) => T2;
+type CallbackWithReturn<T, T2> = (...data: T[]) => T2;
 /**
  * Define la firma para un callback que se ejecuta cuando se desactiva un listener.
  */
 type CallbackOffOnchange = () => void;
 /**
- * 
+ *
  */
-declare class TuSignal<T>{
+declare class TuSignal<T> {
     /**
-     * 
+     *
      */
     constructor(value: T);
     /**
-     * 
+     *
      */
     get value(): T;
     /**
-     * 
+     *
      */
     set value(value: T);
     get(): T;
     set(value: T): void;
     /**
-     * 
+     *
      */
     onChange(callback: Callback<T>): CallbackOffOnchange;
 
@@ -1031,30 +1477,27 @@ declare class TuSignal<T>{
     //static Computed<T,T2>(callback: CallbackWithReturn<T,T2>|Callback<T>): TuSignalNs.Computed<T,T2>;
 }
 /**/
-declare namespace TuSignal{
-    export class State<T>{
+declare namespace TuSignal {
+    export class State<T> {
         constructor(value: T);
         get value(): T;
         set value(value: T);
         onChange(callback: Callback<T>): CallbackOffOnchange;
         subscribe(callback: Callback<T>): CallbackOffOnchange;
     }
-    export class Computed<T,T2>{
-        constructor(callback: CallbackWithReturn<T,T2>|Callback<T>);
+    export class Computed<T, T2> {
+        constructor(callback: CallbackWithReturn<T, T2> | Callback<T>);
         get value(): T2;
         onChange(callback: Callback<T2>): CallbackOffOnchange;
         subscribe(callback: Callback<T2>): CallbackOffOnchange;
-        static fromTemplate<T>(template: Computed<T,string>): Computed<T,string>;
+        static fromTemplate<T>(template: Computed<T, string>): Computed<T, string>;
     }
-    
-}/*
+} /*
  */
 
 // ============================================================================
 // --- html-attributes.d.ts ---
 // ============================================================================
-
-
 
 // ============================================================================
 // 🌐 1. GLOBAL ATTRIBUTES (Available on all HTML tags)
@@ -1066,7 +1509,7 @@ interface GlobalHtmlAttributes {
      * @es Clases CSS del elemento. Usa nomenclatura HTML pura ('class', no 'className').
      * @example class: "flex items-center justify-center"
      */
-    'class'?: SignalOr<string>;
+    class?: SignalOr<string>;
 
     /**
      * Unique identifier for the element.
@@ -1088,14 +1531,14 @@ interface GlobalHtmlAttributes {
      * - `hidden` (booleano): Oculta el elemento por completo.
      * - `"until-found"`: Oculto pero accesible para la búsqueda en página (Ctrl+F).
      */
-    hidden?: SignalOr<boolean | 'until-found' | string>;
+    hidden?: SignalOr<boolean | "until-found" | string>;
 
     tabindex?: SignalOr<number | string>;
-    contenteditable?: SignalOr<boolean | 'true' | 'false'>;
-    draggable?: SignalOr<boolean | 'true' | 'false'>;
-    translate?: SignalOr<'yes' | 'no'>;
-    spellcheck?: SignalOr<'true' | 'false'>;
-    dir?: SignalOr<'ltr' | 'rtl' | 'auto'>;
+    contenteditable?: SignalOr<boolean | "true" | "false">;
+    draggable?: SignalOr<boolean | "true" | "false">;
+    translate?: SignalOr<"yes" | "no">;
+    spellcheck?: SignalOr<"true" | "false">;
+    dir?: SignalOr<"ltr" | "rtl" | "auto">;
     lang?: SignalOr<string>;
     title?: SignalOr<string>;
 }
@@ -1126,7 +1569,7 @@ interface AnchorAttributes {
      * - `_top`: Opens in the top-level frame.
      * @es Dónde abrir el recurso enlazado.
      */
-    target?: SignalOr<'_blank' | '_self' | '_parent' | '_top' | string>;
+    target?: SignalOr<"_blank" | "_self" | "_parent" | "_top" | string>;
 
     rel?: SignalOr<string>;
 }
@@ -1145,7 +1588,7 @@ interface ImageAttributes {
      * - `lazy`: Retrasa la carga hasta que el usuario hace scroll cerca de la imagen (Mejora el rendimiento).
      * - `eager`: Carga la imagen inmediatamente.
      */
-    loading?: SignalOr<'lazy' | 'eager'>;
+    loading?: SignalOr<"lazy" | "eager">;
 
     /**
      * Provides a hint of the relative priority to fetch the image.
@@ -1154,9 +1597,9 @@ interface ImageAttributes {
      * @es ⚡ Sugiere al navegador la prioridad de descarga.
      * - `high`: Úsalo para la imagen principal visible arriba del pliegue (LCP).
      */
-    fetchpriority?: SignalOr<'high' | 'low' | 'auto'>;
+    fetchpriority?: SignalOr<"high" | "low" | "auto">;
 
-    decoding?: SignalOr<'sync' | 'async' | 'auto'>;
+    decoding?: SignalOr<"sync" | "async" | "auto">;
 }
 
 /** * <script>
@@ -1173,7 +1616,7 @@ interface ScriptAttributes {
      * - `module`: El script es un módulo moderno (permite import/export).
      * - `importmap`: Permite definir un mapa JSON para resolver importaciones como `import Vue from 'vue'`.
      */
-    type?: SignalOr<'module' | 'importmap' | 'text/javascript' | string>;
+    type?: SignalOr<"module" | "importmap" | "text/javascript" | string>;
 
     /**
      * If true, the browser will download the script asynchronously without blocking the HTML parser.
@@ -1187,7 +1630,7 @@ interface ScriptAttributes {
      */
     defer?: SignalOr<boolean>;
 
-    crossorigin?: SignalOr<'anonymous' | 'use-credentials' | ''>;
+    crossorigin?: SignalOr<"anonymous" | "use-credentials" | "">;
 }
 
 /** * <input>
@@ -1197,7 +1640,20 @@ interface InputAttributes {
      * Type of form control.
      * @es Tipo de control de formulario.
      */
-    type?: SignalOr<'text' | 'password' | 'email' | 'number' | 'checkbox' | 'radio' | 'file' | 'date' | 'color' | 'range' | 'hidden' | string>;
+    type?: SignalOr<
+        | "text"
+        | "password"
+        | "email"
+        | "number"
+        | "checkbox"
+        | "radio"
+        | "file"
+        | "date"
+        | "color"
+        | "range"
+        | "hidden"
+        | string
+    >;
 
     value?: SignalOr<string | number>;
     checked?: SignalOr<boolean>;
@@ -1217,7 +1673,9 @@ interface InputAttributes {
     max?: SignalOr<string | number>;
     step?: SignalOr<string | number>;
     maxlength?: SignalOr<number>;
-    autocomplete?: SignalOr<'on' | 'off' | 'new-password' | 'current-password' | 'email' | 'username' | string>;
+    autocomplete?: SignalOr<
+        "on" | "off" | "new-password" | "current-password" | "email" | "username" | string
+    >;
 }
 
 /** * <button>
@@ -1232,7 +1690,7 @@ interface ButtonAttributes {
      * - `submit`: Envía el formulario (Es el valor por defecto si no se especifica).
      * - `button`: No hace nada por defecto. Úsalo cuando el botón solo dispara eventos JS.
      */
-    type?: SignalOr<'submit' | 'button' | 'reset'>;
+    type?: SignalOr<"submit" | "button" | "reset">;
 
     disabled?: SignalOr<boolean>;
     form?: SignalOr<string>;
@@ -1261,9 +1719,9 @@ interface FormAttributes$1 {
      * @es Método HTTP.
      * - `dialog`: Cierra un `<dialog>` padre nativamente sin JS.
      */
-    method?: SignalOr<'GET' | 'POST' | 'dialog' | string>;
+    method?: SignalOr<"GET" | "POST" | "dialog" | string>;
 
-    enctype?: SignalOr<'application/x-www-form-urlencoded' | 'multipart/form-data' | 'text/plain'>;
+    enctype?: SignalOr<"application/x-www-form-urlencoded" | "multipart/form-data" | "text/plain">;
     target?: SignalOr<string>;
     novalidate?: SignalOr<boolean>;
 }
@@ -1285,7 +1743,7 @@ interface MediaAttributes$1 {
      * @es Sugerencia de precarga.
      * - `metadata`: Ideal para ahorrar datos, solo carga la duración.
      */
-    preload?: SignalOr<'none' | 'metadata' | 'auto'>;
+    preload?: SignalOr<"none" | "metadata" | "auto">;
 
     /** @es (Solo Video) URL de la imagen de portada antes de reproducir. */
     poster?: SignalOr<string>;
@@ -1304,7 +1762,7 @@ interface IframeAttributes {
      */
     srcdoc?: SignalOr<string>;
 
-    loading?: SignalOr<'lazy' | 'eager'>;
+    loading?: SignalOr<"lazy" | "eager">;
     allow?: SignalOr<string>;
     allowfullscreen?: SignalOr<boolean>;
 
@@ -1322,7 +1780,7 @@ interface MetaAttributes {
     name?: SignalOr<string>;
     content?: SignalOr<string>;
     charset?: SignalOr<string>;
-    'http-equiv'?: SignalOr<string>;
+    "http-equiv"?: SignalOr<string>;
 }
 
 /**
@@ -1337,8 +1795,8 @@ interface LinkAttributes$1 {
      * Defines when a preloaded resource should be fetched.
      * @es Define qué tipo de recurso se va a precargar para optimizar la red.
      */
-    as?: SignalOr<'fetch' | 'font' | 'image' | 'script' | 'style' | 'track' | string>;
-    crossorigin?: SignalOr<'anonymous' | 'use-credentials' | ''>;
+    as?: SignalOr<"fetch" | "font" | "image" | "script" | "style" | "track" | string>;
+    crossorigin?: SignalOr<"anonymous" | "use-credentials" | "">;
 }
 
 // ============================================================================
@@ -1349,19 +1807,29 @@ interface LinkAttributes$1 {
  * Directs the correct specific attributes based on the exact DOM Element.
  * @es Asigna los atributos correctos según el elemento exacto.
  */
-type SpecificHtmlAttributes<TElement> =
-    TElement extends HTMLAnchorElement ? AnchorAttributes :
-    TElement extends HTMLImageElement ? ImageAttributes :
-    TElement extends HTMLScriptElement ? ScriptAttributes :
-    TElement extends HTMLInputElement ? InputAttributes :
-    TElement extends HTMLButtonElement ? ButtonAttributes :
-    TElement extends HTMLLabelElement | HTMLOutputElement ? LabelAttributes :
-    TElement extends HTMLFormElement ? FormAttributes$1 :
-    TElement extends HTMLVideoElement | HTMLAudioElement ? MediaAttributes$1 :
-    TElement extends HTMLIFrameElement ? IframeAttributes :
-    TElement extends HTMLMetaElement ? MetaAttributes :
-    TElement extends HTMLLinkElement ? LinkAttributes$1 :
-    {}; // Fallback for <div>, <span>, <section>, etc.
+type SpecificHtmlAttributes<TElement> = TElement extends HTMLAnchorElement
+    ? AnchorAttributes
+    : TElement extends HTMLImageElement
+      ? ImageAttributes
+      : TElement extends HTMLScriptElement
+        ? ScriptAttributes
+        : TElement extends HTMLInputElement
+          ? InputAttributes
+          : TElement extends HTMLButtonElement
+            ? ButtonAttributes
+            : TElement extends HTMLLabelElement | HTMLOutputElement
+              ? LabelAttributes
+              : TElement extends HTMLFormElement
+                ? FormAttributes$1
+                : TElement extends HTMLVideoElement | HTMLAudioElement
+                  ? MediaAttributes$1
+                  : TElement extends HTMLIFrameElement
+                    ? IframeAttributes
+                    : TElement extends HTMLMetaElement
+                      ? MetaAttributes
+                      : TElement extends HTMLLinkElement
+                        ? LinkAttributes$1
+                        : {}; // Fallback for <div>, <span>, <section>, etc.
 
 // ============================================================================
 // 📦 4. FINAL EXPORT (@attrs payload)
@@ -1371,15 +1839,11 @@ type SpecificHtmlAttributes<TElement> =
  * The final composition for HTML tags in `@attrs`.
  * @es La composición final que se inyectará en `@attrs` para elementos HTML.
  */
-type GetHtmlRawAttributes<TElement> =
-    GlobalHtmlAttributes &
-    SpecificHtmlAttributes<TElement>;
+type GetHtmlRawAttributes<TElement> = GlobalHtmlAttributes & SpecificHtmlAttributes<TElement>;
 
 // ============================================================================
 // --- svg-attributes.d.ts ---
 // ============================================================================
-
-
 
 // ============================================================================
 // 🌐 1. GLOBAL & PRESENTATION ATTRIBUTES (The Core)
@@ -1390,7 +1854,7 @@ interface GlobalSvgAttributes {
      * Standard CSS classes.
      * @es Clases CSS estándar.
      */
-    'class'?: SignalOr<string>;
+    class?: SignalOr<string>;
 
     /**
      * Unique identifier for the element.
@@ -1414,7 +1878,7 @@ interface SvgUseAttributes {
     height?: SignalOr<string | number>;
 }
 
-/** 
+/**
  * <foreignObject>
  * Permite incrustar HTML normal (como un <div> o <p>) dentro de un SVG.
  */
@@ -1457,7 +1921,7 @@ interface SvgRootAttributes {
      * Indicates how an image should be scaled if aspect ratios don't match.
      * @es Indica cómo debe encajar el SVG si su `viewBox` no coincide con su `width`/`height`.
      */
-    preserveAspectRatio?: SignalOr<'none' | 'xMidYMid meet' | 'xMinYMin slice' | string>;
+    preserveAspectRatio?: SignalOr<"none" | "xMidYMid meet" | "xMinYMin slice" | string>;
 
     xmlns?: SignalOr<string>;
 }
@@ -1639,17 +2103,17 @@ interface TextAttributes {
      * Determines the alignment of the text relative to the X coordinate.
      * @es Alineación del texto respecto a su coordenada X.
      */
-    'text-anchor'?: SignalOr<'start' | 'middle' | 'end' | string>;
+    "text-anchor"?: SignalOr<"start" | "middle" | "end" | string>;
 
     /**
      * Determines the vertical alignment of the text.
      * @es Alineación vertical (ideal para centrar texto verticalmente).
      */
-    'dominant-baseline'?: SignalOr<'auto' | 'middle' | 'central' | 'hanging' | string>;
+    "dominant-baseline"?: SignalOr<"auto" | "middle" | "central" | "hanging" | string>;
 
-    'font-family'?: SignalOr<string>;
-    'font-size'?: SignalOr<string | number>;
-    'font-weight'?: SignalOr<'normal' | 'bold' | 'bolder' | 'lighter' | number | string>;
+    "font-family"?: SignalOr<string>;
+    "font-size"?: SignalOr<string | number>;
+    "font-weight"?: SignalOr<"normal" | "bold" | "bolder" | "lighter" | number | string>;
 }
 
 /** * <image> (Inside SVG)
@@ -1671,19 +2135,29 @@ interface SvgImageAttributes {
  * Directs the correct specific geometry attributes based on the exact SVG Element.
  * @es Asigna los atributos geométricos correctos según la figura.
  */
-type SpecificSvgAttributes<TElement> =
-    TElement extends SVGSVGElement ? SvgRootAttributes :
-    TElement extends SVGCircleElement ? CircleAttributes :
-    TElement extends SVGEllipseElement ? EllipseAttributes :
-    TElement extends SVGRectElement ? RectAttributes :
-    TElement extends SVGLineElement ? LineAttributes :
-    TElement extends SVGPolygonElement | SVGPolylineElement ? PolyAttributes :
-    TElement extends SVGPathElement ? PathAttributes :
-    TElement extends SVGTextElement | SVGTSpanElement ? TextAttributes :
-    TElement extends SVGImageElement ? SvgImageAttributes :
-    TElement extends SVGUseElement ? SvgUseAttributes :
-    TElement extends SVGForeignObjectElement ? ForeignObjectAttributes :
-    {}; // Fallback for <g>, <defs>, etc.
+type SpecificSvgAttributes<TElement> = TElement extends SVGSVGElement
+    ? SvgRootAttributes
+    : TElement extends SVGCircleElement
+      ? CircleAttributes
+      : TElement extends SVGEllipseElement
+        ? EllipseAttributes
+        : TElement extends SVGRectElement
+          ? RectAttributes
+          : TElement extends SVGLineElement
+            ? LineAttributes
+            : TElement extends SVGPolygonElement | SVGPolylineElement
+              ? PolyAttributes
+              : TElement extends SVGPathElement
+                ? PathAttributes
+                : TElement extends SVGTextElement | SVGTSpanElement
+                  ? TextAttributes
+                  : TElement extends SVGImageElement
+                    ? SvgImageAttributes
+                    : TElement extends SVGUseElement
+                      ? SvgUseAttributes
+                      : TElement extends SVGForeignObjectElement
+                        ? ForeignObjectAttributes
+                        : {}; // Fallback for <g>, <defs>, etc.
 
 // ============================================================================
 // 📦 4. FINAL EXPORT (@attrs payload)
@@ -1694,16 +2168,13 @@ type SpecificSvgAttributes<TElement> =
  * Combines Global, Presentation (colors/strokes), and Specific Geometry.
  * @es La composición final que se inyectará en `@attrs` para elementos SVG.
  */
-type GetSvgRawAttributes<TElement> =
-    GlobalSvgAttributes &
+type GetSvgRawAttributes<TElement> = GlobalSvgAttributes &
     //SvgPresentationAttributes &
     SpecificSvgAttributes<TElement>;
 
 // ============================================================================
 // --- math-attributes.d.ts ---
 // ============================================================================
-
-
 
 // ============================================================================
 // 🌐 1. GLOBAL MATH ATTRIBUTES (Available on all MathML tags)
@@ -1715,7 +2186,7 @@ interface GlobalMathAttributes {
      * @es Clases CSS estándar.
      * @example class: "math-formula highlight"
      */
-    'class'?: SignalOr<string>;
+    class?: SignalOr<string>;
 
     /**
      * Unique identifier for the element.
@@ -1724,7 +2195,7 @@ interface GlobalMathAttributes {
     id?: SignalOr<string>;
 
     style?: SignalOr<string>;
-    dir?: SignalOr<'ltr' | 'rtl'>;
+    dir?: SignalOr<"ltr" | "rtl">;
     href?: SignalOr<string>;
 
     /**
@@ -1746,7 +2217,7 @@ interface GlobalMathAttributes {
      * @es Tamaño de la fuente matemática.
      * @example mathsize: "1.5em"
      */
-    mathsize?: SignalOr<'small' | 'normal' | 'big' | string>;
+    mathsize?: SignalOr<"small" | "normal" | "big" | string>;
 }
 
 // ============================================================================
@@ -1763,16 +2234,16 @@ interface SpecificMathAttributes {
      * - `block`: En su propio bloque (como un párrafo centrado).
      * - `inline`: En línea con el texto actual.
      */
-    display?: SignalOr<'block' | 'inline'>;
+    display?: SignalOr<"block" | "inline">;
     /**
      * Overrides the display style. If true, forces block-style rendering (larger operators, vertical limits).
      * @es Fuerza el estilo de renderizado. Si es 'true', las fracciones y sumatorias se dibujan en formato grande.
      * @example displaystyle: "true"
      */
-    displaystyle?: SignalOr<'true' | 'false' | boolean>;
+    displaystyle?: SignalOr<"true" | "false" | boolean>;
 
     /**
-     * Controls the font size implicitly by setting the script level. 
+     * Controls the font size implicitly by setting the script level.
      * Higher levels mean smaller text (like inside a fraction of a fraction).
      * @es Controla el nivel de anidamiento matemático (afecta el tamaño de fuente).
      * @example scriptlevel: "+1" // Reduce el tamaño de fuente un nivel
@@ -1785,14 +2256,14 @@ interface SpecificMathAttributes {
      * @example mathvariant: "double-struck" // For Real Numbers symbol (ℝ)
      */
     mathvariant?: SignalOr<
-        | 'normal'
-        | 'italic'
-        | 'bold'
-        | 'bold-italic'
-        | 'double-struck'
-        | 'script'
-        | 'fraktur'
-        | 'sans-serif'
+        | "normal"
+        | "italic"
+        | "bold"
+        | "bold-italic"
+        | "double-struck"
+        | "script"
+        | "fraktur"
+        | "sans-serif"
         | string
     >;
 
@@ -1804,7 +2275,7 @@ interface SpecificMathAttributes {
      * - `postfix`: Operator after the operand (e.g., x!).
      * @es Indica el rol o posición del operador.
      */
-    form?: SignalOr<'prefix' | 'infix' | 'postfix'>;
+    form?: SignalOr<"prefix" | "infix" | "postfix">;
 
     /**
      * Space added before the operator.
@@ -1824,43 +2295,43 @@ interface SpecificMathAttributes {
      * If true, the operator stretches to the size of adjacent elements (e.g., large brackets).
      * @es Si es 'true', el operador (como un paréntesis o llave) se estirará para cubrir a sus hermanos.
      */
-    stretchy?: SignalOr<'true' | 'false' | boolean>;
+    stretchy?: SignalOr<"true" | "false" | boolean>;
 
     /**
      * If true, the operator is drawn larger when in display="block" mode (like Integrals or Sums).
      * @es Si es 'true', el operador (como ∑ o ∫) se dibujará más grande en modo bloque.
      */
-    largeop?: SignalOr<'true' | 'false' | boolean>;
+    largeop?: SignalOr<"true" | "false" | boolean>;
 
     /**
      * If true, attached scripts are moved to under/over positions in display mode.
      * @es Mueve los subíndices y superíndices arriba y abajo del operador (ej. límites de suma).
      */
-    movablelimits?: SignalOr<'true' | 'false' | boolean>;
+    movablelimits?: SignalOr<"true" | "false" | boolean>;
 
     /**
      * Whether the operator should be vertically symmetric around the math axis.
      * @es Si el operador debe ser verticalmente simétrico respecto al eje matemático.
      */
-    symmetric?: SignalOr<'true' | 'false' | boolean>;
+    symmetric?: SignalOr<"true" | "false" | boolean>;
 
     /**
      * Indicates if the operator is a fence (such as parentheses).
      * @es Indica si el operador actúa como un delimitador (ej. paréntesis).
      */
-    fence?: SignalOr<'true' | 'false' | boolean>;
+    fence?: SignalOr<"true" | "false" | boolean>;
 
     /**
      * Indicates if the operator is a separator (such as a comma).
      * @es Indica si el operador actúa como un separador (ej. coma).
      */
-    separator?: SignalOr<'true' | 'false' | boolean>;
+    separator?: SignalOr<"true" | "false" | boolean>;
 
     /**
      * Indicates if the operator should be treated as an accent (drawn closer to the base).
      * @es Indica si el operador se comporta como un acento (se dibuja más cerca de la base).
      */
-    accent?: SignalOr<'true' | 'false' | boolean>;
+    accent?: SignalOr<"true" | "false" | boolean>;
 
     /**
      * The maximum size a stretchy operator is allowed to grow to.
@@ -1912,20 +2383,20 @@ interface SpecificMathAttributes {
      * @example notation: "longdiv" // Also: "actuarial", "radical", "box", "strike"
      */
     notation?: SignalOr<
-        | 'longdiv'
-        | 'actuarial'
-        | 'radical'
-        | 'box'
-        | 'roundedbox'
-        | 'circle'
-        | 'left'
-        | 'right'
-        | 'top'
-        | 'bottom'
-        | 'updiagonalstrike'
-        | 'downdiagonalstrike'
-        | 'verticalstrike'
-        | 'horizontalstrike'
+        | "longdiv"
+        | "actuarial"
+        | "radical"
+        | "box"
+        | "roundedbox"
+        | "circle"
+        | "left"
+        | "right"
+        | "top"
+        | "bottom"
+        | "updiagonalstrike"
+        | "downdiagonalstrike"
+        | "verticalstrike"
+        | "horizontalstrike"
         | string
     >;
 
@@ -1957,33 +2428,33 @@ interface SpecificMathAttributes {
      * @es Alineación horizontal de las celdas.
      * @example columnalign: "center"
      */
-    columnalign?: SignalOr<'left' | 'center' | 'right' | string>;
+    columnalign?: SignalOr<"left" | "center" | "right" | string>;
 
     /**
      * Vertical alignment of the cells.
      * @es Alineación vertical de las celdas.
      * @example rowalign: "baseline"
      */
-    rowalign?: SignalOr<'top' | 'bottom' | 'center' | 'baseline' | 'axis' | string>;
+    rowalign?: SignalOr<"top" | "bottom" | "center" | "baseline" | "axis" | string>;
 
     /**
      * Border lines between columns.
      * @es Líneas de borde entre columnas.
      */
-    columnlines?: SignalOr<'none' | 'solid' | 'dashed' | string>;
+    columnlines?: SignalOr<"none" | "solid" | "dashed" | string>;
 
     /**
      * Border lines between rows.
      * @es Líneas de borde entre filas.
      */
-    rowlines?: SignalOr<'none' | 'solid' | 'dashed' | string>;
+    rowlines?: SignalOr<"none" | "solid" | "dashed" | string>;
 
     /**
      * Border frame around the entire table.
      * @es Marco exterior alrededor de la matriz/tabla.
      * @example frame: "solid"
      */
-    frame?: SignalOr<'none' | 'solid' | 'dashed' | string>;
+    frame?: SignalOr<"none" | "solid" | "dashed" | string>;
 
     /**
      * Space between the frame and the table.
@@ -2011,7 +2482,7 @@ interface SpecificMathAttributes {
      * Specifies if the underscript should be treated as an accent (drawn closer to the base expression).
      * @es Especifica si el texto inferior debe tratarse como un acento (dibujado más cerca de la base).
      */
-    accentunder?: SignalOr<'true' | 'false' | boolean>;
+    accentunder?: SignalOr<"true" | "false" | boolean>;
 }
 
 // ============================================================================
@@ -2026,20 +2497,17 @@ interface SpecificMathAttributes {
  * Al no existir interfaces específicas en TS (como MathMLFractionElement),
  * unificamos todos los atributos en un solo diccionario ultra-rápido de O(1).
  */
-type GetMathRawAttributes<TElement> =
-    GlobalMathAttributes &
-    SpecificMathAttributes;
+type GetMathRawAttributes<TElement> = GlobalMathAttributes & SpecificMathAttributes;
 
 // ==========================================
 // --- attributes.d.ts ---
 // ==========================================
 
-
 //type AnyFunction = Function | { (...args: any[]): any } | { new(...args: any[]): any };
 
 interface Subscribable<T> {
-  subscribe(onValue: (value: T) => void): void;
-  subscribe(onValue: (value: T, oldValue: T) => void): void;
+    subscribe(onValue: (value: T) => void): void;
+    subscribe(onValue: (value: T, oldValue: T) => void): void;
 }
 
 /**
@@ -2053,19 +2521,26 @@ type SignalOr<T> = T | TuSignal<T> | Subscribable<T> | number;
 // =========================================================================
 
 type CSSKeys = Exclude<
-  keyof CSSStyleDeclaration,
-  number | symbol | 'length' | 'parentRule' | 'getPropertyPriority' |
-  'getPropertyValue' | 'item' | 'removeProperty' | 'setProperty'
+    keyof CSSStyleDeclaration,
+    | number
+    | symbol
+    | "length"
+    | "parentRule"
+    | "getPropertyPriority"
+    | "getPropertyValue"
+    | "item"
+    | "removeProperty"
+    | "setProperty"
 >;
 
 type StyleObject = {
-  [K in CSSKeys]?: SignalOr<string | number>;
+    [K in CSSKeys]?: SignalOr<string | number>;
 } & {
-  [customProperty: `--${string}`]: SignalOr<string | number>;
+    [customProperty: `--${string}`]: SignalOr<string | number>;
 };
 
 type ClassToggleMap = {
-  [className: string]: SignalOr<boolean>;
+    [className: string]: SignalOr<boolean>;
 };
 
 // =========================================================================
@@ -2078,96 +2553,110 @@ type ClassToggleMap = {
  * @es Elementos de metadatos que por error del DOM heredan eventos de interfaz.
  */
 type MetadataElements =
-  | HTMLScriptElement | HTMLLinkElement | HTMLMetaElement
-  | HTMLStyleElement | HTMLTitleElement | HTMLBaseElement | HTMLTemplateElement;
+    | HTMLScriptElement
+    | HTMLLinkElement
+    | HTMLMetaElement
+    | HTMLStyleElement
+    | HTMLTitleElement
+    | HTMLBaseElement
+    | HTMLTemplateElement;
 
 /**
  * Strict lifecycle event map for metadata.
  * @es Mapa estricto de eventos de carga para scripts, links, etc.
  */
 interface ResourceEventMap {
-  "load": Event;
-  "error": ErrorEvent;
-  "abort": Event;
+    load: Event;
+    error: ErrorEvent;
+    abort: Event;
 }
 
 /**
- * 🚀 EVENT ROUTER: 
+ * 🚀 EVENT ROUTER:
  * Determines which EventMap belongs to which Element.
  * If you find new special tags in the future, add them here!
  * @es Enrutador de eventos. Asigna el mapa correcto según el elemento.
  * ¡Añade aquí futuras etiquetas con tratos especiales!
  */
-type GetEventMap<T> =
-  T extends MetadataElements ? ResourceEventMap : // Interceptor de Metadatos
-  T extends SVGElement ? SVGElementEventMap :     // Interceptor SVG
-  T extends MathMLElement ? HTMLElementEventMap : // Interceptor MathML
-  HTMLElementEventMap;                            // Fallback estándar (div, button, etc)
+type GetEventMap<T> = T extends MetadataElements
+    ? ResourceEventMap
+    : // Interceptor de Metadatos
+      T extends SVGElement
+      ? SVGElementEventMap
+      : // Interceptor SVG
+        T extends MathMLElement
+        ? HTMLElementEventMap
+        : // Interceptor MathML
+          HTMLElementEventMap; // Fallback estándar (div, button, etc)
 
 /**
  * Regenerates native DOM events (on*) strictly from our custom Event Router.
  * @es Regenera los eventos nativos (on*) de forma estricta desde nuestro enrutador.
  */
 type NativeEventAttributes<TElement extends Element> = {
-  [K in keyof GetEventMap<TElement> as `on${K & string}`]?: (this: TElement, event: GetEventMap<TElement>[K]) => unknown;
+    [K in keyof GetEventMap<TElement> as `on${K & string}`]?: (
+        this: TElement,
+        event: GetEventMap<TElement>[K]
+    ) => unknown;
 };
 
 // =========================================================================
 // 3. DIRECTIVAS REACTIVAS ESPECIALES (`@`)
 // =========================================================================
 /**
- * Sobreescribe el evento nativo de TS para inyectar el elemento exacto 
+ * Sobreescribe el evento nativo de TS para inyectar el elemento exacto
  * en el `target` y `currentTarget`, evitando errores ts(2339).
  */
-type TuJsEvent<TElement extends EventTarget, TEvent extends Event = Event> =
-  Omit<TEvent, 'target' | 'currentTarget'> & {
+type TuJsEvent<TElement extends EventTarget, TEvent extends Event = Event> = Omit<
+    TEvent,
+    "target" | "currentTarget"
+> & {
     readonly target: TElement;
     readonly currentTarget: TElement;
-  };
+};
 // export type EventListenerMap<TElement extends Element> = {
 //   [EventType in keyof GetEventMap<TElement>]?: (event: GetEventMap<TElement>[EventType]) => void;
 // };
 type EventListenerMap<TElement extends Element> = {
-  // 1. Mapea todos los eventos oficiales del DOM (click, change, input...)
-  [K in keyof GlobalEventHandlersEventMap]?: (
-    e: TuJsEvent<TElement, GlobalEventHandlersEventMap[K]>
-  ) => void;
+    // 1. Mapea todos los eventos oficiales del DOM (click, change, input...)
+    [K in keyof GlobalEventHandlersEventMap]?: (
+        e: TuJsEvent<TElement, GlobalEventHandlersEventMap[K]>
+    ) => void;
 } & {
-  // 2. Fallback para Custom Events o eventos no estándar
-  [customEvent: string]: Function
-  //[customEvent: string]: (e: TuJsEvent<TElement, unknown>) => void; //<-- error en js strict
+    // 2. Fallback para Custom Events o eventos no estándar
+    [customEvent: string]: Function;
+    //[customEvent: string]: (e: TuJsEvent<TElement, unknown>) => void; //<-- error en js strict
 };
-type FormStateObject = { [key: string]: unknown; };
+type FormStateObject = { [key: string]: unknown };
 
 /**
- * 🚀 ENRUTADOR DE ATRIBUTOS: 
+ * 🚀 ENRUTADOR DE ATRIBUTOS:
  * Decide qué mapa de atributos mostrar en @attrs dependiendo del elemento actual.
  */
-type GetRawAttributesMap<TElement> =
-  TElement extends SVGElement ? GetSvgRawAttributes<TElement> :
-  TElement extends MathMLElement ? GetMathRawAttributes<TElement> : // (Hasta que hagamos math-attributes)
-  GetHtmlRawAttributes<TElement>;
-
+type GetRawAttributesMap<TElement> = TElement extends SVGElement
+    ? GetSvgRawAttributes<TElement>
+    : TElement extends MathMLElement
+      ? GetMathRawAttributes<TElement>
+      : // (Hasta que hagamos math-attributes)
+        GetHtmlRawAttributes<TElement>;
 
 type DirectiveAttributes<TElement extends Element> = {
-
-  "@classToggle"?: ClassToggleMap;
-  "@addClass"?: SignalOr<string>;
-  "@attrs"?: GetRawAttributesMap<TElement> &
-  Record<`data-${string}`, SignalOr<string | number | boolean>> &
-  Record<`aria-${string}`, SignalOr<string | boolean>>
-  "@on"?: EventListenerMap<TElement>;
-  "@one"?: EventListenerMap<TElement>;
-  "@once"?: EventListenerMap<TElement>;
-  "@bind:value"?: SignalOr<string | number | string[]>;
-  "@bind:checked"?: SignalOr<boolean>;
-  /**
-   * [DIRECTIVA] Captura los datos de un formulario en el evento de envío,
-   * los convierte en un objeto y los guarda en la señal proporcionada.
-   * Previene el envío tradicional del formulario.
-   */
-  "@bind:form"?: SignalOr<FormStateObject>;
-
+    "@classToggle"?: ClassToggleMap;
+    "@addClass"?: SignalOr<string>;
+    "@attrs"?: GetRawAttributesMap<TElement> &
+        Record<`data-${string}`, SignalOr<string | number | boolean>> &
+        Record<`aria-${string}`, SignalOr<string | boolean>>;
+    "@on"?: EventListenerMap<TElement>;
+    "@one"?: EventListenerMap<TElement>;
+    "@once"?: EventListenerMap<TElement>;
+    "@bind:value"?: SignalOr<string | number | string[]>;
+    "@bind:checked"?: SignalOr<boolean>;
+    /**
+     * [DIRECTIVA] Captura los datos de un formulario en el evento de envío,
+     * los convierte en un objeto y los guarda en la señal proporcionada.
+     * Previene el envío tradicional del formulario.
+     */
+    "@bind:form"?: SignalOr<FormStateObject>;
 };
 
 // =========================================================================
@@ -2176,60 +2665,145 @@ type DirectiveAttributes<TElement extends Element> = {
 
 /**
  * @OmitList
- * List of native DOM properties that are either read-only, methods, or 
+ * List of native DOM properties that are either read-only, methods, or
  * internal properties that pollute the Developer Experience.
  * @es Lista negra de propiedades inútiles, read-only o internas que ensucian el autocompletado.
  */
 type SpecialExclusionsProps =
-  // 🧱 1. Constantes del Sistema (Node Constants)
-  | 'ATTRIBUTE_NODE' | 'CDATA_SECTION_NODE' | 'COMMENT_NODE' | 'DOCUMENT_FRAGMENT_NODE'
-  | 'DOCUMENT_NODE' | 'DOCUMENT_POSITION_CONTAINED_BY' | 'DOCUMENT_POSITION_CONTAINS'
-  | 'DOCUMENT_POSITION_DISCONNECTED' | 'DOCUMENT_POSITION_FOLLOWING'
-  | 'DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC' | 'DOCUMENT_POSITION_PRECEDING'
-  | 'DOCUMENT_TYPE_NODE' | 'ELEMENT_NODE' | 'ENTITY_NODE' | 'ENTITY_REFERENCE_NODE'
-  | 'NOTATION_NODE' | 'PROCESSING_INSTRUCTION_NODE' | 'TEXT_NODE'
+    // 🧱 1. Constantes del Sistema (Node Constants)
+    | "ATTRIBUTE_NODE"
+    | "CDATA_SECTION_NODE"
+    | "COMMENT_NODE"
+    | "DOCUMENT_FRAGMENT_NODE"
+    | "DOCUMENT_NODE"
+    | "DOCUMENT_POSITION_CONTAINED_BY"
+    | "DOCUMENT_POSITION_CONTAINS"
+    | "DOCUMENT_POSITION_DISCONNECTED"
+    | "DOCUMENT_POSITION_FOLLOWING"
+    | "DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC"
+    | "DOCUMENT_POSITION_PRECEDING"
+    | "DOCUMENT_TYPE_NODE"
+    | "ELEMENT_NODE"
+    | "ENTITY_NODE"
+    | "ENTITY_REFERENCE_NODE"
+    | "NOTATION_NODE"
+    | "PROCESSING_INSTRUCTION_NODE"
+    | "TEXT_NODE"
 
-  // 🧭 2. Navegación y Jerarquía del DOM (Readonly getters)
-  | 'childNodes' | 'children' | 'firstChild' | 'firstElementChild' | 'lastChild'
-  | 'lastElementChild' | 'nextElementSibling' | 'nextSibling' | 'ownerDocument'
-  | 'parentElement' | 'parentNode' | 'previousElementSibling' | 'previousSibling'
-  | 'isConnected' | 'baseURI' | 'localName' | 'namespaceURI' | 'nodeName' | 'nodeType'
-  | 'prefix' | 'tagName' | 'shadowRoot' | 'assignedSlot' | 'part'
+    // 🧭 2. Navegación y Jerarquía del DOM (Readonly getters)
+    | "childNodes"
+    | "children"
+    | "firstChild"
+    | "firstElementChild"
+    | "lastChild"
+    | "lastElementChild"
+    | "nextElementSibling"
+    | "nextSibling"
+    | "ownerDocument"
+    | "parentElement"
+    | "parentNode"
+    | "previousElementSibling"
+    | "previousSibling"
+    | "isConnected"
+    | "baseURI"
+    | "localName"
+    | "namespaceURI"
+    | "nodeName"
+    | "nodeType"
+    | "prefix"
+    | "tagName"
+    | "shadowRoot"
+    | "assignedSlot"
+    | "part"
 
-  // 📏 3. Dimensiones, Posición y Scroll (Readonly o manejados por CSS)
-  | 'clientHeight' | 'clientLeft' | 'clientTop' | 'clientWidth'
-  | 'offsetHeight' | 'offsetLeft' | 'offsetParent' | 'offsetTop' | 'offsetWidth'
-  | 'scrollHeight' | 'scrollLeft' | 'scrollTop' | 'scrollWidth'
-  // | 'x' | 'y' // son porta de algunos SVG
+    // 📏 3. Dimensiones, Posición y Scroll (Readonly o manejados por CSS)
+    | "clientHeight"
+    | "clientLeft"
+    | "clientTop"
+    | "clientWidth"
+    | "offsetHeight"
+    | "offsetLeft"
+    | "offsetParent"
+    | "offsetTop"
+    | "offsetWidth"
+    | "scrollHeight"
+    | "scrollLeft"
+    | "scrollTop"
+    | "scrollWidth"
+    // | 'x' | 'y' // son porta de algunos SVG
 
-  // 📝 4. Inserción de Contenido (Manejado por las directivas del Framework)
-  | 'outerHTML' | 'nodeValue'
+    // 📝 4. Inserción de Contenido (Manejado por las directivas del Framework)
+    | "outerHTML"
+    | "nodeValue"
 
-  // 🎨 5. Atributos Complejos y Mapas de Estilo (Manejados por ConfigureAttributes)
-  | 'classList' //| 'dataset' | 'style' 
-  | 'attributeStyleMap' | 'attributes'
+    // 🎨 5. Atributos Complejos y Mapas de Estilo (Manejados por ConfigureAttributes)
+    | "classList" //| 'dataset' | 'style'
+    | "attributeStyleMap"
+    | "attributes"
 
-  // 🖼️ 6. Ruido Específico de SVG y MathML
-  | 'ownerSVGElement' | 'viewportElement' | 'nearestViewportElement'
-  | 'farthestViewportElement' | 'animatedPathSegList' | 'pathSegList'
-  | 'ownerMathElement'
+    // 🖼️ 6. Ruido Específico de SVG y MathML
+    | "ownerSVGElement"
+    | "viewportElement"
+    | "nearestViewportElement"
+    | "farthestViewportElement"
+    | "animatedPathSegList"
+    | "pathSegList"
+    | "ownerMathElement"
 
-  // 🛡️ 7. Estados de Validación y Formularios (Readonly getters)
-  | 'validity' | 'validationMessage' | 'willValidate' | 'labels' | 'form' | 'list'
-  | 'control'
+    // 🛡️ 7. Estados de Validación y Formularios (Readonly getters)
+    | "validity"
+    | "validationMessage"
+    | "willValidate"
+    | "labels"
+    | "form"
+    | "list"
+    | "control"
 
-  // ♿ 8. Object Models de Accesibilidad (Evitamos camelCase y forzamos el uso de aria-*)
-  | 'ariaAtomic' | 'ariaAutoComplete' | 'ariaBusy' | 'ariaChecked' | 'ariaColCount'
-  | 'ariaColIndex' | 'ariaColSpan' | 'ariaCurrent' | 'ariaDisabled' | 'ariaExpanded'
-  | 'ariaHasPopup' | 'ariaHidden' | 'ariaInvalid' | 'ariaKeyShortcuts' | 'ariaLabel'
-  | 'ariaLevel' | 'ariaLive' | 'ariaModal' | 'ariaMultiLine' | 'ariaMultiSelectable'
-  | 'ariaOrientation' | 'ariaPlaceholder' | 'ariaPosInSet' | 'ariaPressed' | 'ariaReadOnly'
-  | 'ariaRequired' | 'ariaRoleDescription' | 'ariaRowCount' | 'ariaRowIndex' | 'ariaRowSpan'
-  | 'ariaSelected' | 'ariaSetSize' | 'ariaSort' | 'ariaValueMax' | 'ariaValueMin'
-  | 'ariaValueNow' | 'ariaValueText' | 'role'
+    // ♿ 8. Object Models de Accesibilidad (Evitamos camelCase y forzamos el uso de aria-*)
+    | "ariaAtomic"
+    | "ariaAutoComplete"
+    | "ariaBusy"
+    | "ariaChecked"
+    | "ariaColCount"
+    | "ariaColIndex"
+    | "ariaColSpan"
+    | "ariaCurrent"
+    | "ariaDisabled"
+    | "ariaExpanded"
+    | "ariaHasPopup"
+    | "ariaHidden"
+    | "ariaInvalid"
+    | "ariaKeyShortcuts"
+    | "ariaLabel"
+    | "ariaLevel"
+    | "ariaLive"
+    | "ariaModal"
+    | "ariaMultiLine"
+    | "ariaMultiSelectable"
+    | "ariaOrientation"
+    | "ariaPlaceholder"
+    | "ariaPosInSet"
+    | "ariaPressed"
+    | "ariaReadOnly"
+    | "ariaRequired"
+    | "ariaRoleDescription"
+    | "ariaRowCount"
+    | "ariaRowIndex"
+    | "ariaRowSpan"
+    | "ariaSelected"
+    | "ariaSetSize"
+    | "ariaSort"
+    | "ariaValueMax"
+    | "ariaValueMin"
+    | "ariaValueNow"
+    | "ariaValueText"
+    | "role"
 
-  // ⚙️ 9. Otras propiedades nativas ruidosas
-  | 'enterKeyHint' | 'childElementCount' | 'currentCSSZoom' | 'elementTiming';
+    // ⚙️ 9. Otras propiedades nativas ruidosas
+    | "enterKeyHint"
+    | "childElementCount"
+    | "currentCSSZoom"
+    | "elementTiming";
 
 /**
  * SVG Magic: Unpacks `SVGAnimatedLength` to allow string/number assignments.
@@ -2242,17 +2816,21 @@ type DomPropType<T> = T extends { baseVal: infer U } ? U | string | number : T |
  * @es El filtro maestro. Borra métodos, lista negra, y TODOS los eventos nativos originales.
  */
 type ValidBaseKeys<T> = {
-  //[K in keyof T]-?: NonNullable<T[K]> extends AnyFunction ? never :
-  [K in keyof T]-?: NonNullable<T[K]> extends FunctionGeneric$1 ? never :
-  K extends SpecialExclusionsProps | 'dataset' | 'style' | 'class' | 'className' ? never :
-  K extends `on${string}` ? never : K // <- ¡Borra los eventos nativos del DOM!
+    //[K in keyof T]-?: NonNullable<T[K]> extends AnyFunction ? never :
+    [K in keyof T]-?: NonNullable<T[K]> extends FunctionGeneric$1
+        ? never
+        : K extends SpecialExclusionsProps | "dataset" | "style" | "class" | "className"
+          ? never
+          : K extends `on${string}`
+            ? never
+            : K; // <- ¡Borra los eventos nativos del DOM!
 }[keyof T];
 
 /**
  * Converts valid properties to their reactive version (`SignalOr`).
  */
 type BaseProps<TElement extends Element> = {
-  [K in ValidBaseKeys<TElement>]?: SignalOr<DomPropType<TElement[K]>>;
+    [K in ValidBaseKeys<TElement>]?: SignalOr<DomPropType<TElement[K]>>;
 };
 
 // =========================================================================
@@ -2261,42 +2839,35 @@ type BaseProps<TElement extends Element> = {
 
 /**
  * @es Objeto de configuración unificado.
- * El núcleo de la Arquitectura: Reconstruye el elemento fusionando nuestras 
+ * El núcleo de la Arquitectura: Reconstruye el elemento fusionando nuestras
  * directivas, nuestros propios eventos (purificados) y los atributos limpios.
  */
 type ConfigureAttributes<TElement extends Element = HTMLElement> =
-  // 1. Data Properties (limpias de métodos y eventos viejos)
-  BaseProps<TElement> &
-
-  // 2. Eventos Reconstruidos (solo los válidos para el elemento)
-  NativeEventAttributes<TElement> &
-
-  // 3. Clases y Estilos Optimizados
-  {
-    style?: StyleObject | SignalOr<string>;
-    dataset?: Record<string, SignalOr<string | number | boolean | null | undefined>>;
-    //className?: SignalOr<string>;
-  } &
-  (TElement extends HTMLElement ? { className?: SignalOr<string> } : {}) & // <-- ¡AQUÍ ESTÁ LA MAGIA!
-
-  // 4. Directivas Avanzadas de TuJsHtml (@)
-  DirectiveAttributes<TElement> &
-
-  // 5. Soporte para data-* y atributos sin tipar
-  Record<`data-${string}`, string | number | boolean | undefined>;
-
+    // 1. Data Properties (limpias de métodos y eventos viejos)
+    BaseProps<TElement> &
+        // 2. Eventos Reconstruidos (solo los válidos para el elemento)
+        NativeEventAttributes<TElement> & {
+            // 3. Clases y Estilos Optimizados
+            style?: StyleObject | SignalOr<string>;
+            dataset?: Record<string, SignalOr<string | number | boolean | null | undefined>>;
+            //className?: SignalOr<string>;
+        } & (TElement extends HTMLElement ? { className?: SignalOr<string> } : {}) & // <-- ¡AQUÍ ESTÁ LA MAGIA!
+        // 4. Directivas Avanzadas de TuJsHtml (@)
+        DirectiveAttributes<TElement> &
+        // 5. Soporte para data-* y atributos sin tipar
+        Record<`data-${string}`, string | number | boolean | undefined>;
 
 /**
-* 🪤 POISON PILL (Strict Excess Property Check):
-* Intercepts invalid DOM properties and forces a literal string error.
-* Prevents TypeScript from collapsing the callback inference to 'any'.
-*/
+ * 🪤 POISON PILL (Strict Excess Property Check):
+ * Intercepts invalid DOM properties and forces a literal string error.
+ * Prevents TypeScript from collapsing the callback inference to 'any'.
+ */
 type CatchExcessProps<TConfig, TValid> = {
-  [K in keyof TConfig]: string extends K
-  ? unknown // 👈 EL SALVAVIDAS: Si TS infiere 'string' genérico (por culpa de JS), ignora la validación para no romper todo.
-  : K extends keyof TValid
-  ? TConfig[K]
-  : `🛑 Invalid DOM property '${K & string}'. Use 'data-${K & string}' or assign it inside the callback.`;
+    [K in keyof TConfig]: string extends K
+        ? unknown // 👈 EL SALVAVIDAS: Si TS infiere 'string' genérico (por culpa de JS), ignora la validación para no romper todo.
+        : K extends keyof TValid
+          ? TConfig[K]
+          : `🛑 Invalid DOM property '${K & string}'. Use 'data-${K & string}' or assign it inside the callback.`;
 };
 // export type CatchExcessProps<TProvided, TExpected> = {
 //   [K in keyof TProvided]: K extends keyof TExpected
@@ -2308,7 +2879,8 @@ type CatchExcessProps<TConfig, TValid> = {
  * Combina la configuración permitida con la trampa de propiedades.
  * Esto limpia dramáticamente las firmas de las funciones.
  */
-type ValidatedConfig<TConfig, TElement> = ConfigureAttributes<TElement> & CatchExcessProps<TConfig, ConfigureAttributes<TElement>>;
+type ValidatedConfig<TConfig, TElement> = ConfigureAttributes<TElement> &
+    CatchExcessProps<TConfig, ConfigureAttributes<TElement>>;
 
 /// <reference lib="dom" />
 // webview.d.ts
@@ -2359,14 +2931,21 @@ interface WebViewElement extends HTMLElement {
     getAudioState(callback: (isPlaying: boolean) => void): void;
     setAudioMuted(mute: boolean): void;
     isAudioMuted(callback: (muted: boolean) => void): void;
-    captureVisibleRegion(options?: { mimeType?: string; quality?: number }, callback?: (dataUrl: string) => void): void;
+    captureVisibleRegion(
+        options?: { mimeType?: string; quality?: number },
+        callback?: (dataUrl: string) => void
+    ): void;
     addContentScripts(contentScriptList: ContentScriptDetails[]): void;
     back(callback?: () => void): void;
     canGoBack(): boolean;
     canGoForward(): boolean;
     clearData(options: ClearDataOptions, types: ClearDataTypeSet, callback: () => void): void;
     executeScript(details: InjectDetails, callback?: (results: unknown[]) => void): void;
-    find(searchText: string, options?: FindOptions, callback?: (result: FindCallbackResults) => void): void;
+    find(
+        searchText: string,
+        options?: FindOptions,
+        callback?: (result: FindCallbackResults) => void
+    ): void;
     forward(callback?: () => void): void;
     getProcessId(): number;
     getUserAgent(): string;
@@ -2382,7 +2961,7 @@ interface WebViewElement extends HTMLElement {
     setZoom(zoomFactor: number, callback?: () => void): void;
     setZoomMode(mode: ZoomMode, callback?: () => void): void;
     stop(): void;
-    stopFinding(action: 'clear' | 'keep' | 'activate'): void;
+    stopFinding(action: "clear" | "keep" | "activate"): void;
     loadDataWithBaseUrl(dataUrl: string, baseUrl: string, virtualUrl?: string): void;
     setSpatialNavigationEnabled(enabled: boolean): void;
     isSpatialNavigationEnabled(callback: (enabled: boolean) => void): void;
@@ -2391,28 +2970,100 @@ interface WebViewElement extends HTMLElement {
     /**
      * Eventos
      */
-    addEventListener(type: 'close', listener: (this: WebViewElement, ev: Event) => unknown, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'consolemessage', listener: (this: WebViewElement, ev: AppendEvent<ConsoleMessageEvent>) => unknown, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'contentload', listener: (this: WebViewElement, ev: Event) => unknown, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'dialog', listener: (this: WebViewElement, ev: AppendEvent<DialogController>) => unknown, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'exit', listener: (this: WebViewElement, ev: AppendEvent<ExitEvent>) => unknown, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'findupdate', listener: (this: WebViewElement, ev: AppendEvent<FindCallbackResults>) => unknown, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'loadabort', listener: (this: WebViewElement, ev: AppendEvent<LoadAbortEvent>) => unknown, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'loadcommit', listener: (this: WebViewElement, ev: AppendEvent<LoadCommitEvent>) => unknown, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'loadredirect', listener: (this: WebViewElement, ev: AppendEvent<LoadRedirectEvent>) => unknown, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'loadstart', listener: (this: WebViewElement, ev: AppendEvent<LoadStartEvent>) => unknown, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(
+        type: "close",
+        listener: (this: WebViewElement, ev: Event) => unknown,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        type: "consolemessage",
+        listener: (this: WebViewElement, ev: AppendEvent<ConsoleMessageEvent>) => unknown,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        type: "contentload",
+        listener: (this: WebViewElement, ev: Event) => unknown,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        type: "dialog",
+        listener: (this: WebViewElement, ev: AppendEvent<DialogController>) => unknown,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        type: "exit",
+        listener: (this: WebViewElement, ev: AppendEvent<ExitEvent>) => unknown,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        type: "findupdate",
+        listener: (this: WebViewElement, ev: AppendEvent<FindCallbackResults>) => unknown,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        type: "loadabort",
+        listener: (this: WebViewElement, ev: AppendEvent<LoadAbortEvent>) => unknown,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        type: "loadcommit",
+        listener: (this: WebViewElement, ev: AppendEvent<LoadCommitEvent>) => unknown,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        type: "loadredirect",
+        listener: (this: WebViewElement, ev: AppendEvent<LoadRedirectEvent>) => unknown,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        type: "loadstart",
+        listener: (this: WebViewElement, ev: AppendEvent<LoadStartEvent>) => unknown,
+        options?: boolean | AddEventListenerOptions
+    ): void;
     /**
      * Se activa cuando se completan todas las cargas a nivel del fotograma en una página secundaria (incluidos todos sus subfotogramas). Esto incluye la navegación dentro del documento actual y las cargas a nivel del documento de subframes, pero no incluye las cargas de recursos asíncronas. Este evento se activa cada vez que la cantidad de cargas a nivel del documento pasa de una (o más) a cero. Por ejemplo, si una página ya terminó de cargarse (es decir, loadstop ya se activó una vez) crea un iframe nuevo que carga una página y, luego, se activará un segundo loadstop cuando se complete la carga de la página del iframe. Este patrón se observa comúnmente en las páginas que cargan anuncios.
      * Nota: Cuando se anula una carga confirmada, un evento loadstop seguirá a un evento loadabort, incluso si se anularon todas las cargas confirmadas desde el último evento loadstop (si hubo alguno).
      */
-    addEventListener(type: 'loadstop', listener: (this: WebViewElement, ev: Event) => unknown, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'newwindow', listener: (this: WebViewElement, ev: AppendEvent<NewWindow>) => unknown, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'permissionrequest', listener: (this: WebViewElement, ev: AppendEvent<PermissionRequest>) => unknown, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'responsive', listener: (this: WebViewElement, ev: Event) => unknown, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'sizechanged', listener: (this: WebViewElement, ev: AppendEvent<SizeChangedEvent>) => unknown, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'unresponsive', listener: (this: WebViewElement, ev: Event) => unknown, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: 'zoomchange', listener: (this: WebViewElement, ev: AppendEvent<ZoomChange>) => unknown, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(
+        type: "loadstop",
+        listener: (this: WebViewElement, ev: Event) => unknown,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        type: "newwindow",
+        listener: (this: WebViewElement, ev: AppendEvent<NewWindow>) => unknown,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        type: "permissionrequest",
+        listener: (this: WebViewElement, ev: AppendEvent<PermissionRequest>) => unknown,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        type: "responsive",
+        listener: (this: WebViewElement, ev: Event) => unknown,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        type: "sizechanged",
+        listener: (this: WebViewElement, ev: AppendEvent<SizeChangedEvent>) => unknown,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        type: "unresponsive",
+        listener: (this: WebViewElement, ev: Event) => unknown,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        type: "zoomchange",
+        listener: (this: WebViewElement, ev: AppendEvent<ZoomChange>) => unknown,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        type: string,
+        listener: EventListenerOrEventListenerObject,
+        options?: boolean | AddEventListenerOptions
+    ): void;
 }
 interface ChromeWebViewElement extends WebViewElement {
     // Extiende la interfaz WebViewElement para incluir propiedades específicas de Chrome
@@ -2454,7 +3105,7 @@ interface ClearDataTypeSet {
 interface InjectDetails {
     code?: string;
     file?: string;
-    runAt?: 'document_start' | 'document_end' | 'document_idle';
+    runAt?: "document_start" | "document_end" | "document_idle";
 }
 
 interface ContentScriptDetails {
@@ -2462,7 +3113,7 @@ interface ContentScriptDetails {
     matches: string[];
     css?: string[];
     js?: string[];
-    runAt?: 'document_start' | 'document_end' | 'document_idle';
+    runAt?: "document_start" | "document_end" | "document_idle";
 }
 
 interface ContextMenuCreateProperties {
@@ -2486,7 +3137,19 @@ interface ContextMenuUpdateProperties {
     visible?: boolean;
 }
 
-type ContextType = 'all' | 'page' | 'frame' | 'selection' | 'link' | 'editable' | 'image' | 'video' | 'audio' | 'launcher' | 'browser_action' | 'page_action';
+type ContextType =
+    | "all"
+    | "page"
+    | "frame"
+    | "selection"
+    | "link"
+    | "editable"
+    | "image"
+    | "video"
+    | "audio"
+    | "launcher"
+    | "browser_action"
+    | "page_action";
 
 interface FindOptions {
     forward?: boolean;
@@ -2523,15 +3186,22 @@ interface PermissionRequest {
 interface LoadAbortEvent {
     url: string;
     isTopLevel: boolean;
-    reason: "ERR_ABORTED" | "ERR_INVALID_URL" | "ERR_DISALLOWED_URL_SCHEME" | "ERR_BLOCKED_BY_CLIENT" | "ERR_ADDRESS_UNREACHABLE" | "ERR_EMPTY_RESPONSE" | "ERR_FILE_NOT_FOUND" | "ERR_UNKNOWN_URL_SCHEME" | string;
+    reason:
+        | "ERR_ABORTED"
+        | "ERR_INVALID_URL"
+        | "ERR_DISALLOWED_URL_SCHEME"
+        | "ERR_BLOCKED_BY_CLIENT"
+        | "ERR_ADDRESS_UNREACHABLE"
+        | "ERR_EMPTY_RESPONSE"
+        | "ERR_FILE_NOT_FOUND"
+        | "ERR_UNKNOWN_URL_SCHEME"
+        | string;
 }
 interface LoadStartEvent {
     url: string;
     isTopLevel: boolean;
 }
-interface LoadCommitEvent extends LoadStartEvent {
-}
-
+interface LoadCommitEvent extends LoadStartEvent {}
 
 interface LoadRedirectEvent {
     oldUrl: string;
@@ -2540,7 +3210,7 @@ interface LoadRedirectEvent {
 }
 
 interface ExitEvent {
-    reason: 'abnormal' | 'crash' | 'kill' | 'normal' | 'out-of-memory' | 'launch-failed';
+    reason: "abnormal" | "crash" | "kill" | "normal" | "out-of-memory" | "launch-failed";
     processId: number;
 }
 
@@ -2556,7 +3226,7 @@ interface ZoomChange {
     newZoomFactor: number;
 }
 
-type ZoomMode = 'per-origin' | 'per-view';
+type ZoomMode = "per-origin" | "per-view";
 
 interface ConsoleMessageEvent {
     level: number;
@@ -2573,8 +3243,6 @@ interface DialogController {
 // --- html-tags.d.ts ---
 // ==========================================
 /// <reference lib="dom" />
-
-
 
 /**
  * Official dictionary of HTML5 tags supported by TuJsHtml.
@@ -2909,7 +3577,6 @@ interface TuJsHtml_NativeTags {
      */
     figcaption: SpecificTagFunction<HTMLElement>;
 
-
     // ==========================================================================
     // 📝 INLINE TEXT SEMANTICS (SEMÁNTICA DE TEXTO EN LÍNEA)
     // ==========================================================================
@@ -3183,7 +3850,6 @@ interface TuJsHtml_NativeTags {
      */
     canvas: SpecificTagFunction<HTMLCanvasElement>;
 
-
     // ==========================================================================
     // 📊 TABLE ELEMENTS (ELEMENTOS DE TABLA)
     // ==========================================================================
@@ -3267,7 +3933,6 @@ interface TuJsHtml_NativeTags {
      * Define propiedades para columnas específicas. No admite hijos.
      */
     col: VoidTagFunction<HTMLTableColElement>;
-
 
     // ==========================================================================
     // 📝 FORMS & INTERACTIVE (FORMULARIOS E INTERACTIVIDAD)
@@ -3409,14 +4074,13 @@ interface TuJsHtml_NativeTags {
      */
     dialog: SpecificTagFunction<HTMLDialogElement>;
 
-
     // ==========================================================================
     // 💀 OBSOLETE ELEMENTS (OBSOLETOS - NO USAR)
     // ==========================================================================
 
     /**
      * 💀 **OBSOLETE**: `<marquee/>`
-     * @deprecated 🚨 ¡NO USAR! This tag was removed from the HTML5 standard. 
+     * @deprecated 🚨 ¡NO USAR! This tag was removed from the HTML5 standard.
      * @es 💀 **OBSOLETO**: `<marquee/>`
      * @deprecated 🚨 ¡NO USAR! Etiqueta eliminada de HTML5. Usa animaciones CSS.
      */
@@ -3464,15 +4128,25 @@ interface TuJsHtml_NativeTags {
 /// <reference lib="dom" />
 
 // 1. Limpiamos las propiedades nativas de JS
-type ValidSvgTags = keyof Omit<TuJsHtml_SvgContext,
-    'prototype' | 'apply' | 'call' | 'bind' | 'length' | 'name' | 'arguments' | 'caller' | 'toString'>;
+type ValidSvgTags = keyof Omit<
+    TuJsHtml_SvgContext,
+    | "prototype"
+    | "apply"
+    | "call"
+    | "bind"
+    | "length"
+    | "name"
+    | "arguments"
+    | "caller"
+    | "toString"
+>;
 // ==========================================================================
 // 🎨 CORE DEL ECOSISTEMA SVG (Ultrastricto)
 // ==========================================================================
 
 /**
  * Nodos recursivos para contenedores SVG puros.
- * 🛑 ¡ATENCIÓN!: Se han eliminado `string` y `number`. 
+ * 🛑 ¡ATENCIÓN!: Se han eliminado `string` y `number`.
  * En SVG, el texto solo es válido dentro de la etiqueta `<text>`.
  * @es Previene inyectar texto huérfano dentro de etiquetas como `<g>` o `<svg>`.
  */
@@ -3572,7 +4246,7 @@ interface SvgTextTagFunction<TEl extends SVGElement> {
     (...args: NodosTxt<TEl>): Ret<TEl>;
     /**
      * 📝 **Fábrica de Texto SVG (Template)**
-     * @example 
+     * @example
      * svg.text`Hola Mundo`
      * svg.tspan`hello World ${varname_1}`
      */
@@ -3597,7 +4271,6 @@ interface SvgTextTagFunction<TEl extends SVGElement> {
  * Expone etiquetas con un control semántico absoluto sobre lo que pueden contener.
  */
 interface TuJsHtml_SvgContext<TRoot extends SVGElement = SVGElement> {
-
     /** Permite anidar elementos al root actual, prohibiendo texto flotante */
     (...args: SvgRecursiveNode<TRoot>[]): TRoot;
     // =========================================================================
@@ -3681,7 +4354,6 @@ interface TuJsHtml_SvgContext<TRoot extends SVGElement = SVGElement> {
      */
     use: SvgVoidTagFunction<SVGUseElement>;
 
-
     // ----------------------------------------------------------------------
     // 📦 ELEMENTOS CONTENEDORES (SIN TEXTO)
     // ----------------------------------------------------------------------
@@ -3714,7 +4386,6 @@ interface TuJsHtml_SvgContext<TRoot extends SVGElement = SVGElement> {
      */
     foreignObject: SvgContainerTagFunction<SVGForeignObjectElement>;
 
-
     // ----------------------------------------------------------------------
     // 📝 ELEMENTOS DE TEXTO (LOS ÚNICOS QUE ADMITEN STRINGS/NUMBERS)
     // ----------------------------------------------------------------------
@@ -3729,7 +4400,7 @@ interface TuJsHtml_SvgContext<TRoot extends SVGElement = SVGElement> {
      * svg.text`Usando Template Literals directamente!`;
      */
     //text: SvgTextTagFunction<SVGTextElement>;
-    text: SvgTextTagFunction<TRoot>
+    text: SvgTextTagFunction<TRoot>;
     /**
      * 📝 **SVG Text Span**: `<tspan/>`
      * Used to format individual pieces of text inside a `<text>` element.
@@ -3749,8 +4420,8 @@ interface TuJsHtml_SvgContext<TRoot extends SVGElement = SVGElement> {
  * Combina las etiquetas limpias con la magia de desestructuración Emmet.
  * 🛑 SIN FALLBACK: Garantiza que solo se usen etiquetas válidas de la W3C.
  */
-type TuJsHtml_SvgProxy<TRoot extends SVGElement = SVGElement> =
-    TuJsHtml_SvgContext<TRoot> & CustomEmmetSelectors<TuJsHtml_SvgContext<TRoot>, ValidSvgTags>;
+type TuJsHtml_SvgProxy<TRoot extends SVGElement = SVGElement> = TuJsHtml_SvgContext<TRoot> &
+    CustomEmmetSelectors<TuJsHtml_SvgContext<TRoot>, ValidSvgTags>;
 
 // ==========================================
 // --- math-tags.d.ts ---
@@ -3758,8 +4429,18 @@ type TuJsHtml_SvgProxy<TRoot extends SVGElement = SVGElement> =
 /// <reference lib="dom" />
 
 // 1. Limpiamos las propiedades nativas de JS
-type ValidMathTags = keyof Omit<TuJsHtml_MathContext,
-    'prototype' | 'apply' | 'call' | 'bind' | 'length' | 'name' | 'arguments' | 'caller' | 'toString'>;
+type ValidMathTags = keyof Omit<
+    TuJsHtml_MathContext,
+    | "prototype"
+    | "apply"
+    | "call"
+    | "bind"
+    | "length"
+    | "name"
+    | "arguments"
+    | "caller"
+    | "toString"
+>;
 // ==========================================================================
 // 📐 CORE DEL ECOSISTEMA MATHML (Ultrastricto)
 // ==========================================================================
@@ -3916,7 +4597,6 @@ interface MathVoidTagFunction<TElement extends MathMLElement> {
     ): SuperElementClass<TElement>;
 }
 
-
 // ==========================================================================
 // 📐 DICCIONARIO DE ETIQUETAS MATHML (CONTEXTO AISLADO)
 // ==========================================================================
@@ -3928,7 +4608,6 @@ interface MathVoidTagFunction<TElement extends MathMLElement> {
  * Expone etiquetas con control semántico absoluto sobre fórmulas matemáticas.
  */
 interface TuJsHtml_MathContext<TRoot extends MathMLElement = MathMLElement> {
-
     /**
      * ⚙️ **Root Appender (Direct Nesting) / Anexador Raíz (Anidamiento Directo)**
      * Appends valid MathML nodes directly to the current root element of this context.
@@ -3943,10 +4622,10 @@ interface TuJsHtml_MathContext<TRoot extends MathMLElement = MathMLElement> {
      * // Assuming we are inside a `<math>` or `<mrow>` callback:
      * math( ctx => {
      * // This appends exactly 3 nodes directly to the `<math>` root
-     *   ctx( 
-     *     ctx.mi`f`, 
-     *     ctx.mo`=`, 
-     *     ctx.mi`m` 
+     *   ctx(
+     *     ctx.mi`f`,
+     *     ctx.mo`=`,
+     *     ctx.mi`m`
      *   );
      * })
      */
@@ -4063,7 +4742,7 @@ interface TuJsHtml_MathContext<TRoot extends MathMLElement = MathMLElement> {
      *   mCtx.mi`x`; // Base
      *   mCtx.mn`3`; // Index
      * });
-     * 
+     *
      */
     mroot: MathContainerTagFunction<MathMLElement>;
 
@@ -4247,11 +4926,11 @@ interface TuJsHtml_MathContext<TRoot extends MathMLElement = MathMLElement> {
      * });
      * // or short style
      * math.mtable( ({mtr:myRow,mtd:myCol,mn}) => {
-     *   myRow( 
+     *   myRow(
      *     myCol( mn`1` ),
      *     myCol( mn`0` )
      *   );
-     *   myRow( 
+     *   myRow(
      *     myCol( mn`0` ),
      *     myCol( mn`1` )
      *   );
@@ -4283,9 +4962,9 @@ interface TuJsHtml_MathContext<TRoot extends MathMLElement = MathMLElement> {
      * @example
      * math.semantics( mCtx => {
      *   // 1. Presentación visual
-     *   mCtx.mrow( rCtx => { rCtx.mi("x"); rCtx.mo("+"); rCtx.mi("y"); }); 
+     *   mCtx.mrow( rCtx => { rCtx.mi("x"); rCtx.mo("+"); rCtx.mi("y"); });
      *   // 2. Significado semántico oculto
-     *   mCtx.annotation({ "@attrs": { encoding: "application/x-tex" } }, "x + y"); 
+     *   mCtx.annotation({ "@attrs": { encoding: "application/x-tex" } }, "x + y");
      * });
      * // or short style
      * math.semantics( ({mrow,'annotation[enconding="application/x-tex"]':myAnnotation,mi,mo})=>{
@@ -4312,7 +4991,7 @@ interface TuJsHtml_MathContext<TRoot extends MathMLElement = MathMLElement> {
      * Holds XML semantic data for a semantics element.
      * @es 🧠 **Anotación XML**: `<annotation-xml/>`
      */
-    'annotation-xml': MathContainerTagFunction<MathMLElement>;
+    "annotation-xml": MathContainerTagFunction<MathMLElement>;
 
     // ----------------------------------------------------------------------
     // 🛑 ESPACIADO (VOID)
@@ -4332,14 +5011,12 @@ interface TuJsHtml_MathContext<TRoot extends MathMLElement = MathMLElement> {
  * Combina las etiquetas limpias con la magia de desestructuración Emmet.
  * 🛑 SIN FALLBACK: Previene errores tipográficos (typos) en el ecosistema cerrado de MathML.
  */
-type TuJsHtml_MathProxy<TRoot extends MathMLElement = MathMLElement> =
-    TuJsHtml_MathContext<TRoot> & CustomEmmetSelectors<TuJsHtml_MathContext<TRoot>, ValidMathTags>;
+type TuJsHtml_MathProxy<TRoot extends MathMLElement = MathMLElement> = TuJsHtml_MathContext<TRoot> &
+    CustomEmmetSelectors<TuJsHtml_MathContext<TRoot>, ValidMathTags>;
 
 // ==========================================
 // --- TuJsHtml.d.ts ---
 // ==========================================
-
-
 
 // ============================================
 // 1. BASE TYPES & UTILITIES / TIPOS BASE Y UTILIDADES
@@ -4347,8 +5024,6 @@ type TuJsHtml_MathProxy<TRoot extends MathMLElement = MathMLElement> =
 
 // export type EventOff = () => void;
 // export type ExecuteAfterRender = () => void;
-
-
 
 // /**
 //  * Interface that structurally resembles a DOM Node.
@@ -4365,41 +5040,43 @@ type TuJsHtml_MathProxy<TRoot extends MathMLElement = MathMLElement> =
 //   configure(configureObject: ConfigureAttributes<TBaseElement>): this;
 //   tags: TuJsHtml_Tags<TBaseElement>;
 // }
-declare class ElementUtil$<TBaseElement extends HTMLElement | SVGElement | MathMLElement = HTMLElement> {
-  /**
-   * Adjunta un event listener al elemento.
-   * @param type El tipo de evento (ej. 'click', 'input')
-   * @param listener El callback fuertemente tipado según el evento.
-   */
-  on<K extends keyof HTMLElementEventMap>(
-    type: K,
-    listener: (this: TBaseElement, ev: HTMLElementEventMap[K]) => unknown
-  ): EventOff;
+declare class ElementUtil$<
+    TBaseElement extends HTMLElement | SVGElement | MathMLElement = HTMLElement
+> {
+    /**
+     * Adjunta un event listener al elemento.
+     * @param type El tipo de evento (ej. 'click', 'input')
+     * @param listener El callback fuertemente tipado según el evento.
+     */
+    on<K extends keyof HTMLElementEventMap>(
+        type: K,
+        listener: (this: TBaseElement, ev: HTMLElementEventMap[K]) => unknown
+    ): EventOff;
 
-  /**
-   * Adjunta un event listener que se ejecuta una sola vez.
-   */
-  one<K extends keyof HTMLElementEventMap>(
-    type: K,
-    listener: (this: TBaseElement, ev: HTMLElementEventMap[K]) => unknown
-  ): EventOff;
+    /**
+     * Adjunta un event listener que se ejecuta una sola vez.
+     */
+    one<K extends keyof HTMLElementEventMap>(
+        type: K,
+        listener: (this: TBaseElement, ev: HTMLElementEventMap[K]) => unknown
+    ): EventOff;
 
-  /**
-   * Remueve un event listener del elemento.
-   */
-  off<K extends keyof HTMLElementEventMap>(
-    type: K,
-    listener: (this: TBaseElement, ev: HTMLElementEventMap[K]) => unknown
-  ): this;
+    /**
+     * Remueve un event listener del elemento.
+     */
+    off<K extends keyof HTMLElementEventMap>(
+        type: K,
+        listener: (this: TBaseElement, ev: HTMLElementEventMap[K]) => unknown
+    ): this;
 
-  configure(configureObject: ConfigureAttributes<TBaseElement>): this;
-  tags: TuJsHtml_Tags<TBaseElement>;
+    configure(configureObject: ConfigureAttributes<TBaseElement>): this;
+    tags: TuJsHtml_Tags<TBaseElement>;
 }
 
 declare global {
-  interface SuperElementProperties {
-    [ELEMENT_UTIL]: ElementUtil$;
-  }
+    interface SuperElementProperties {
+        [ELEMENT_UTIL]: ElementUtil$;
+    }
 }
 
 /**
@@ -4408,7 +5085,8 @@ declare global {
  * @es Clase base para todos los elementos DOM extendidos por el framework.
  * Garantiza que cada elemento tenga acceso a las utilidades del framework.
  */
-type SuperElementClass<TBaseElement extends HTMLElement | SVGElement | MathMLElement> = TBaseElement & SuperElementProperties;
+type SuperElementClass<TBaseElement extends HTMLElement | SVGElement | MathMLElement> =
+    TBaseElement & SuperElementProperties;
 
 // ============================================
 // 2. RECURSIVE CONTEXT / CONTEXTO RECURSIVO (TRoot)
@@ -4420,12 +5098,9 @@ type SuperElementClass<TBaseElement extends HTMLElement | SVGElement | MathMLEle
  * @es Representa cualquier nodo/argumento válido dentro de una función de etiqueta.
  * Transporta el contexto `TRoot` hacia abajo para evitar perder el contexto padre en anidamientos profundos.
  */
-type RecursiveNode$1<TRoot extends HTMLElement | DocumentFragment | SVGElement | MathMLElement = HTMLElement> =
-  | Node
-  | SuperElementClass<HTMLElement>
-  | TuJsHtml_Callback<TRoot>
-  | string
-  | number;
+type RecursiveNode$1<
+    TRoot extends HTMLElement | DocumentFragment | SVGElement | MathMLElement = HTMLElement
+> = Node | SuperElementClass<HTMLElement> | TuJsHtml_Callback<TRoot> | string | number;
 
 type DynamicNodes = ChildNode[];
 
@@ -4434,24 +5109,28 @@ type DynamicNodes = ChildNode[];
  * @es Tipo utilitario para mapear los tipos de argumentos a su representación real en el DOM.
  */
 type MapToDOMNode<T> =
-  T extends SuperElementClass<infer E> ? E :
-  T extends (...args: unknown[]) => unknown ? DynamicNodes :
-  T extends Node ? T :
-  T extends string | number ? Text :
-  Node;
+    T extends SuperElementClass<infer E>
+        ? E
+        : T extends (...args: unknown[]) => unknown
+          ? DynamicNodes
+          : T extends Node
+            ? T
+            : T extends string | number
+              ? Text
+              : Node;
 
 /**
  * Flattening engine for arrays and nested nodes during insertion.
  * @es Motor de aplanamiento para arrays y nodos anidados durante la inserción.
  */
 type Flatten<T extends unknown[]> = T extends [infer First, ...infer Rest]
-  ? First extends unknown[]
-  ? [...First, ...Flatten<Rest>]
-  : [MapToDOMNode<First>, ...Flatten<Rest>]
-  : [];
+    ? First extends unknown[]
+        ? [...First, ...Flatten<Rest>]
+        : [MapToDOMNode<First>, ...Flatten<Rest>]
+    : [];
 
 interface StoreObject {
-  [key: string]: unknown;
+    [key: string]: unknown;
 }
 type StoreProperty = StoreObject;
 
@@ -4471,97 +5150,99 @@ type StoreProperty = StoreObject;
  * - ✅ ASYNC SOLUTION 2 (Isolated World): Open the block with `function(ctx) {}` instead of an arrow function. The framework detects this and creates a dedicated, isolated proxy just for this block, making `ctx()` safe for async use.
  *
  * @es ⚙️ **Invocador de Contexto TuJsHtml (El Proxy "Promiscuo")**
- * Define el comportamiento del contexto actual. 
+ * Define el comportamiento del contexto actual.
  * ⚠️ REGLA DE ARQUITECTURA: Por rendimiento, este proxy se recicla. ¡NO lo invoques dentro de temporizadores o promesas si usaste una función flecha! Para asincronía segura, usa el parámetro `parent` o declara el bloque con `function(ctx) {}`.
  */
-interface TuJsHtml_TagsCallable<TRoot extends HTMLElement | DocumentFragment | SVGElement | MathMLElement = HTMLElement> {
-  /**
-   * 🎨 **Late Configuration / Configuración Tardía**
-   * Appends nodes while modifying the root's attributes (Only valid if TRoot is HTMLElement).
-   * @es Anexa nodos y simultáneamente inyecta o modifica atributos al contenedor raíz actual.
-   * @example
-   * // 🤖 EXAMPLE 1: Conditional Styling (Estilos Condicionales)
-   * tags.div( ctx => {
-   *   // Si hay error, muta el contenedor padre antes de inyectar el hijo
-   *   if (hasError) ctx({ style: {border: "1px solid red"} });
-   *   ctx.span("Verifique sus datos");
-   * });
-   * @example
-   * // 🤖 EXAMPLE 2: Dynamic ARIA/Attributes (Atributos Dinámicos)
-   * tags.button( ctx => {
-   *   const isLoading = checkStatus();
-   *   // Inyecta el atributo 'disabled' al vuelo según la lógica
-   *   ctx({ disabled: isLoading, "aria-busy": isLoading }, 
-   *      isLoading ? "Cargando..." : "Enviar"
-   *   );
-   * });
-   */
-  (
-    config: TRoot extends HTMLElement ? ConfigureAttributes<TRoot> : never,
-    ...args: RecursiveNode$1<TRoot>[]
-  ): TRoot;
+interface TuJsHtml_TagsCallable<
+    TRoot extends HTMLElement | DocumentFragment | SVGElement | MathMLElement = HTMLElement
+> {
+    /**
+     * 🎨 **Late Configuration / Configuración Tardía**
+     * Appends nodes while modifying the root's attributes (Only valid if TRoot is HTMLElement).
+     * @es Anexa nodos y simultáneamente inyecta o modifica atributos al contenedor raíz actual.
+     * @example
+     * // 🤖 EXAMPLE 1: Conditional Styling (Estilos Condicionales)
+     * tags.div( ctx => {
+     *   // Si hay error, muta el contenedor padre antes de inyectar el hijo
+     *   if (hasError) ctx({ style: {border: "1px solid red"} });
+     *   ctx.span("Verifique sus datos");
+     * });
+     * @example
+     * // 🤖 EXAMPLE 2: Dynamic ARIA/Attributes (Atributos Dinámicos)
+     * tags.button( ctx => {
+     *   const isLoading = checkStatus();
+     *   // Inyecta el atributo 'disabled' al vuelo según la lógica
+     *   ctx({ disabled: isLoading, "aria-busy": isLoading },
+     *      isLoading ? "Cargando..." : "Enviar"
+     *   );
+     * });
+     */
+    (
+        config: TRoot extends HTMLElement ? ConfigureAttributes<TRoot> : never,
+        ...args: RecursiveNode$1<TRoot>[]
+    ): TRoot;
 
-  /**
-   * 🎨 **Logic Organizer & Async Sandbox / Organizador Lógico y Sandbox Asíncrono**
-   * Structure complex logic, loops, and handle async mutations based on how you declare the function.
-   * @es Estructura lógica compleja y maneja mutaciones asíncronas dependiendo de cómo declares el callback.
-   * @example
-   * // 🤖 EXAMPLE 1: Async Mutation (The Native Hatch)
-   * tags.p( (ctx, parent) => {
-   *   ctx.span("Cargando...");
-   *   // ✅ GOOD: Using the native parent is always safe with arrow functions
-   *   setTimeout(() => parent.style.color = "green", 3000);
-   * });
-   * @example
-   * // 🤖 EXAMPLE 2: Async Mutation (The Isolated World)
-   * tags.p( function(ctx) {
-   *   ctx.span("Procesando datos...");
-   *   // ✅ GOOD: Standard 'function' forces a unique, safe proxy instance
-   *   setTimeout(() => ctx({ style: "border: 2px solid green" }), 3000);
-   * });
-   * @example
-   * // 🤖 EXAMPLE 3: Clean Synchronous Logic (Evitando Espagueti)
-   * tags.ul( ctx => {
-   *   for (const user of users) {
-   *     ctx.li({ className: "user-item" }, user.name);
-   *   }
-   * });
-   */
-  (...args: RecursiveNode$1<TRoot>[]): TRoot;
+    /**
+     * 🎨 **Logic Organizer & Async Sandbox / Organizador Lógico y Sandbox Asíncrono**
+     * Structure complex logic, loops, and handle async mutations based on how you declare the function.
+     * @es Estructura lógica compleja y maneja mutaciones asíncronas dependiendo de cómo declares el callback.
+     * @example
+     * // 🤖 EXAMPLE 1: Async Mutation (The Native Hatch)
+     * tags.p( (ctx, parent) => {
+     *   ctx.span("Cargando...");
+     *   // ✅ GOOD: Using the native parent is always safe with arrow functions
+     *   setTimeout(() => parent.style.color = "green", 3000);
+     * });
+     * @example
+     * // 🤖 EXAMPLE 2: Async Mutation (The Isolated World)
+     * tags.p( function(ctx) {
+     *   ctx.span("Procesando datos...");
+     *   // ✅ GOOD: Standard 'function' forces a unique, safe proxy instance
+     *   setTimeout(() => ctx({ style: "border: 2px solid green" }), 3000);
+     * });
+     * @example
+     * // 🤖 EXAMPLE 3: Clean Synchronous Logic (Evitando Espagueti)
+     * tags.ul( ctx => {
+     *   for (const user of users) {
+     *     ctx.li({ className: "user-item" }, user.name);
+     *   }
+     * });
+     */
+    (...args: RecursiveNode$1<TRoot>[]): TRoot;
 
-  /**
-   * 🎨 **Direct Template Appender / Anexador Directo por Template Literal**
-   * Instantly appends a text node to the current context.
-   * @es Anexa instantáneamente un nodo de texto al contexto actual.
-   * @example
-   * // 🤖 EXAMPLE: Fluent Text Appending
-   * tags.p( ctx => {
-   *   ctx.strong("Aviso: ");
-   *   ctx`Este texto se añade directamente al párrafo.`;
-   * });
-   */
-  (template: TemplateStringsArray, ...values: unknown[]): TRoot;
-  // =========================================================================
-  // 🛑 LIMPIEZA DE AUTOCOMPLETADO (FUNCTION SHADOWING)
-  // =========================================================================
-  /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
-  prototype: never;
-  /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
-  apply: never;
-  /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
-  call: never;
-  /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
-  bind: never;
-  /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
-  length: never;
-  /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
-  name: never;
-  /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
-  arguments: never;
-  /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
-  caller: never;
-  /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
-  toString: never;
+    /**
+     * 🎨 **Direct Template Appender / Anexador Directo por Template Literal**
+     * Instantly appends a text node to the current context.
+     * @es Anexa instantáneamente un nodo de texto al contexto actual.
+     * @example
+     * // 🤖 EXAMPLE: Fluent Text Appending
+     * tags.p( ctx => {
+     *   ctx.strong("Aviso: ");
+     *   ctx`Este texto se añade directamente al párrafo.`;
+     * });
+     */
+    (template: TemplateStringsArray, ...values: unknown[]): TRoot;
+    // =========================================================================
+    // 🛑 LIMPIEZA DE AUTOCOMPLETADO (FUNCTION SHADOWING)
+    // =========================================================================
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    prototype: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    apply: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    call: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    bind: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    length: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    name: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    arguments: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    caller: never;
+    /** @deprecated 🛑 Propiedad nativa de JavaScript. Ignorar. */
+    toString: never;
 }
 
 /**
@@ -4573,33 +5254,32 @@ interface TuJsHtml_TagsCallable<TRoot extends HTMLElement | DocumentFragment | S
  * Soporta objetos de configuración, texto directo, o template literals.
  */
 interface MetadataTagFunction<TElement extends HTMLElement> {
-
-  //(config: OmitUIEvents<ConfigureAttributes<TElement>>, ...args: RecursiveNode<TElement>[]): SuperElementClass<TElement>;
-  /**
-   * 🎨 **Render with Configuration / Renderiza con Configuración**
-   * @example
-   * // <script type="module">console.log("ok")</script>
-   * script({ type: "module" }, "console.log('ok')")
-   */
-  <TConfig extends Record<string, unknown>>(
-    config: ValidatedConfig<TConfig, TElement>,
-    ...args: RecursiveNode$1<TElement>[]
-  ): SuperElementClass<TElement>;
-  /**
-   * 🎨 **Render Content Directly / Renderiza Contenido Directamente**
-   * @example
-   * title("Welcome ",2,`TuJsHtml`)
-   */
-  (...args: RecursiveNode$1<TElement>[]): SuperElementClass<TElement>;
-  /**
-   * 🎨 **Render with Template Literals / Renderiza con Template Literals**
-   * @example
-   * style`
-   *   body { background: #000; color: #fff; }
-   *   .btn { padding: 10px; }
-   * `
-   */
-  (template: TemplateStringsArray, ...values: unknown[]): SuperElementClass<TElement>;
+    //(config: OmitUIEvents<ConfigureAttributes<TElement>>, ...args: RecursiveNode<TElement>[]): SuperElementClass<TElement>;
+    /**
+     * 🎨 **Render with Configuration / Renderiza con Configuración**
+     * @example
+     * // <script type="module">console.log("ok")</script>
+     * script({ type: "module" }, "console.log('ok')")
+     */
+    <TConfig extends Record<string, unknown>>(
+        config: ValidatedConfig<TConfig, TElement>,
+        ...args: RecursiveNode$1<TElement>[]
+    ): SuperElementClass<TElement>;
+    /**
+     * 🎨 **Render Content Directly / Renderiza Contenido Directamente**
+     * @example
+     * title("Welcome ",2,`TuJsHtml`)
+     */
+    (...args: RecursiveNode$1<TElement>[]): SuperElementClass<TElement>;
+    /**
+     * 🎨 **Render with Template Literals / Renderiza con Template Literals**
+     * @example
+     * style`
+     *   body { background: #000; color: #fff; }
+     *   .btn { padding: 10px; }
+     * `
+     */
+    (template: TemplateStringsArray, ...values: unknown[]): SuperElementClass<TElement>;
 }
 
 /**
@@ -4609,17 +5289,17 @@ interface MetadataTagFunction<TElement extends HTMLElement> {
  * Función para etiquetas de Metadatos que NO admiten hijos bajo ninguna circunstancia (ej. meta, link, base).
  */
 interface VoidMetadataTagFunction<TElement extends HTMLElement> {
-  //(config?: OmitUIEvents<ConfigureAttributes<TElement>>): SuperElementClass<TElement>;
-  /**
-   * 🎨 **Render with Configuration / Renderiza con Configuración**
-   * @example
-   * meta({ name: "viewport", content: "width=device-width, initial-scale=1" })
-   * @example
-   * link({ rel: "stylesheet", href: "/assets/main.css" })
-   */
-  <TConfig extends Record<string, unknown>>(
-    config?: ValidatedConfig<TConfig, TElement>
-  ): SuperElementClass<TElement>;
+    //(config?: OmitUIEvents<ConfigureAttributes<TElement>>): SuperElementClass<TElement>;
+    /**
+     * 🎨 **Render with Configuration / Renderiza con Configuración**
+     * @example
+     * meta({ name: "viewport", content: "width=device-width, initial-scale=1" })
+     * @example
+     * link({ rel: "stylesheet", href: "/assets/main.css" })
+     */
+    <TConfig extends Record<string, unknown>>(
+        config?: ValidatedConfig<TConfig, TElement>
+    ): SuperElementClass<TElement>;
 }
 
 /**
@@ -4631,56 +5311,56 @@ interface VoidMetadataTagFunction<TElement extends HTMLElement> {
  * Nota que NO hereda TRoot, ya que cada etiqueta crea su propio contexto limpio para sus hijos.
  */
 interface SpecificTagFunction<TElement extends HTMLElement> {
-  //(config: ConfigureAttributes<TElement>, ...args: RecursiveNode<TElement>[]): SuperElementClass<TElement>;
-  // <TConfig extends Record<string, unknown>>(
-  //   config: ConfigureAttributes<TElement> & CatchExcessProps<TConfig, ConfigureAttributes<TElement>>,
-  //   ...args: RecursiveNode<TElement>[]
-  // ): TElement;
-  /**
-   * 🎨 **Advanced Composition (Config + Children) / Composición Avanzada**
-   * Mix attributes, directives, plain text, nested tags, and template literals in a single call.
-   * @es Mezcla atributos, directivas, texto plano, etiquetas anidadas y template literals en una sola llamada.
-   * @example
-   * // Deep mixing example:
-   * p({ className: "card-text" }, 
-   *   b`Warning: `, 
-   *   "Please click ", 
-   *   a({ href: "/docs", target: "_blank" }, "here"), 
-   *   " to read the rules."
-   * )
-   */
-  <TConfig extends Record<string, unknown>>(
-    config: ValidatedConfig<TConfig, TElement>,
-    ...args: RecursiveNode$1<TElement>[]
-  ): SuperElementClass<TElement>;
-  /**
-   * 🎨 **Direct Composition & Callbacks / Composición Directa y Callbacks**
-   * Skip configuration and deeply nest nodes, strings, or use scoped contexts.
-   * @es Omite la configuración y anida nodos, strings o usa contextos anidados.
-   * @example
-   * // Scoped Context (Builder pattern):
-   * section( ({h2,ul,li}) => {
-   *   h2("User List");
-   *   ul(
-   *     li( _=> _.img({ src: "avatar1.png" }), " Alice" ),
-   *     li( _=> _.img({ src: "avatar2.png" }), " Bob" )
-   *   );
-   * })
-   * @example
-   * // Direct inline nesting:
-   * div( h1`Title`, "Description text", hr() )
-   */
-  (...args: RecursiveNode$1<TElement>[]): SuperElementClass<TElement>;
-  /**
-   * 🎨 **Template Literal Syntax / Sintaxis de Template Literals**
-   * Ultra-compact syntax for text-only nodes.
-   * @es Sintaxis ultracompacta para nodos que solo contienen texto.
-   * @example
-   * h1`Hello World`
-   * button`Submit Form`
-   * html.p` short mode ${button("click here")} ${html.i("italic")} `
-   */
-  (template: TemplateStringsArray, ...values: unknown[]): SuperElementClass<TElement>;
+    //(config: ConfigureAttributes<TElement>, ...args: RecursiveNode<TElement>[]): SuperElementClass<TElement>;
+    // <TConfig extends Record<string, unknown>>(
+    //   config: ConfigureAttributes<TElement> & CatchExcessProps<TConfig, ConfigureAttributes<TElement>>,
+    //   ...args: RecursiveNode<TElement>[]
+    // ): TElement;
+    /**
+     * 🎨 **Advanced Composition (Config + Children) / Composición Avanzada**
+     * Mix attributes, directives, plain text, nested tags, and template literals in a single call.
+     * @es Mezcla atributos, directivas, texto plano, etiquetas anidadas y template literals en una sola llamada.
+     * @example
+     * // Deep mixing example:
+     * p({ className: "card-text" },
+     *   b`Warning: `,
+     *   "Please click ",
+     *   a({ href: "/docs", target: "_blank" }, "here"),
+     *   " to read the rules."
+     * )
+     */
+    <TConfig extends Record<string, unknown>>(
+        config: ValidatedConfig<TConfig, TElement>,
+        ...args: RecursiveNode$1<TElement>[]
+    ): SuperElementClass<TElement>;
+    /**
+     * 🎨 **Direct Composition & Callbacks / Composición Directa y Callbacks**
+     * Skip configuration and deeply nest nodes, strings, or use scoped contexts.
+     * @es Omite la configuración y anida nodos, strings o usa contextos anidados.
+     * @example
+     * // Scoped Context (Builder pattern):
+     * section( ({h2,ul,li}) => {
+     *   h2("User List");
+     *   ul(
+     *     li( _=> _.img({ src: "avatar1.png" }), " Alice" ),
+     *     li( _=> _.img({ src: "avatar2.png" }), " Bob" )
+     *   );
+     * })
+     * @example
+     * // Direct inline nesting:
+     * div( h1`Title`, "Description text", hr() )
+     */
+    (...args: RecursiveNode$1<TElement>[]): SuperElementClass<TElement>;
+    /**
+     * 🎨 **Template Literal Syntax / Sintaxis de Template Literals**
+     * Ultra-compact syntax for text-only nodes.
+     * @es Sintaxis ultracompacta para nodos que solo contienen texto.
+     * @example
+     * h1`Hello World`
+     * button`Submit Form`
+     * html.p` short mode ${button("click here")} ${html.i("italic")} `
+     */
+    (template: TemplateStringsArray, ...values: unknown[]): SuperElementClass<TElement>;
 }
 /**
  * Void Tag Function (Para etiquetas como input, img, br, hr que NO admiten hijos).
@@ -4688,180 +5368,175 @@ interface SpecificTagFunction<TElement extends HTMLElement> {
  * @es Función para etiquetas vacías que NO admiten hijos ni texto.
  */
 interface VoidTagFunction<TElement extends HTMLElement> {
-  // Acepta atributos, pero NO acepta ...args (hijos)
-  (config?: ConfigureAttributes<TElement>): SuperElementClass<TElement>;
+    // Acepta atributos, pero NO acepta ...args (hijos)
+    (config?: ConfigureAttributes<TElement>): SuperElementClass<TElement>;
 }
-
 
 interface TuJsHtml_TagsSpecials {
-  /**
-   * Creates a render block linked to the reactivity of an object or Signal.
-   * Auto-re-renders when properties change.
-   * @es Crea un bloque de renderizado vinculado a la reactividad de un objeto o Signal.
-   * Se re-renderiza automáticamente cuando cambian las propiedades.
-   * @example 
-   * const block = tags.$block(mySignal, tags => tags.h1("Dynamic"));
-   */
-  $block: (
-    variable: object | null | string | number,
-    callback: (tags: TuJsHtml_Tags<DocumentFragment>) => void,
-    fallback?: (tags: TuJsHtml_Tags<DocumentFragment>) => void | ExecuteAfterRender
-  ) => TuJsHtml;
+    /**
+     * Creates a render block linked to the reactivity of an object or Signal.
+     * Auto-re-renders when properties change.
+     * @es Crea un bloque de renderizado vinculado a la reactividad de un objeto o Signal.
+     * Se re-renderiza automáticamente cuando cambian las propiedades.
+     * @example
+     * const block = tags.$block(mySignal, tags => tags.h1("Dynamic"));
+     */
+    $block: (
+        variable: object | null | string | number,
+        callback: (tags: TuJsHtml_Tags<DocumentFragment>) => void,
+        fallback?: (tags: TuJsHtml_Tags<DocumentFragment>) => void | ExecuteAfterRender
+    ) => TuJsHtml;
 
-  /**
-   * Creates a reactive fragment with asynchronous rendering support.
-   * Ideal for fetching data before showing content.
-   * @es Crea un fragmento reactivo con soporte asíncrono. Ideal para Fetch.
-   * @example 
-   * const frag = tags.$fragment(async tags => { 
-   * await fetch(...); 
-   * tags.p("Done"); 
-   * });
-   */
-  $fragment: (
-    callback: (tags: TuJsHtml_Tags<DocumentFragment>) => void | Promise<void>,
-    fallback?: (tags: TuJsHtml_Tags<DocumentFragment>) => void | ExecuteAfterRender
-  ) => TuJsHtml;
+    /**
+     * Creates a reactive fragment with asynchronous rendering support.
+     * Ideal for fetching data before showing content.
+     * @es Crea un fragmento reactivo con soporte asíncrono. Ideal para Fetch.
+     * @example
+     * const frag = tags.$fragment(async tags => {
+     * await fetch(...);
+     * tags.p("Done");
+     * });
+     */
+    $fragment: (
+        callback: (tags: TuJsHtml_Tags<DocumentFragment>) => void | Promise<void>,
+        fallback?: (tags: TuJsHtml_Tags<DocumentFragment>) => void | ExecuteAfterRender
+    ) => TuJsHtml;
 
-  /** 
-   * Alias for $fragment 
-   * @es Alias de $fragment 
-   */
-  $f: TuJsHtml_TagsSpecials['$fragment'];
+    /**
+     * Alias for $fragment
+     * @es Alias de $fragment
+     */
+    $f: TuJsHtml_TagsSpecials["$fragment"];
 
-  /**
-   * Generates a static template in an independent DocumentFragment.
-   * @es Genera una plantilla estática en un DocumentFragment independiente.
-   */
-  $tpl: (
-    callback: (tags: TuJsHtml_Tags<DocumentFragment>) => void
-  ) => DocumentFragment;
+    /**
+     * Generates a static template in an independent DocumentFragment.
+     * @es Genera una plantilla estática en un DocumentFragment independiente.
+     */
+    $tpl: (callback: (tags: TuJsHtml_Tags<DocumentFragment>) => void) => DocumentFragment;
 
-  /**
-   * Inserts elements and returns a tuple with the exact processed types.
-   * @es Inserta elementos y devuelve una tupla con los tipos exactos procesados.
-   */
-  $insert: <T extends unknown[]>(...args: T) => Flatten<T>;
+    /**
+     * Inserts elements and returns a tuple with the exact processed types.
+     * @es Inserta elementos y devuelve una tupla con los tipos exactos procesados.
+     */
+    $insert: <T extends unknown[]>(...args: T) => Flatten<T>;
 
-  /**
-   * Persistent local storage linked to the element's lifecycle.
-   * @es Almacenamiento local persistente vinculado al ciclo de vida del elemento.
-   * @example tags.div(({p, $store}) => { $store.count = 0; });
-   */
-  $store: StoreProperty;
-  [key: `$store:${string}`]: StoreProperty;
+    /**
+     * Persistent local storage linked to the element's lifecycle.
+     * @es Almacenamiento local persistente vinculado al ciclo de vida del elemento.
+     * @example tags.div(({p, $store}) => { $store.count = 0; });
+     */
+    $store: StoreProperty;
+    [key: `$store:${string}`]: StoreProperty;
 
-  /**
-   * Overload 1: Dynamically registers a Custom Element by passing its class.
-   * @es Sobrecarga 1: Registra un Custom Element pasando su clase dinámicamente.
-   * @example const myTag = tags.$custom("custom-el.class", CustomEl);
-   */
-  $custom<T extends HTMLElement = HTMLElement>(
-    selector: string,
-    elementClass?: new () => T
-  ): SpecificTagFunction<T>;
+    /**
+     * Overload 1: Dynamically registers a Custom Element by passing its class.
+     * @es Sobrecarga 1: Registra un Custom Element pasando su clase dinámicamente.
+     * @example const myTag = tags.$custom("custom-el.class", CustomEl);
+     */
+    $custom<T extends HTMLElement = HTMLElement>(
+        selector: string,
+        elementClass?: new () => T
+    ): SpecificTagFunction<T>;
 
-  /**
-   * Overload 2: Registers a Custom Element using its static TAG property.
-   * @es Sobrecarga 2: Registra un Custom Element usando su propiedad estática TAG.
-   * @example const myTag = tags.$custom(CustomEl); // CustomEl.TAG must be defined
-   */
-  $custom<T extends HTMLElement>(
-    elementClass: (new () => T) & { TAG: string }
-  ): SpecificTagFunction<T>;
+    /**
+     * Overload 2: Registers a Custom Element using its static TAG property.
+     * @es Sobrecarga 2: Registra un Custom Element usando su propiedad estática TAG.
+     * @example const myTag = tags.$custom(CustomEl); // CustomEl.TAG must be defined
+     */
+    $custom<T extends HTMLElement>(
+        elementClass: (new () => T) & { TAG: string }
+    ): SpecificTagFunction<T>;
 
-  /**
-   * Overload 3: Registers a Custom Element from an existing instance (will be cloned).
-   * @es Sobrecarga 3: Registra un Custom Element desde una instancia existente (será clonada).
-   * @example const myTag = tags.$custom(myCustomInstance);
-   */
-  $custom<T extends HTMLElement>(
-    elementInstance: T
-  ): SpecificTagFunction<T>;
+    /**
+     * Overload 3: Registers a Custom Element from an existing instance (will be cloned).
+     * @es Sobrecarga 3: Registra un Custom Element desde una instancia existente (será clonada).
+     * @example const myTag = tags.$custom(myCustomInstance);
+     */
+    $custom<T extends HTMLElement>(elementInstance: T): SpecificTagFunction<T>;
 
-  /**
-   * 🎨 **Portal a SVG (Contexto Aislado)**: `$svg`
-   * Crea un lienzo `<svg>` y entra en un contexto estricto de dibujo vectorial.
-   * Dentro de este callback, el objeto inyectado SOLO contiene etiquetas SVG.
-   * @es Crea un espacio de nombres SVG (`createElementNS`).
-   * @experimental ⚠️ Está en pañales, solo para uso interno o testers muy valientes
-   * @example
-   * tags.div( ctx => {
-   *   ctx.$svg({ viewBox: "0 0 100 100" }, svg => {
-   *     // 'svg' es TuJsHtml_SvgContext. ¡Aquí no existe svg.div ni svg.$block!
-   *     svg.circle({ cx: 50, cy: 50, r: 40 });
-   *   });
-   * });
-   */
-  $svg: SvgContainerTagFunction<SVGSVGElement>;
-  /**
-   * 📐 **Portal a MathML (Contexto Aislado)**: `$math`
-   * Crea un contenedor `<math>` e inyecta un ecosistema estricto de notación matemática.
-   * Dentro de su callback, el objeto inyectado SOLO contiene etiquetas de MathML.
-   * @es 🌉 Puente principal hacia el entorno de ecuaciones matemáticas.
-   * @experimental ⚠️ Está en pañales, solo para uso interno o testers muy valientes
-   * @example
-   * // Fórmula: x² + y² = z²
-   * tags.div({ className: "formula-box" }, ctx => {
-   *   ctx.$math({ display: "block" }, math => {
-   *     math.msup( m => { m.mi("x"); m.mn("2"); });
-   *     math.mo("+");
-   *     math.msup( m => { m.mi("y"); m.mn("2"); });
-   *     math.mo("=");
-   *     math.msup( ({mi,mn}) => { mi`z`; mn`2`; });
-   *   });
-   * });
-   */
-  $math: MathContainerTagFunction<MathMLElement>;
+    /**
+     * 🎨 **Portal a SVG (Contexto Aislado)**: `$svg`
+     * Crea un lienzo `<svg>` y entra en un contexto estricto de dibujo vectorial.
+     * Dentro de este callback, el objeto inyectado SOLO contiene etiquetas SVG.
+     * @es Crea un espacio de nombres SVG (`createElementNS`).
+     * @experimental ⚠️ Está en pañales, solo para uso interno o testers muy valientes
+     * @example
+     * tags.div( ctx => {
+     *   ctx.$svg({ viewBox: "0 0 100 100" }, svg => {
+     *     // 'svg' es TuJsHtml_SvgContext. ¡Aquí no existe svg.div ni svg.$block!
+     *     svg.circle({ cx: 50, cy: 50, r: 40 });
+     *   });
+     * });
+     */
+    $svg: SvgContainerTagFunction<SVGSVGElement>;
+    /**
+     * 📐 **Portal a MathML (Contexto Aislado)**: `$math`
+     * Crea un contenedor `<math>` e inyecta un ecosistema estricto de notación matemática.
+     * Dentro de su callback, el objeto inyectado SOLO contiene etiquetas de MathML.
+     * @es 🌉 Puente principal hacia el entorno de ecuaciones matemáticas.
+     * @experimental ⚠️ Está en pañales, solo para uso interno o testers muy valientes
+     * @example
+     * // Fórmula: x² + y² = z²
+     * tags.div({ className: "formula-box" }, ctx => {
+     *   ctx.$math({ display: "block" }, math => {
+     *     math.msup( m => { m.mi("x"); m.mn("2"); });
+     *     math.mo("+");
+     *     math.msup( m => { m.mi("y"); m.mn("2"); });
+     *     math.mo("=");
+     *     math.msup( ({mi,mn}) => { mi`z`; mn`2`; });
+     *   });
+     * });
+     */
+    $math: MathContainerTagFunction<MathMLElement>;
 }
-
-
-
 
 /**
  * 💡 EXTENSION POINT (HOOK):
  * Empty interface designed for end-users to extend in their own projects via Declaration Merging.
  * @es Interfaz vacía diseñada para que el usuario final la extienda mediante Declaration Merging.
- * @example 
+ * @example
  * // In a global 'globals.d.ts' file:
- * declare module './TuJsHtml.d.ts' { 
- * export interface TuJsHtml_CustomTags { "my-el": TuJsHtml.Types.CustomTag<MyEl> } 
+ * declare module './TuJsHtml.d.ts' {
+ * export interface TuJsHtml_CustomTags { "my-el": TuJsHtml.Types.CustomTag<MyEl> }
  * }
  */
-interface TuJsHtml_CustomTags { }
+interface TuJsHtml_CustomTags {}
 
 /**
  * Safe core interface combining callable traits, specials, standard HTML5, and overrides.
  * @es Interfaz base segura que combina propiedades llamables, especiales, HTML5 y overrides.
  */
-interface TuJsHtml_TagsSafe<TRoot extends HTMLElement | DocumentFragment | SVGElement | MathMLElement = HTMLElement>
-  extends TuJsHtml_TagsCallable<TRoot>,
-  TuJsHtml_TagsSpecials,
-  //TuJsHtml_SvgContext,
-  //HtmlTagsMapped,
-  TuJsHtml_NativeTags,
-  TuJsHtml_CustomTags {
-  // Aquí puedes dejar solo los elementos que son Exclusivos de Electron/Framework 
-  // que no pertenecen al HTML estándar:
-  /**
-   * Only for Electron/NwJs
-   * @es Solo para Electron/NwJs
-   */
-  webview: VoidTagFunction<ChromeWebViewElement>;
+interface TuJsHtml_TagsSafe<
+    TRoot extends HTMLElement | DocumentFragment | SVGElement | MathMLElement = HTMLElement
+> extends TuJsHtml_TagsCallable<TRoot>,
+        TuJsHtml_TagsSpecials,
+        //TuJsHtml_SvgContext,
+        //HtmlTagsMapped,
+        TuJsHtml_NativeTags,
+        TuJsHtml_CustomTags {
+    // Aquí puedes dejar solo los elementos que son Exclusivos de Electron/Framework
+    // que no pertenecen al HTML estándar:
+    /**
+     * Only for Electron/NwJs
+     * @es Solo para Electron/NwJs
+     */
+    webview: VoidTagFunction<ChromeWebViewElement>;
 }
 
 // ============================================
 // 5. EMMET MAGIC & FINAL EXPORT
 // ============================================
 
-type SelectorPrefix = '.' | '#' | '[' | '{';
+type SelectorPrefix = "." | "#" | "[" | "{";
 
 /**
  * Maps Emmet patterns for native tags (e.g., "div.container", "p#main").
  * @es Mapea patrones Emmet para etiquetas nativas (ej. "div.container").
  */
 type EmmetStandardTags = {
-  [Tag in keyof HTMLElementTagNameMap as `${Tag}${SelectorPrefix}${string}`]: SpecificTagFunction<HTMLElementTagNameMap[Tag]>;
+    [Tag in keyof HTMLElementTagNameMap as `${Tag}${SelectorPrefix}${string}`]: SpecificTagFunction<
+        HTMLElementTagNameMap[Tag]
+    >;
 };
 
 /**
@@ -4869,9 +5544,9 @@ type EmmetStandardTags = {
  * @es Mapea patrones Emmet para etiquetas Extendidas/Sobrescritas.
  */
 type EmmetSpecialTags = {
-  [Tag in 'webview' as `${Tag}${SelectorPrefix}${string}`]: SpecificTagFunction<ChromeWebViewElement>;
+    [Tag in "webview" as `${Tag}${SelectorPrefix}${string}`]: SpecificTagFunction<ChromeWebViewElement>;
 } & {
-  [Tag in 'input' as `${Tag}${SelectorPrefix}${string}`]: SpecificTagFunction<HTMLInputElementExtended>;
+    [Tag in "input" as `${Tag}${SelectorPrefix}${string}`]: SpecificTagFunction<HTMLInputElementExtended>;
 };
 
 /**
@@ -4879,18 +5554,19 @@ type EmmetSpecialTags = {
  * Intersection allowing Emmet and dynamic fallback without crashing TS Server.
  * @es TIPO FINAL: TuJsHtml_Tags. Intersección que permite Emmet y fallbacks sin romper el TS Server.
  */
-type TuJsHtml_Tags<TRoot extends HTMLElement | DocumentFragment | SVGElement | MathMLElement = HTMLElement> =
-  TuJsHtml_TagsSafe<TRoot> &
-  EmmetStandardTags &
-  EmmetSpecialTags & {
-    /**
-     * STRICT FALLBACK: Unmapped strings default to HTMLElementExtended.
-     * Prevents TS from marking dynamic components as 'unknown' or breaking autocompletion.
-     * @es FALLBACK ESTRICTO: Strings no mapeados devuelven HTMLElementExtended.
-     * Evita que TS marque componentes dinámicos como 'unknown' o rompa el autocompletado.
-     */
-    [dynamicSelector: string]: SpecificTagFunction<HTMLElementExtended>;
-  };
+type TuJsHtml_Tags<
+    TRoot extends HTMLElement | DocumentFragment | SVGElement | MathMLElement = HTMLElement
+> = TuJsHtml_TagsSafe<TRoot> &
+    EmmetStandardTags &
+    EmmetSpecialTags & {
+        /**
+         * STRICT FALLBACK: Unmapped strings default to HTMLElementExtended.
+         * Prevents TS from marking dynamic components as 'unknown' or breaking autocompletion.
+         * @es FALLBACK ESTRICTO: Strings no mapeados devuelven HTMLElementExtended.
+         * Evita que TS marque componentes dinámicos como 'unknown' o rompa el autocompletado.
+         */
+        [dynamicSelector: string]: SpecificTagFunction<HTMLElementExtended>;
+    };
 
 // ============================================
 // 6. CALLBACKS & MAIN CLASS
@@ -4902,7 +5578,7 @@ type TuJsHtml_Tags<TRoot extends HTMLElement | DocumentFragment | SVGElement | M
  * It provides the proxy to build children, and the native DOM element for direct manipulation.
  *
  * 🤖 **AI INSTRUCTION (DESIGN PHILOSOPHY & PARAMETERS):**
- * - `Param 1 (tags / ctx)`: The recursive proxy. USE THIS to append children safely. 
+ * - `Param 1 (tags / ctx)`: The recursive proxy. USE THIS to append children safely.
  * *Note: Highly optimized. Do NOT use inside async closures (like setTimeout) if using an arrow function.*
  * - `Param 2 (currentElement)`: The "Native Escape Hatch". USE THIS when you need raw DOM access (e.g., `element.style`, `element.addEventListener`) or safe asynchronous mutations.
  * - `Param 3 (...extraArgs)`: Forgiving rest parameter. Ensures pure JS users don't face execution crashes if they pass unexpected arguments.
@@ -4911,10 +5587,12 @@ type TuJsHtml_Tags<TRoot extends HTMLElement | DocumentFragment | SVGElement | M
  * El callback fundamental que impulsa el patrón recursivo.
  * Acepta argumentos extra (rest) para que los usuarios JS no obtengan errores al omitir o añadir parámetros.
  */
-type TuJsHtml_Callback<TRoot extends HTMLElement | DocumentFragment | SVGElement | MathMLElement = HTMLElement> = (
-  tags: TuJsHtml_Tags<TRoot>,
-  currentElement: TRoot extends HTMLElement ? SuperElementClass<TRoot> : DocumentFragment,
-  ...extraArgs: unknown[]
+type TuJsHtml_Callback<
+    TRoot extends HTMLElement | DocumentFragment | SVGElement | MathMLElement = HTMLElement
+> = (
+    tags: TuJsHtml_Tags<TRoot>,
+    currentElement: TRoot extends HTMLElement ? SuperElementClass<TRoot> : DocumentFragment,
+    ...extraArgs: unknown[]
 ) => unknown;
 /**
  * 🔒 **Strict HTML Extended Callback**
@@ -4922,7 +5600,7 @@ type TuJsHtml_Callback<TRoot extends HTMLElement | DocumentFragment | SVGElement
  * 🤖 **AI INSTRUCTION:**
  * - Use this typing for custom plugins, internal HTML extensions, or strict components that MUST NOT be used inside SVG or MathML contexts.
  * @es 🔒 **Callback Extendido Estricto (Solo HTML)**
- * Versión estricta y no genérica bloqueada a elementos HTML. 
+ * Versión estricta y no genérica bloqueada a elementos HTML.
  * Útil para crear plugins o directivas que no deben ejecutarse en SVG/MathML.
  */
 type TuJsHtml_CallbackExtended = (tags: TuJsHtml_Tags, currentElement: HTMLElement) => void;
@@ -4948,37 +5626,39 @@ declare function AnyNode(strings: TemplateStringsArray, ...values: unknown[]): D
  * document.body.append(demo)
  */
 declare class TuJsHtml extends DocumentFragment {
-  //static TYPE_TAGS: TuJsHtml_Tags<DocumentFragment>;
+    //static TYPE_TAGS: TuJsHtml_Tags<DocumentFragment>;
 
-  /**
-   * Constructor for TuJsHtml rendering engine.
-   * @es Constructor para el motor de renderizado TuJsHtml.
-   * @param callback Main render callback / Render principal.
-   * @param callbackFallback Fallback if async / Fallback (solo útil si el render es asíncrono).
-   */
-  constructor(
-    callback: (tags: TuJsHtml_Tags<HTMLElement | DocumentFragment>) => void | Promise<void>,
-    callbackFallback?: (tags: TuJsHtml_Tags<HTMLElement | DocumentFragment>) => void | ExecuteAfterRender
-  );
+    /**
+     * Constructor for TuJsHtml rendering engine.
+     * @es Constructor para el motor de renderizado TuJsHtml.
+     * @param callback Main render callback / Render principal.
+     * @param callbackFallback Fallback if async / Fallback (solo útil si el render es asíncrono).
+     */
+    constructor(
+        callback: (tags: TuJsHtml_Tags<HTMLElement | DocumentFragment>) => void | Promise<void>,
+        callbackFallback?: (
+            tags: TuJsHtml_Tags<HTMLElement | DocumentFragment>
+        ) => void | ExecuteAfterRender
+    );
 
-  /** @deprecated */
-  set(name: string, callback: TuJsHtml_CallbackExtended): this;
+    /** @deprecated */
+    set(name: string, callback: TuJsHtml_CallbackExtended): this;
 
-  /** Resets the TuJsHtml object state (triggers a re-render).
-   * @es Restablece el estado del objeto TuJsHtml (dispara un re-render).
-   */
-  reset(): void;
+    /** Resets the TuJsHtml object state (triggers a re-render).
+     * @es Restablece el estado del objeto TuJsHtml (dispara un re-render).
+     */
+    reset(): void;
 
-  /** Removes all DOM content attached to this instance.
-   * @es Elimina todo el contenido DOM adjunto a esta instancia.
-   */
-  remove(): void;
+    /** Removes all DOM content attached to this instance.
+     * @es Elimina todo el contenido DOM adjunto a esta instancia.
+     */
+    remove(): void;
 
-  /** Returns the tags proxy for the main document context.
-   * @es Retorna el proxy de etiquetas para el contexto del documento principal.
-   */
-  get tags(): TuJsHtml_Tags<HTMLElement | DocumentFragment>;
-  get isConnected(): boolean;
+    /** Returns the tags proxy for the main document context.
+     * @es Retorna el proxy de etiquetas para el contexto del documento principal.
+     */
+    get tags(): TuJsHtml_Tags<HTMLElement | DocumentFragment>;
+    get isConnected(): boolean;
 }
 
 /**
@@ -4986,27 +5666,31 @@ declare class TuJsHtml extends DocumentFragment {
  * @es Espacio de nombres que alberga los tipos core de TuJsHtml.
  */
 declare namespace TuJsHtml {
-  export namespace Types {
-    export type Tags<TRoot extends HTMLElement | DocumentFragment = HTMLElement> = TuJsHtml_Tags<TRoot>;
-    export type Element<TElement extends HTMLElement = HTMLElement> = SuperElementClass<TElement>;
-    export type Callback<TElement extends HTMLElement | DocumentFragment = HTMLElement> = TuJsHtml_Callback<TElement>;
+    export namespace Types {
+        export type Tags<TRoot extends HTMLElement | DocumentFragment = HTMLElement> =
+            TuJsHtml_Tags<TRoot>;
+        export type Element<TElement extends HTMLElement = HTMLElement> =
+            SuperElementClass<TElement>;
+        export type Callback<TElement extends HTMLElement | DocumentFragment = HTMLElement> =
+            TuJsHtml_Callback<TElement>;
 
-    /**
-     * Helper type intended for JSDoc casting in pure JS files.
-     * @es Tipo de ayuda diseñado para castear Custom Elements en archivos JS puros vía JSDoc.
-     * @example 
-     * const { "my-el": el = /** @type {TuJsHtml.Types.CustomTag<MyEl>} *\/ (null) } = tags;
-     */
-    export type CustomTag<TElement extends HTMLElement> = SpecificTagFunction<TElement>;
-    /**
-     * Helper type exposing the configuration object interface for building reusable templates/props.
-     * @es Tipo de ayuda que expone la interfaz de configuración (atributos) para tipar plantillas/props reutilizables.
-     * @example
-     * // * @ type {TuJsHtml.Types.Attributes<HTMLButtonElement>} * /
-     * const btnConfig = { className: "btn-primary", onclick: () => {} };
-     */
-    export type Attributes<TElement extends HTMLElement = HTMLElement> = ConfigureAttributes<TElement>;
-  }
+        /**
+         * Helper type intended for JSDoc casting in pure JS files.
+         * @es Tipo de ayuda diseñado para castear Custom Elements en archivos JS puros vía JSDoc.
+         * @example
+         * const { "my-el": el = /** @type {TuJsHtml.Types.CustomTag<MyEl>} *\/ (null) } = tags;
+         */
+        export type CustomTag<TElement extends HTMLElement> = SpecificTagFunction<TElement>;
+        /**
+         * Helper type exposing the configuration object interface for building reusable templates/props.
+         * @es Tipo de ayuda que expone la interfaz de configuración (atributos) para tipar plantillas/props reutilizables.
+         * @example
+         * // * @ type {TuJsHtml.Types.Attributes<HTMLButtonElement>} * /
+         * const btnConfig = { className: "btn-primary", onclick: () => {} };
+         */
+        export type Attributes<TElement extends HTMLElement = HTMLElement> =
+            ConfigureAttributes<TElement>;
+    }
 }
 
 declare class TuTemplateHtml {
@@ -5017,7 +5701,11 @@ declare class TuTemplateHtml {
      * @param {(slotMap:{[K in keyof T]: string}) => string} cbHtmlString
      * @returns {T}
      */
-    static createTemplate<T>(rootElement: HTMLElement | DocumentFragment, slotMap: T, cbHtmlString: (slotMap: { [K in keyof T]: string; }) => string): T;
+    static createTemplate<T>(
+        rootElement: HTMLElement | DocumentFragment,
+        slotMap: T,
+        cbHtmlString: (slotMap: { [K in keyof T]: string }) => string
+    ): T;
     static Types: {
         /**
          * @returns {HTMLElement}
@@ -5028,11 +5716,16 @@ declare class TuTemplateHtml {
         /**
          * @returns {HTMLElement|HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement|HTMLButtonElement}
          */
-        ElementNext: () => HTMLElement | HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLButtonElement;
+        ElementNext: () =>
+            | HTMLElement
+            | HTMLInputElement
+            | HTMLTextAreaElement
+            | HTMLSelectElement
+            | HTMLButtonElement;
     };
 }
 
-// importante para forzar los tipos del DOM 
+// importante para forzar los tipos del DOM
 /// <reference lib="dom" />
 
 type FunctionGeneric = (...args: unknown[]) => unknown;
@@ -5063,7 +5756,7 @@ type EventAttributes = {
 // Form Attributes
 type FormAttributes = {
     action?: string;
-    method?: 'GET' | 'POST';
+    method?: "GET" | "POST";
     name?: string;
     value?: string | number;
     placeholder?: string;
@@ -5074,9 +5767,9 @@ type FormAttributes = {
 // ARIA Attributes
 type AriaAttributes = {
     role?: string;
-    'aria-label'?: string;
-    'aria-hidden'?: 'true' | 'false';
-    'aria-live'?: 'polite' | 'assertive' | 'off';
+    "aria-label"?: string;
+    "aria-hidden"?: "true" | "false";
+    "aria-live"?: "polite" | "assertive" | "off";
     // Add more ARIA attributes here as needed
 };
 
@@ -5091,15 +5784,20 @@ type MediaAttributes = {
 // Link Attributes
 type LinkAttributes = {
     href?: string;
-    target?: '_self' | '_blank' | '_parent' | '_top';
+    target?: "_self" | "_blank" | "_parent" | "_top";
     rel?: string;
 };
 
 // Combine all attribute groups into a single, comprehensive type.
 // The string index signature acts as a catch-all for custom attributes (e.g., data-*)
-type HtmlAttributes = GlobalAttributes & EventAttributes & FormAttributes & AriaAttributes & MediaAttributes & LinkAttributes & {
-    [key: string]: string | number | boolean | null | undefined;
-};
+type HtmlAttributes = GlobalAttributes &
+    EventAttributes &
+    FormAttributes &
+    AriaAttributes &
+    MediaAttributes &
+    LinkAttributes & {
+        [key: string]: string | number | boolean | null | undefined;
+    };
 
 /**
  * Tipo que define los nodos posibles que pueden ser pasados a las funciones de tags.
@@ -5116,7 +5814,10 @@ type RecursiveNode = Node | FunctionGeneric | ObjectGeneric | Builder_Callback;
 //   (firstArg:ReactiveAttributes | RecursiveNode ,...args: RecursiveNode[]): TuadminHtmlElement;
 //   //(): HTMLElement; // Para finalizar y devolver un elemento HTML
 // }
-type RecursiveTag = (firstArg: HtmlAttributes | RecursiveNode, ...args: RecursiveNode[]) => HTMLElement;
+type RecursiveTag = (
+    firstArg: HtmlAttributes | RecursiveNode,
+    ...args: RecursiveNode[]
+) => HTMLElement;
 type Builder_Callback = (tags: Builder_Tags, currentTag: HTMLElement) => HTMLElement | void;
 type CustomTagPattern = `${string}-${string}`;
 type CustomTagPattern2 = `${string}`;
@@ -5125,7 +5826,7 @@ type AllElementTags = keyof HTMLElementTagNameMap | CustomTagPattern | CustomTag
 type Builder_Tags = {
     [K in AllElementTags]: RecursiveTag;
     //[key: string]: RecursiveTag;
-}
+};
 type BuilderTemplate = {
     (element: HTMLElement): HTMLElement;
     (strings: TemplateStringsArray, ...values: unknown[]): HTMLElement | DocumentFragment;
@@ -5156,7 +5857,7 @@ type HtmlElementOrFragmentWithProp<T, K extends string> = (HTMLElement | Documen
  *
  * // The returned function has autocompletion for `data`
  * const [root1, refs1] = fabrica1();
- * refs1.data.set("New value"); // Autocomplete for 'data' works. 
+ * refs1.data.set("New value"); // Autocomplete for 'data' works.
  * // The returned function has autocompletion for `data`
  * const [root1Clon, refsClon] = fabrica1();
  * refsClon.data.set("New clon value"); // Autocomplete for 'data' works.
@@ -5172,9 +5873,9 @@ type HtmlElementOrFragmentWithProp<T, K extends string> = (HTMLElement | Documen
  * // The returned function has autocompletion for `label`
  * const [root2, refs2] = fabrica2();
  * refs2.label.textContent = "New text"; // Autocomplete for 'label' works.
- * @example 3 complex 
+ * @example 3 complex
  * ```js
- * 
+ *
  * const templateLi = createTemplateHtml((root) => {
  *   const texto = document.createTextNode("texto inicial");
  *   root(
@@ -5216,7 +5917,6 @@ declare function createTemplateHtml<T>(
      */
     builderFn: (rootBuilder: BuilderTemplate) => T
 ): {
-
     /**
      * Modifies the original template's exposed nodes.
      * @param modifierFn A function that receives an object with references to the original template's exposed nodes.
@@ -5227,7 +5927,10 @@ declare function createTemplateHtml<T>(
      * @param nameOfProp The name of the property to add to the cloned element. Defaults to 'refs'.
      * @returns {HtmlElementOrFragmentWithProp<T, N>} The cloned root element with a new property containing the references.
      */
-    clone<N extends string = 'refs'>(modifierFn?: (refs: T) => void, nameOfProp?: N): HtmlElementOrFragmentWithProp<T, N>;
+    clone<N extends string = "refs">(
+        modifierFn?: (refs: T) => void,
+        nameOfProp?: N
+    ): HtmlElementOrFragmentWithProp<T, N>;
 };
 
 /**
@@ -5256,7 +5959,10 @@ interface RemoteControl<E = undefined> {
      * @param eventName - Value from the exported Events object.
      * @param callback - Function to handle the payload.
      */
-    on(eventName: E extends undefined ? string : ValueOf<E>, callback: (payload: unknown) => void): void;
+    on(
+        eventName: E extends undefined ? string : ValueOf<E>,
+        callback: (payload: unknown) => void
+    ): void;
 
     /**
      * **EN:** Returns true if the worker is idle and ready for new tasks.
@@ -5336,35 +6042,35 @@ interface ConnectOptions {
     shared?: boolean;
     /**
      * **EN:** Reuses same connection for the same URL/Name.
-     * 
+     *
      * **ES:** Reutiliza la misma conexión para la misma URL/Nombre.
      */
     singleton?: boolean;
-    /** 
+    /**
      * **EN:** Handshake timeout (ms) before triggering a retry.
-     * 
-     * **ES:** Tiempo de espera del handshake (ms) antes de activar un reintento. 
-     * @default 3000 
+     *
+     * **ES:** Tiempo de espera del handshake (ms) antes de activar un reintento.
+     * @default 3000
      */
     timeout?: number;
-    /** 
-     * **EN:** Max physical connection retries before failing. 
-     * 
-     * **ES:** Número máximo de reintentos de conexión física antes de fallar. 
-     * 
-     * @default 3 
+    /**
+     * **EN:** Max physical connection retries before failing.
+     *
+     * **ES:** Número máximo de reintentos de conexión física antes de fallar.
+     *
+     * @default 3
      */
     maxRetries?: number;
-    /** 
-     * **EN:** Disaster recovery callback. 
-     * 
-     * **ES:** Callback de recuperación de errores. 
+    /**
+     * **EN:** Disaster recovery callback.
+     *
+     * **ES:** Callback de recuperación de errores.
      */
     onCrash?: (ctx: CrashContext) => void;
-    /** 
-     * **EN:** Process ID for routing in bundled workers. 
-     * 
-     * **ES:** ID de proceso para ruteo en workers empaquetados. 
+    /**
+     * **EN:** Process ID for routing in bundled workers.
+     *
+     * **ES:** ID de proceso para ruteo en workers empaquetados.
      */
     pid?: string;
 }
@@ -5377,23 +6083,18 @@ interface ConnectOptions {
  * @package Threading
  */
 
-
-
-
-
-
-/** 
+/**
  * **EN:** The "Mirror" of the Service in the Client.
  * Methods become Promises and management is moved to `$control`.
- * 
+ *
  * **ES:** El "Espejo" del Servicio en el Cliente.
  * Los métodos se vuelven Promesas y la gestión se mueve a `$control`.
  */
 type RemoteLink<T, E = undefined> = {
     // 1. Mapeo de métodos originales (Promisificados)
     readonly [K in keyof T]: T[K] extends (...args: infer A) => infer R
-    ? (...args: A) => Promise<Awaited<R>>
-    : T[K];
+        ? (...args: A) => Promise<Awaited<R>>
+        : T[K];
 } & {
     /**
      * **EN:** Management property to avoid method collision with your class.
@@ -5405,14 +6106,14 @@ type RemoteLink<T, E = undefined> = {
 /**
  * ### RemoteModule (Base)
  * **EN:** Standard Worker bridge. Each `connect()` creates a fresh, isolated instance.
- * 
+ *
  * **ES:** Puente de Worker estándar. Cada `connect()` crea una instancia nueva y aislada.
  * @version 2.1
  */
 declare class RemoteModule {
-    /** 
+    /**
      * **EN:** Starts hosting the service logic inside the Worker thread.
-     * 
+     *
      * **ES:** Inicia el hosting de la lógica del servicio dentro del hilo del Worker.
      * @param meta - Pass `import.meta` to automatically detect the worker script URL.
      */
@@ -5420,7 +6121,7 @@ declare class RemoteModule {
 
     /**
      * **EN:** Connects to the Worker and returns a Promisified Proxy.
-     * 
+     *
      * **ES:** Conecta con el Worker y devuelve un Proxy asíncrono.
      */
     static connect<T extends typeof RemoteModule, E = undefined>(
@@ -5428,16 +6129,16 @@ declare class RemoteModule {
         options?: ConnectOptions
     ): Promise<RemoteLink<InstanceType<T>, E>>;
 
-    /** 
+    /**
      * **EN:** Sends a private event to the clients of THIS instance.
-     * 
+     *
      * **ES:** Envía un evento privado a los clientes de ESTA instancia.
      */
     protected publish(event: string, payload?: unknown): void;
 
     /**
      * **EN:** Broadcasts an event to ALL services in this Worker thread.
-     * 
+     *
      * **ES:** Envía un evento a TODOS los servicios en este hilo del Worker.
      */
     protected broadcast(event: string, payload?: unknown): void;
@@ -5446,45 +6147,45 @@ declare class RemoteModule {
 /**
  * ### RemoteLocalModule (Tab Singleton)
  * **EN:** Shared instance within the CURRENT TAB (SPA).
- * 
+ *
  * **ES:** Instancia compartida dentro de la PESTAÑA ACTUAL (SPA).
  */
 declare class RemoteLocalModule extends RemoteModule {
     static connect<T extends typeof RemoteLocalModule, E = undefined>(
         this: T,
-        options?: Omit<ConnectOptions, 'singleton'>
+        options?: Omit<ConnectOptions, "singleton">
     ): Promise<RemoteLink<InstanceType<T>, E>>;
 }
 
 /**
  * ### RemoteSharedModule (Multi-Tab / SharedWorker)
  * **EN:** Shared across multiple tabs/windows via SharedWorker.
- * 
+ *
  * **ES:** Compartido entre múltiples pestañas/ventanas vía SharedWorker.
  */
 declare class RemoteSharedModule extends RemoteModule {
     static connect<T extends typeof RemoteSharedModule, E = undefined>(
         this: T,
-        options?: Omit<ConnectOptions, 'shared'>
+        options?: Omit<ConnectOptions, "shared">
     ): Promise<RemoteLink<InstanceType<T>, E>>;
 }
 
 /**
  * ### RemoteGlobalModule (Browser Singleton)
  * **EN:** One single instance for the entire browser session.
- * 
+ *
  * **ES:** Una única instancia para toda la sesión del navegador.
  */
 declare class RemoteGlobalModule extends RemoteModule {
     static connect<T extends typeof RemoteGlobalModule, E = undefined>(
         this: T,
-        options?: Omit<ConnectOptions, 'shared' | 'singleton' | 'name'>
+        options?: Omit<ConnectOptions, "shared" | "singleton" | "name">
     ): Promise<RemoteLink<InstanceType<T>, E>>;
 }
 
 /**
  * **EN:** Namespace to access all Remote Module variants.
- * 
+ *
  * **ES:** Namespace para acceder a todas las variantes de Remote Module.
  */
 declare const Remote: {
@@ -5494,192 +6195,37 @@ declare const Remote: {
     readonly Global: typeof RemoteGlobalModule;
 };
 
-/**
- * FrankJStein: TuDiscovery Type Definitions
- * 
- * Functional Service Locator and Module Discovery Hub.
- * Alternative to Import Map Aliases, ideal for environments with restricted resolution (Workers).
- * 
- * @es Localizador de Servicios Funcional y Hub de Descubrimiento de Módulos.
- * Alternativa a los Import Map Aliases, ideal para entornos con resolución restringida (Workers).
- */
-
-/**
- * @template T
- * A discovery node represents a module that can be resolved lazily.
- * 
- * @es Un nodo de descubrimiento representa un módulo que puede resolverse de forma perezosa.
- */
-type DiscoveryNode<T> = {
-    /** 
-     * Call as a function with an optional callback to use the module once resolved.
-     * @es Llamar como función con un callback opcional para usar el módulo una vez resuelto.
-     * 
-     * @example 
-     * Hub.math(m => m.sum(1, 2));
-     */
-    (cb?: (module: T) => void): Promise<T>;
-} & Promise<T>;
-
-/**
- * Registry of module loaders.
- * @es Registro de cargadores de módulos.
- */
-type DiscoveryRegistry = Record<string, () => Promise<any>>;
-
-/**
- * Map of discovery nodes based on the registry.
- * @es Mapa de nodos de descubrimiento basado en el registro.
- */
-type TuDiscoveryMap<T extends DiscoveryRegistry> = {
-    [K in keyof T]: DiscoveryNode<Awaited<ReturnType<T[K]>>>;
-} & {
-    /** 
-     * Run a smoke test on all registered modules to ensure they are resolvable.
-     * @es Ejecuta una prueba de humo en todos los módulos registrados para asegurar que son resolubles.
-     */
-    "$verify"(): Promise<Record<string, string>>;
+export {
+    AnyNode,
+    DI,
+    DISPOSE,
+    Disposable,
+    DisposableStore,
+    ELEMENT_UTIL,
+    ObservableDraft,
+    ReactiveDraft,
+    Remote,
+    RemoteGlobalModule,
+    RemoteLocalModule,
+    RemoteModule,
+    RemoteSharedModule,
+    TUtils,
+    TuContainer,
+    TuDiscovery,
+    TuInject,
+    TuJsHtml,
+    TuLazyInject,
+    TuScope,
+    TuTemplateHtml,
+    TuWebUtils,
+    createComputedSignal,
+    createKageBunshinObject,
+    createSignal,
+    createTemplateHtml,
+    debounce,
+    debounceEvents,
+    makeReactive,
+    textSize,
+    textSizeEvents,
+    trim
 };
-
-declare class TuDiscovery {
-    /**
-     * Creates a discovery hub that lazily loads modules and provides dual-usage (Promise/Callback).
-     * Ideal for maintaining absolute paths and avoiding "Alias Infection" in Workers.
-     * 
-     * @es Crea un hub de descubrimiento que carga módulos de forma perezosa y provee uso dual (Promesa/Callback).
-     * Ideal para mantener rutas absolutas/relativas y evitar la "Infección de Alias" en Workers.
-     * 
-     * @template T
-     * @param registry - Object mapping keys to import() loaders.
-     * 
-     * @example
-     * const Hub = TuDiscovery.create({
-     *   math: () => import("./math.js"),
-     *   auth: () => import("./auth.js")
-     * });
-     * 
-     * // Use as Promise
-     * const m = await Hub.math;
-     * 
-     * // Use as Callback
-     * Hub.math(m => m.sum(1, 2));
-     */
-    static create<T extends DiscoveryRegistry>(registry: T): TuDiscoveryMap<T>;
-}
-
-/**
- * @file TuContainer.d.ts
- * @description Type definitions for the Sovereign DI Kernel.
- * @es Definiciones de tipos para el Núcleo de Inyección Soberano.
- */
-
-/**
- * @class TuScope
- * @description Manages a local cache of instances and hierarchical resolution.
- * @es Gestiona un caché local de instancias y la resolución jerárquica.
- */
-declare class TuScope {
-    private _cache: Map<unknown, unknown>;
-    private _parent: TuScope | null;
-    private _disposed: boolean;
-
-    constructor(parent?: TuScope | null);
-
-    /**
-     * Resolves a dependency by searching the hierarchy.
-     * @es Resuelve una dependencia buscando en la jerarquía.
-     * @param token The class or token to resolve. /es La clase o token a resolver.
-     * @returns The resolved instance. /es La instancia resuelta.
-     */
-    resolve<T>(token: Token<T>): T;
-
-    /**
-     * Disposes the scope and clears its cache.
-     * @es Dispone el scope y limpia su caché.
-     */
-    dispose(): void;
-}
-
-//export type Constructor<T = unknown> = new (...args: unknown[]) => T;
-// 1. Cambiamos 'new' por 'abstract new'
-type Constructor<T = unknown> = abstract new (...args: unknown[]) => T;
-// 2. El Token automáticamente heredará la capacidad de ser una clase abstracta
-type Token<T = unknown> = Constructor<T> | string | symbol;
-type Factory<T = unknown> = (ctx: TuScope) => T;
-
-/**
- * @class TuContainer
- * @description Central registry for all dependencies and root scope.
- * @es Registro central para todas las dependencias y scope raíz.
- */
-declare class TuContainer {
-    static root: TuScope;
-
-    /**
-     * Registers a singleton dependency (One instance for the entire app).
-     * @es Registra una dependencia tipo singleton (Una instancia para toda la app).
-     * @example
-     * TuContainer.addSingleton(AppConfig);
-     * TuContainer.addSingleton(IService, (ctx) => new MyService("apiKey", ctx.resolve(ILogger)));
-     */
-    static addSingleton<T>(token: Token<T>, factory: Factory<T>): void;
-    static addSingleton<T>(token: Token<T>, provider?: Constructor<T>): void;
-
-    /**
-     * Registers a transient dependency (New instance every time).
-     * @es Registra una dependencia tipo transient (Instancia nueva cada vez).
-     */
-    static addTransient<T>(token: Token<T>, factory: Factory<T>): void;
-    static addTransient<T>(token: Token<T>, provider?: Constructor<T>): void;
-
-    /**
-     * Registers a scoped dependency (One instance per Scope hierarchy).
-     * @es Registra una dependencia tipo scope (Una instancia por jerarquía de Scope).
-     */
-    static addScope<T>(token: Token<T>, factory: Factory<T>): void;
-    static addScope<T>(token: Token<T>, provider?: Constructor<T>): void;
-
-    /**
-     * Creates a new child scope.
-     * @es Crea un nuevo scope hijo.
-     * @param callback Optional callback with the new scope. /es Callback opcional con el nuevo scope.
-     * @param parent Custom parent scope. /es Scope padre personalizado.
-     */
-    static createScope(callback?: (scope: TuScope) => unknown, parent?: TuScope | null): TuScope;
-    /**
-     * Checks if a token is registered.
-     * @es Verifica si un token está registrado.
-     */
-    static hasRegistration(token: Token): boolean;
-    /**
-     * Resolves a dependency from the root scope.
-     * @es Resuelve una dependencia desde el scope raíz.
-     */
-    static resolve<T>(token: Token<T>): T;
-}
-
-/**
- * Lazily injects a dependency. Captured at instantiation time.
- * @es Inyecta una dependencia de forma diferida (perezosa). Capturado al instanciar.
- */
-declare function TuLazyInject<T>(tokenProvider: () => Token<T>): T;
-
-/**
- * Synchronously injects a dependency.
- * @es Inyecta una dependencia de forma sincrónica.
- */
-declare function TuInject<T>(token: Token<T>): T;
-
-/**
- * @namespace DI
- * @description Grouped access to the DI system.
- * @es Acceso agrupado al sistema de inyección.
- */
-declare const DI: {
-    readonly Container: typeof TuContainer;
-    readonly Scope: typeof TuScope;
-    readonly Inject: typeof TuInject;
-    readonly LazyInject: typeof TuLazyInject;
-};
-
-export { AnyNode, DI, ELEMENT_UTIL, ObservableDraft, ReactiveDraft, Remote, RemoteGlobalModule, RemoteLocalModule, RemoteModule, RemoteSharedModule, TUtils, TuContainer, TuDiscovery, TuInject, TuJsHtml, TuLazyInject, TuScope, TuTemplateHtml, TuWebUtils, createComputedSignal, createKageBunshinObject, createSignal, createTemplateHtml, debounce, debounceEvents, makeReactive, textSize, textSizeEvents, trim };

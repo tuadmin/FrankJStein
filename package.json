@@ -1,6 +1,6 @@
 {
     "name": "frankjstein",
-    "version": "0.5.7",
+    "version": "0.6.0",
     "publishConfig": {
         "tag": "alpha",
         "access": "public"
@@ -15,12 +15,18 @@
         "test:all": "bun test",
         "lint": "biome lint .",
         "lint:fix": "biome check --apply .",
-        "format": "biome format --write ."
+        "format": "biome format --write .",
+        "build:addons": "rollup -c scripts/rollup.addons.mjs",
+        "bench:router": "bun run benchmarks/turouter.js"
     },
     "exports": {
         ".": {
             "types": "./dist/frankjstein.d.ts",
             "import": "./dist/frankjstein.js"
+        },
+        "./turouter": {
+            "types": "./dist/turouter.d.ts",
+            "import": "./dist/turouter.js"
         }
     },
     "files": [
@@ -31,8 +37,12 @@
     "devDependencies": {
         "@biomejs/biome": "^2.4.14",
         "@happy-dom/global-registrator": "^20.9.0",
+        "@rollup/plugin-strip": "^3.0.4",
+        "@rollup/plugin-terser": "^1.0.0",
         "@types/bun": "^1.3.13",
-        "happy-dom": "^20.9.0"
+        "happy-dom": "^20.9.0",
+        "rollup": "^4.60.3",
+        "rollup-plugin-dts": "^6.4.1"
     },
     "repository": {
         "type": "git",
