@@ -76,6 +76,8 @@ export function CustomView(tags) {
   massive DataGrid or an isolated widget), or acts as a Micro-Frontend SPA, it
   CAN and SHOULD initialize its own internal state (`createSignal`) or inject
   dependencies via `TuContainer`.
+  - **AI Rule (DI in Components)**: Do NOT abuse injections in UI components. When injecting, favor **Singletons** (like `AuthService` or `AppConfig`). Injecting Transient or Scoped services into UI components is a code smell unless strictly architected.
+  - **AI Rule (Async Context)**: If the injection happens dynamically inside a Promise or an async block within the component, you MUST pass `{ context: tags }` to `TuLazyInject` to avoid losing the UI component's scope.
 
 - **The Proxy Trap (TuLazyInject)**: Be aware that `TuLazyInject` returns a **Proxy**. It looks and behaves like the real instance, but if you need to perform `instanceof` checks or pass it to low-level libraries that don't support Proxies, you might need to access a property to trigger resolution. For 99% of UI cases, it is transparent.
 
@@ -152,6 +154,67 @@ export function Footer(tags) {
         ctx.div({ className: "social" }, renderSocialLinks(ctx));
     });
 }
+```
+
+### 8. Composition Styles & Destructuring Patterns (Side-by-Side)
+
+When composing UI in FrankJStein, there are three primary styles of tag invocation. Each has specific trade-offs regarding readability, indentation depth, and how Tailwind utility classes are handled:
+
+#### I. Callback-Style (Inline Builder Callbacks)
+Children are defined inside a callback function that receives a nested tags context (usually named `ctx` or `item`).
+*   **Pros:** Access to the native parent element (`el`), easy to debug inline, very direct.
+*   **Cons:** Can lead to deep nesting/indentation ("callback hell") if overused.
+*   **Best for:** When you need the native DOM element reference, or for highly dynamic blocks (like event handlers/async loaders).
+
+```javascript
+info.div({ className: "contact-item" }, (item) => {
+    item.div({ className: "contact-ico" }, ci.icon);
+    item.div({}, (d) => {
+        d.p({ className: "contact-lbl" }, ci.lbl);
+        d.p({ className: "contact-val" }, ci.render);
+    });
+});
+```
+
+#### II. Pure N-Arguments Style (Nested Functions)
+Tags are invoked as pure functions that receive children as sequential arguments (without callbacks).
+*   **Pros:** Clean, declarative, behaves like React/Hyperapp nested functions, no callback indentation.
+*   **Cons:** Less inline debuggability, no direct access to parent elements within the child nodes unless wrapped.
+*   **Best for:** Standard tree nesting where no native element handles/callbacks are needed.
+
+```javascript
+const { div, p } = info;
+return div({ className: "contact-item" },
+    div({ className: "contact-ico" }, ci.icon),
+    div(
+        p({ className: "contact-lbl" }, ci.lbl),
+        p({ className: "contact-val" }, ci.render)
+    )
+);
+```
+
+#### III. Destructuring with Selector-Keys (CSS Abstraction Style)
+Destructure the `tags` or `info` proxy using CSS selectors to declare Tailwind-styled tags as local components.
+*   **Pros:** ZERO callback nesting, extremely clean markup, matches Tailwind utility conventions perfectly, reusable in the same scope.
+*   **Cons:** Overhead of destructuring declarations at the top of the function.
+*   **Best for:** Large components, Tailwind-heavy layouts, loops, and keeping indentation flat.
+
+```javascript
+const {
+    "div.contact-item": divContactItem,
+    "div.contact-ico": divContactIco,
+    "div.contact-lbl": divContactLbl,
+    "div[class=contact-val]": divContactVal, // Using attribute selectors
+    div
+} = info;
+
+return divContactItem(
+    divContactIco(ci.icon),
+    div(
+        divContactLbl(ci.lbl),
+        divContactVal(ci.render)
+    )
+);
 ```
 
 ---

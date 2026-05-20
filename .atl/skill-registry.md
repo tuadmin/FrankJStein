@@ -64,6 +64,7 @@ Pre-digested rules per skill. Delegators copy matching blocks into sub-agent pro
 - Mandatory Typing: Always type the `tags` parameter as `Tags` (or use `@typedef` alias).
 - Decorator Pattern: Pass a `bindLogic(el, data)` callback to dumb templates to keep them pure and reusable.
 - Atomic Design: Atoms (Dumb/Stateless), Molecules/Organisms (Smart/Stateful).
+- Composition Styles: Use Callback-Style when parent DOM ref is needed, Pure N-Args for clean simple nesting, and Destructuring Selector-Keys for flat Tailwind-heavy layouts.
 
 ### frankjstein-utils
 - Always use `TUtils.cachedAsync` for data/imports inside components to prevent redundant fetches.

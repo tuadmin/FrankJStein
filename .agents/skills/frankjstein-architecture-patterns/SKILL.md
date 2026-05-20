@@ -80,6 +80,16 @@ For medium-to-large projects, using **Import Aliases** (e.g., `#services/`, `#ty
 - **Constraint**: If no alias system is detected, stick to standard relative paths.
 - **Suggestion**: If the project is growing and lacks aliases, suggest configuring them to the user (e.g., using Deno's native imports or Node/Bun's "subpath imports").
 
+### 7. Resource Management (The Disposable Pattern)
+
+For classes that create event listeners, timers, or spawn sub-components, memory leaks are a huge risk. FrankJStein provides a native `Disposable` base class (and `IDisposable` pattern) leveraging `Symbol.dispose`.
+
+- **When to use**: Any UI Controller or Service that manages external subscriptions, timers, or spawns other disposable instances.
+- **How to use**: Extend `Disposable` (or `TuScope` which is also disposable). Use `this._register(resource)` to tie sub-resources to the instance's lifecycle.
+- **AI Rule**: If a class you are designing has a "cleanup", "destroy", or "teardown" method, DO NOT invent your own names. ALWAYS use the standard `[DISPOSE]()` or `dispose()` method. 
+- **AI Rule (Polyfill/Compat)**: The exported `DISPOSE` symbol from FrankJStein is an alias for native `Symbol.dispose`. It provides a fallback (`Symbol.for("Symbol.dispose")`) if the environment lacks support. ALWAYS use the imported `DISPOSE` instead of raw `Symbol.dispose` to guarantee backward compatibility in older browsers.
+- **AI Rule**: Before calling methods on a service, defensively check `if (this.isDisposed) return;` if it's an asynchronous callback.
+
 ## Code Examples
 
 ### Correct Reactivity Flow (Service -> UI)

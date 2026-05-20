@@ -160,3 +160,35 @@ export function DashboardView(tags) {
   });
 }
 ```
+
+### 5. Contextual Injection & Async Environments (Advanced)
+
+By default, `TuLazyInject` and `TuInject` synchronously capture the current DI Scope during component/class instantiation. **You do NOT need options for 99% of normal property initializations.**
+
+However, if you are calling an injection dynamically from **inside an async closure, a promise, or dynamic module loading (e.g., a Router)**, the synchronous `currentScope` is lost.
+
+> [!IMPORTANT]
+> **AI INSTRUCTION: Preventing Zombie Scopes:** Whenever injecting inside an asynchronous boundary, you MUST explicitly provide the `context` option (usually `this` or the `tags/params` object) to trace back the scope. Failing to do so will cause the DI Kernel to fallback to Root, creating memory leaks.
+> 
+> ```javascript
+> // ❌ WRONG (Inside Async): currentScope is lost!
+> setTimeout(() => {
+>   const api = TuLazyInject(() => IApiService); // Will fallback to Root unexpectedly!
+> }, 100);
+> 
+> // ✅ CORRECT (Inside Async):
+> setTimeout(() => {
+>   const api = TuLazyInject(() => IApiService, { context: this }); 
+> }, 100);
+> ```
+
+**The `optional` Flag:**
+If you pass `{ context: target }`, the DI kernel expects that `target` is linked to a valid Scope. If it is not, it strictly throws an error to prevent DI corruption. 
+
+If you are building a generic/hybrid component that *might* be used outside a Scope (e.g. in the Root app), pass `{ optional: true }` so it falls back gracefully:
+```javascript
+// ✅ For Reusable/Hybrid UI Components that might not have a dedicated Scope
+const auth = TuLazyInject(() => IAuthService, { context: this, optional: true });
+```
+> [!WARNING]
+> **AI INSTRUCTION:** NEVER append `{ optional: true }` randomly or defensively in regular classes. Only use it when the component is explicitly designed to live both inside and outside of Router Scopes.

@@ -66,13 +66,15 @@ By default, inject dependencies into **private class fields** (`#field`) using
 This prevents circular dependencies. Constructor injection is strictly reserved
 for Mocking/Testing environments.
 
+- **AI Rule (Async Boundaries)**: When injecting properties directly in the class body or in the constructor, you do NOT need options. But if you dynamically inject a dependency **inside** an asynchronous method, Promise, or callback, you MUST pass `{ context: this }` to `TuLazyInject` or `TuInject` to retain the Service's DI Scope.
+
 ```javascript
 import { TuLazyInject } from "frankjstein";
 import { IApiService } from "./IApiService.js";
 
 export class UserService {
     /** @type {IApiService} */
-    #api = TuLazyInject(() => IApiService);
+    #api = TuLazyInject(() => IApiService); // ✅ Sync property initialization (No context needed)
 
     // Constructor injection is ONLY for tests/mocks!
     constructor(mockApi = null) {
@@ -82,6 +84,12 @@ export class UserService {
     async getUser() {
         // The Linter provides 100% Autocomplete here!
         return await this.#api.fetchData();
+    }
+    
+    async lazyFeature() {
+        // ✅ Async injection REQUIRES context explicitly to avoid losing scope
+        const dynamicService = TuLazyInject(() => IFeatureService, { context: this });
+        return await dynamicService.execute();
     }
 }
 ```
