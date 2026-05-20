@@ -1,0 +1,3121 @@
+# FrankJStein: Sovereign AI Context
+
+> Comprehensive architectural patterns and rules for AI Agents.
+
+
+# SECTION: AI SKILLS (ENGINEERING STANDARDS)
+> Technical rules and non-negotiable architectural patterns.
+
+
+---
+# Source: .agents/skills/frankjstein/SKILL.md
+
+---
+name: frankjstein
+description: >
+  Main index and core guidelines for FrankJStein.
+  Trigger: Load this skill whenever the user requests to work with FrankJStein.
+license: Apache-2.0
+metadata:
+  author: gentleman-programming
+  version: "1.1"
+---
+
+## Senior Architect Persona (MANDATORY)
+
+When working with FrankJStein, you MUST adopt the persona of a **Senior Architect with 15+ years of experience**. You are not just a "coder"; you are a systems designer who values performance, maintainability, and clean abstractions over framework magic.
+
+### 1. Expertise Domains
+Your knowledge base must reflect expertise in:
+- **Architecture**: Clean, Hexagonal, and Screaming Architecture.
+- **Frontend Core**: Deep JavaScript (ESNext), Reactivity (Signals), and DOM Primitives.
+- **Patterns**: Atomic Design, Container-Presentational, and Dependency Injection (IoC).
+- **Tooling**: TypeScript, Testing (TDD), and CLI efficiency (Vim/Tmux style).
+
+### 2. Behavioral Standards
+- **CONCEPTS > CODE**: Always explain the *why* before the *how*. Call out patterns that lack architectural sense.
+- **NO SHORTCUTS**: Reject mediocre solutions. If the user asks for code that bypasses the framework's principles (e.g., mixing logic in templates), push back and propose the correct pattern.
+- **DIRECT TONE**: Be precise, authoritative, and direct. You are a mentor saving a junior from mediocrity. Use CAPS sparingly for emphasis on CRITICAL architectural rules.
+- **VERIFY BEFORE AGREEING**: If the user makes a technical claim, verify it against the code/docs first. Never assume they are correct without proof.
+
+## FrankJStein Core Principles (The Golden Rules)
+
+You are working with FrankJStein, a native, no-transpiler JavaScript framework focused on high performance. 
+**This skill acts as an index.** If you need implementation details to write code or debug, you MUST load the corresponding sub-skills.
+
+### 1. The Nesting Rule (UI)
+When using `TuJsHtml`, use EITHER a Function call OR a Tagged Template for children. **NEVER mix both** in a single statement.
+- ✅ `div({ ... }, "Text")` or `div({ ... })`Content``
+- ❌ `div({ ... })"Content"` (Hallucination pattern)
+
+### 2. The Alias Trap (Workers)
+Web Workers DO NOT support Import Map Aliases or Bare Specifiers (e.g., `#services` or `"frankjstein"`). 
+- **Rule**: All code intended for Workers or Hubs MUST use **relative paths** (`./` or `../`) for all imports, including the framework itself.
+
+### 3. Reactivity Boundaries
+- **Signals** are for the UI (Smart Components). Use strict `===` for comparisons.
+- **Services** (Logic) should use pure JavaScript objects/classes. 
+- Use `.subscribe()` ONLY for non-DOM side effects (Sync, Logging).
+
+### 4. Global Rules and DX (Developer Experience)
+- **Strict Typing / Linter**: You MUST enable JS type checking (`// @ts-check`) or write in `.ts`. The `dist/frankjstein.d.ts` file is the ultimate internal validator.
+- **Zero React/JSX**: No Virtual DOM, JSX, Webpack, or Vite required.
+- **Decoupling**: Keep heavy state and network fetching away from the UI. Centralize it via `TuContainer` (Interfaces or Concrete Classes are both valid tokens).
+
+## 🚀 First-Impact Protocol (MANDATORY)
+
+Before writing any code in an existing repository, you MUST:
+1. **Host Detection**: Identify the host environment (PHP, Go, Java, etc.). FrankJStein is a "guest" library; respect the host's folder structure.
+2. **Uncertainty Check**: If you see multiple build patterns or non-standard paths, **STOP AND ASK**. Never guess the deployment strategy.
+3. **Linter Initiation**: If no `jsconfig.json` is found, add `// @ts-check` to the top of NEW files. Do NOT inject it line-by-line.
+4. **Human Sovereignty**: Patterns in these skills are suggestions for new projects. Always defer to the human's established style or explicit instructions.
+
+### Clean Code Standards for IAs
+- **Avoid JSDoc Cancer**: Use `@typedef` at the top of the file for complex types (Tags, Signals). Keep function signatures as clean as possible.
+- **Poetry for Humans**: Write code that is elegant and readable for a Senior Architect. If it looks like "AI-generated sludge", refactor it.
+
+### Sub-Skills Index (Load as needed)
+
+- If the user asks to build UI, DOM, mutate styles, or handle events -> **Load the `frankjstein-tujshtml` skill**.
+- If the user asks to design, structure, or architect UI components -> **Load the `frankjstein-component-design` skill**.
+- If the user mentions Signals, local state, reactivity, or computed values -> **Load the `frankjstein-kagebunshin` skill**.
+- If the user asks to connect business logic, databases, or global services -> **Load the `frankjstein-tucontainer` skill** and **`frankjstein-ioc-templates`**.
+- If the user asks to perform heavy processing, parallel processing, or hard async tasks -> **Load the `frankjstein-remote` skill**.
+- If the user asks for Service Locators, Hub patterns, or Lazy Loading dependencies -> **Load the `frankjstein-tudiscovery` skill**.
+- If the user asks for high-level application structure or where logic belongs -> **Load the `frankjstein-architecture-patterns` skill**.
+
+
+---
+# Source: .agents/skills/frankjstein-architecture-patterns/SKILL.md
+
+---
+name: frankjstein-architecture-patterns
+description: >
+  Macro-architectural guidelines tying together TuJsHtml, KageBunshin, RemoteModule, and TuContainer.
+  Trigger: When making high-level design decisions, structuring full applications, or deciding where logic belongs.
+license: Apache-2.0
+metadata:
+  author: gentleman-programming
+  version: "1.1"
+---
+
+## When to Use
+
+- Deciding where a `Signal` belongs (Service vs Component).
+- Determining if a task should be offloaded to a Web Worker (`RemoteModule`).
+- Designing state management across multiple browser tabs.
+
+## Critical Patterns
+
+### 1. The Reactivity Boundary (Signals belong to the UI)
+
+`KageBunshin` (Signals) is a Pub/Sub mechanism designed to mutate the DOM
+efficiently. They carry computational and Garbage Collection overhead.
+
+- **Rule of Thumb:** Services should be pure JavaScript and expose traditional
+  methods (e.g., `async getUser()`). The Smart UI Component is responsible for
+  taking that data and placing it inside a local `createSignal()`.
+- **Exception:** A Service can expose a Signal via a getter ONLY if the state is
+  strictly shared and requires cross-component reactivity. Use this sparingly to
+  avoid memory leaks and GC blocking.
+
+### 2. The Worker Boundary (`RemoteModule`)
+
+Web Workers are powerful but come with strict limitations. Do not hallucinate
+Worker usage unnecessarily.
+
+- **When to use:** For CPU-blocking tasks (heavy math, massive array processing)
+  that freeze the User Experience.
+- **When NOT to use:** If the data requires DOM parsing (e.g., `DOMParser`), it
+  will fail because Workers have no DOM access.
+- **SSL Requirement:** Web Workers operate best (and sometimes exclusively)
+  under HTTPS/SSL contexts. If the project is not SSL-ready, avoid proposing
+  them.
+
+### 3. Multi-Tab Architecture (`Remote.Global`)
+
+The most powerful architectural use-case for `RemoteModule` in FrankJStein is
+cross-tab communication.
+
+- A `Remote.Global` service acts as a Singleton across all open tabs of the
+  application.
+- **Example:** A "Logout" action triggered in Tab A calls a method on the
+  `Remote.Global` module, which instantly notifies or updates the state in Tab B
+  and Tab C.
+- _Warning:_ Combining `TuContainer` singletons _inside_ a `Remote.Global`
+  worker is purely theoretical and untested. Stick to simple class proxying for
+  remote modules.
+
+### 4. Mandatory Typing & Orchestration
+
+FrankJStein is designed for Human-AI coordination.
+
+- AI agents MUST ALWAYS generate strongly typed code (TypeScript or JSDoc) so
+  the Deno/TS Linter can validate the architecture across these boundaries.
+- If you are unsure whether to use a Worker, a Service, or a Signal, STOP and
+  ask the human orchestrator.
+
+### 5. Architectural Anti-Patterns (NEVER DO)
+
+- **❌ Business Logic in Templates**: Never perform calculations, data transformations, or complex conditional logic inside a `TuJsHtml` builder. Templates are for structure and layout only.
+- **❌ Unsanitized Signal Mutation**: Avoid mutating signals from multiple unrelated places. State updates should be predictable and ideally localized in a service or a smart component's handler.
+- **❌ Crossing Boundary Contexts**: Do not use outer context tags inside async blocks (`$f`, `$block`). Use the internal context provided by the callback.
+- **❌ Deep Relative Paths**: Avoid long relative imports (e.g., `../../../utils.js`). 
+
+### 6. Import Aliases & Project Scalability
+
+For medium-to-large projects, using **Import Aliases** (e.g., `#services/`, `#types/`) is highly recommended to keep the architecture clean.
+
+- **Check First**: Before using aliases, verify if the project has an `import_map.json`, `deno.json`, `tsconfig.json`, or `package.json` with "imports" configured.
+- **Constraint**: If no alias system is detected, stick to standard relative paths.
+- **Suggestion**: If the project is growing and lacks aliases, suggest configuring them to the user (e.g., using Deno's native imports or Node/Bun's "subpath imports").
+
+## Code Examples
+
+### Correct Reactivity Flow (Service -> UI)
+
+```javascript
+// 1. The Pure Service (No Signals)
+export class UserService {
+  async fetchUser() {
+    return { name: "John", active: true }; // Plain JS Object
+  }
+}
+
+// 2. The Smart Component (Handles Signals)
+import { createSignal } from "frankjstein";
+
+/**
+ * @typedef {import("frankjstein").TuJsHtml.Types.Tags} Tags
+ */
+
+/**
+ * @param {Tags} tags
+ * @param {UserService} userService
+ */
+export function UserProfile(tags, userService) {
+  const userName = createSignal("Loading...");
+  const [, setUserName] = userName.asTuple;
+
+  // The Component owns the reactivity, not the Service
+  userService.fetchUser().then((data) => setUserName(data.name ?? "unknown"));
+
+  return tags.div(
+    tags.h1`Profile`,
+    tags.p`Name: ${userName}`, // UI reacts to the Signal
+  );
+}
+```
+
+## Resources
+
+- **Component Design**: See `frankjstein-component-design`
+- **Inversion of Control**: See `frankjstein-ioc-templates`
+- **Reactivity Rules**: See `frankjstein-kagebunshin`
+
+
+---
+# Source: .agents/skills/frankjstein-component-design/SKILL.md
+
+---
+name: frankjstein-component-design
+description: >
+    Architectural guidelines and conventions for building UI components in FrankJStein.
+    Trigger: When building, refactoring, or designing UI components, views, or layouts.
+license: Apache-2.0
+metadata:
+    author: gentleman-programming
+    version: "1.2"
+---
+
+## When to Use
+
+- Creating new UI components (buttons, modals, headers, etc).
+- Deciding how to pass state to a component.
+- Structuring files, folders, and CSS for a specific view.
+
+## Critical Patterns
+
+### 1. Mandatory TypeScript / JSDoc Typing & Aliasing
+
+FrankJStein components are usually pure functions that receive the `tags`
+builder as their first parameter. To prevent hallucinations and empower the
+Deno/TS Linter, **you MUST ALWAYS strictly type the `tags` parameter**.
+
+To avoid visual clutter (JSDoc cancer) and save tokens when declaring multiple
+components in the same file, ALWAYS use a `@typedef` alias at the top of your
+`.js` files.
+
+```javascript
+// At the top of the file
+/**
+ * @typedef {import("frankjstein").TuJsHtml.Types.Tags} Tags
+ * @typedef {import("frankjstein").TuJsHtml.Types.ConfigureAttributes<HTMLButtonElement>} BtnConfig
+ */
+
+/**
+ * @param {Tags} tags
+ * @param {BtnConfig} config
+ * @param {string} text
+ */
+export function PrimaryButton(tags, config, text) {
+    return tags.button({ ...config, className: "btn-primary" }, text);
+}
+```
+
+### 2. Custom Elements (Web Components) Integration
+
+TuJsHtml fully supports native Web Components, but the TS Linter needs to know
+about them for autocomplete to work on custom methods. You can extend the base
+`Tags` type to inject your custom elements using template literal types.
+
+```javascript
+/**
+ * Extend the base interface to inject our Custom Element.
+ * @typedef {import("frankjstein").TuJsHtml.Types.Tags & { [key: `custom-el${string}`]: import("frankjstein").TuJsHtml.Types.CustomTag<CustomEl>} } MyAppTags
+ */
+
+/**
+ * @param {MyAppTags} tags
+ */
+export function CustomView(tags) {
+    // The linter now knows that 'tags["custom-el"]' returns the CustomEl class
+    return tags["custom-el"]({ id: "my-el" }, (ctx) => {
+        // You get full autocomplete for CustomEl methods here
+    });
+}
+```
+
+### 3. State Locality (Smart vs. Dumb)
+
+- **Dumb Components (Preferred for reuse):** Keep small, reusable components as
+  stateless as possible. Pass pure values or Signals down. This guarantees
+  maximum performance and predictability.
+- **Smart/Robust Components:** If a component is highly complex, unique (e.g., a
+  massive DataGrid or an isolated widget), or acts as a Micro-Frontend SPA, it
+  CAN and SHOULD initialize its own internal state (`createSignal`) or inject
+  dependencies via `TuContainer`.
+
+- **The Proxy Trap (TuLazyInject)**: Be aware that `TuLazyInject` returns a **Proxy**. It looks and behaves like the real instance, but if you need to perform `instanceof` checks or pass it to low-level libraries that don't support Proxies, you might need to access a property to trigger resolution. For 99% of UI cases, it is transparent.
+
+### 4. CSS Strategy
+
+Freedom is a double-edged sword. TuJsHtml allows you to create `<style>` tags on
+the fly, but this can lead to CSS spaghetti.
+
+- **Default:** Rely on a global CSS architecture (e.g., utility classes or BEM
+  global stylesheets).
+- **Complex/Isolated Components:** If a component is massive and strictly needs
+  isolation, it can dynamically resolve its own path (using `import.meta.url`)
+  to load an adjacent `.css` file or safely inject a scoped `<style>` block. DO
+  NOT do this for simple components.
+
+### 5. File Structure & Scalability
+
+Adapt to the project's scale:
+
+- **Small projects:** A simple `components/` folder is enough.
+- **Giant projects:** Enforce Atomic Design principles (`atoms/`, `molecules/`,
+  `organisms/`, `templates/`, `pages/`). Always evaluate the project's current
+  structure before generating new files.
+
+### 6. Inversion of Control via Decorators (Binding Logic)
+
+To keep templates "dumb" and reusable, avoid writing handlers directly inside them. Instead, use the **Decorator Pattern**. The template creates a pure element and passes it to a "binder" function (decorator) received via props.
+
+- **The Pattern**: `renderElement(tags, data, bindLogic)`
+- **The Benefit**: The template doesn't know about `signals`, `services`, or `global state`. It only knows it must call `bindLogic(element, data)` for specific interactive parts.
+
+```javascript
+/**
+ * @typedef {import("frankjstein").TuJsHtml.Types.Tags} Tags
+ * @typedef { { id: string, name: string } } User
+ * @typedef { (el: HTMLInputElement, data: User) => void } BindSelection
+ */
+
+/**
+ * Dumb Template with Injected Logic.
+ * @param {Tags} tags
+ * @param {User} user
+ * @param {BindSelection} bindSelection
+ */
+export function UserRow(tags, user, bindSelection) {
+    return tags.tr((ctx, el) => {
+        ctx.td`ID: ${user.id}`;
+        ctx.td`Name: ${user.name}`;
+        ctx.td((ctxTd) => {
+            // ✅ BEST PRACTICE: Use the second param (el) to bind logic
+            ctxTd.input({ type: "checkbox" }, (ctxInp, elInp) => {
+                bindSelection(elInp, user); 
+            });
+        });
+    });
+}
+```
+
+### 7. Single Source of Truth (SSOT) for Fragments
+If a UI fragment (e.g., a set of navigation links, a specific icon composition, or a repeated sub-form) is used in more than one place within the same file or across different views, **do not copy-paste it**. 
+
+- **Extract to a Sub-function**: Pass the `tags` or a specific tag proxy (like `aTag`) to a helper function.
+- **Benefit**: Centralized maintenance. One change updates all occurrences (e.g., Desktop and Mobile menus).
+
+```javascript
+// ✅ CORRECT: Shared fragments logic
+function renderSocialLinks(tags) {
+    tags.a({ href: "https://twitter.com" }, "Twitter");
+    tags.a({ href: "https://github.com" }, "GitHub");
+}
+
+export function Footer(tags) {
+    return tags.footer(ctx => {
+        ctx.div({ className: "social" }, renderSocialLinks(ctx));
+    });
+}
+```
+
+---
+
+## Code Examples
+
+### The Pure Presentational Component (Atom)
+
+```javascript
+/**
+ * @typedef {import("frankjstein").TuJsHtml.Types.Tags} Tags
+ * @typedef {import("frankjstein").TuJsHtml.Types.ConfigureAttributes<HTMLButtonElement>} BtnConfig
+ */
+
+/**
+ * @param {Tags} tags
+ * @param {BtnConfig} config
+ * @param {string} label
+ */
+export function ActionButton(tags, config, label) {
+    // Merge config classes with default classes safely
+    return tags.button({
+        ...config,
+        className: `action-btn ${config.className || ""}`,
+    }, label);
+}
+```
+
+### The Smart View Component
+
+```javascript
+import { createSignal, TuLazyInject } from "frankjstein";
+import { IAuthService } from "../interfaces/IAuthService.js";
+// Assuming ActionButton and Tags typedef are imported/available
+
+/**
+ * @param {Tags} tags
+ */
+export function UserProfileView(tags) {
+    // Correct: Lazy injection with factory callback
+    const auth = TuLazyInject(() => IAuthService);
+    const isLoading = createSignal(false);
+    const [, setLoading] = isLoading.asTuple;
+
+    return tags.div({ className: "profile-view" }, (ctx) => {
+        ctx.h2`User Profile`;
+
+        // Composing with Dumb components. We pass the 'ctx' (which is the tags proxy)
+        ctx.$insert(ActionButton(ctx, {
+            "@on": {
+                click: () => setLoading(true),
+            },
+        }, "Load Data"));
+
+        ctx.p(
+            { "@classToggle": { "hidden": isLoading } },
+            "Content goes here...",
+        );
+    });
+}
+```
+
+## Resources
+
+- **TuJsHtml Core Rules**: Load `frankjstein-tujshtml` for low-level DOM
+  building rules.
+- **Signals**: Load `frankjstein-kagebunshin` for reactivity patterns.
+- **IoC Container**: Load `frankjstein-tucontainer` if the component requires
+  complex service injections.
+
+
+---
+# Source: .agents/skills/frankjstein-ioc-templates/SKILL.md
+
+---
+name: frankjstein-ioc-templates
+description: >
+    Dependency Injection (DI) and Inversion of Control patterns using TuContainer.
+    Trigger: When building business logic, services, repositories, or injecting dependencies.
+license: Apache-2.0
+metadata:
+    author: gentleman-programming
+    version: "1.1"
+---
+
+## When to Use
+
+- Creating new business logic Services or Repositories.
+- Deciding how to inject a service into a Smart Component or another Service.
+- Registering modules into the global or scoped `TuContainer`.
+- Simulating Interfaces in Vanilla JS for strong typing and autocompletion.
+
+## Critical Patterns
+
+### 1. Abstract Classes as Interfaces (Tokens)
+
+JavaScript lacks native Interfaces. To provide the TS Linter and AI agents with robust autocomplete without executing code, **simulate interfaces using Abstract Classes prefixed with `I`**. These classes serve as BOTH the TypeScript interface AND the `TuContainer` registration token. 
+
+> [!NOTE]
+> **Concrete Classes as Tokens (The Pragmatic Approach):** 
+> You are NOT strictly forced to use Abstract Classes. Injecting a concrete class directly (e.g., `AppConfig`) is a 100% valid, highly pragmatic pattern in FrankJStein. Because of the container's IoC nature, if you ever need to change the implementation in the future, you can simply override it in the Kernel: `TuContainer.addSingleton(AppConfig, AppConfigV2)`. All dependent files will automatically receive `AppConfigV2` without needing any refactoring.
+
+```javascript
+/**
+ * Simulated Interface for Autocomplete and DI Token.
+ */
+export class IApiService {
+    /** @returns {Promise<any>} */
+    fetchData() {
+        throw new Error("Not Implemented");
+    }
+}
+
+// Registration uses the abstract class as the Token!
+// NOTE: You can import TuContainer directly or use the 'DI' alias object
+import { DI, TuContainer } from "frankjstein";
+import { RealApiService } from "./RealApiService.js";
+
+// SIMPLE REGISTRATION (Recommended): If the constructor has no parameters or dependencies.
+TuContainer.addSingleton(IApiService, RealApiService);
+
+// FACTORY REGISTRATION: Use ONLY if you must manually pass parameters to the constructor.
+// Useful for tests (mocks/fakes) or passing configuration strings.
+TuContainer.addScope(IApiService, () => new RealApiService("apikey-xxx", "https://api.dev"));
+
+// CONTEXT-AWARE FACTORY: Use the 'di' context to resolve other dependencies manually.
+TuContainer.addSingleton(IApiService, (di) => {
+    const config = di.resolve(IConfigService);
+    return new RealApiService(config.apiKey, config.url, di.resolve(IHttpClient));
+});
+
+// Alternatively using the DI alias:
+// DI.Container.addSingleton(IApiService, RealApiService);
+```
+
+### 2. Dependency Injection Strategy (`TuLazyInject` vs Constructor)
+
+By default, inject dependencies into **private class fields** (`#field`) using
+`TuLazyInject` combined with an arrow function returning the Interface token.
+This prevents circular dependencies. Constructor injection is strictly reserved
+for Mocking/Testing environments.
+
+```javascript
+import { TuLazyInject } from "frankjstein";
+import { IApiService } from "./IApiService.js";
+
+export class UserService {
+    /** @type {IApiService} */
+    #api = TuLazyInject(() => IApiService);
+
+    // Constructor injection is ONLY for tests/mocks!
+    constructor(mockApi = null) {
+        if (mockApi) this.#api = mockApi;
+    }
+
+    async getUser() {
+        // The Linter provides 100% Autocomplete here!
+        return await this.#api.fetchData();
+    }
+}
+```
+
+### 3. Architecture & Separation of Concerns
+
+FrankJStein is extremely flexible. As an AI Agent, if the macro architecture
+(e.g., Clean Architecture, Hexagonal, MVC) is NOT explicitly defined by the user
+in the prompt or project:
+
+- **DO NOT hallucinate complex architectures.**
+- **Default to Simple Service Architecture**: Smart Components call Services.
+- **ASK THE USER**: If you are acting autonomously and the scope is large, stop
+  and ask the orchestrator/human for the desired architecture before generating
+  a chaotic folder structure.
+
+### 4. Container Modularity
+
+Always use strict JSDoc/TS typing and ensure the linter is active.
+
+- **Small Apps**: A single `container.js` is fine.
+- **Large Apps**: Split registrations by domain (e.g., `auth.container.js`,
+  `users.container.js`) and import them into a central bootstrapper. Do not
+  over-segment to the point of chaos.
+
+## Code Examples
+
+### Complete Injection Flow
+
+```javascript
+import { TuContainer, TuLazyInject } from "frankjstein";
+
+// 1. The Interface (Token)
+export class ILogger {
+    /** @param {string} msg */
+    log(msg) {
+        throw new Error("Not Implemented");
+    }
+}
+
+// 2. The Implementation
+export class ConsoleLogger extends ILogger {
+    /** @param {string} msg */
+    log(msg) {
+        console.log(`[LOG]: ${msg}`);
+    }
+}
+
+// 3. The Consumer Service
+export class CheckoutService {
+    /** @type {ILogger} */
+    #logger = TuLazyInject(() => ILogger);
+
+    constructor(mockLogger = null) {
+        if (mockLogger) this.#logger = mockLogger;
+    }
+
+    process() {
+        this.#logger.log("Processing checkout...");
+    }
+}
+
+// 4. The Registration (usually in a container.js file)
+// Remember: Use addSingleton, addTransient, or addScope.
+TuContainer.addSingleton(ILogger, ConsoleLogger);
+TuContainer.addSingleton(CheckoutService, CheckoutService);
+```
+
+## Resources
+
+- **Component Design**: Load `frankjstein-component-design` to see how smart
+  components consume these services.
+- **Remote Workers**: Load `frankjstein-remote` if the injected service requires
+  heavy multi-threading.
+
+
+---
+# Source: .agents/skills/frankjstein-kagebunshin/SKILL.md
+
+---
+name: frankjstein-kagebunshin
+description: >
+  Handling granular reactivity and Signals (KageBunshin) in FrankJStein.
+  Trigger: State management, Signals, reactivity, createSignal, createComputedSignal.
+license: Apache-2.0
+metadata:
+  author: gentleman-programming
+  version: "1.4"
+---
+
+# 🌀 KageBunshin Whitelist (REACTIVITY ABSTRACTIONS)
+
+Reactivity in FrankJStein is **Explicit, Granular, and Predictable**. It follows the Principle of Least Magic.
+
+## 1. The Two Pillars of Data Flow
+
+### I. State-to-UI (Signals)
+Use Signals to push updates to the DOM.
+- **Standalone**: `const s = createSignal(0);` -> Pass `s` directly as a child to TuJsHtml.
+- **Object Property**: `const o = createKageBunshinObject({x:0});` -> Pass `o.$x` directly as a child to TuJsHtml.
+
+### II. UI-to-State (Bindings)
+Use Directives to pull updates from the DOM.
+- **Two-Way**: `input({ "@bind:value": signal })`.
+
+---
+
+## 2. Derived State (The Explicit Way)
+There is ONLY ONE way to create computed state: `createComputedSignal`.
+
+```javascript
+// ✅ CORRECT: Dependencies are ALWAYS explicit
+const total = createComputedSignal(sig1, sig2, (v1, v2) => v1 + v2);
+```
+
+### 🛑 The Computed DOM Signal Trap (CRITICAL)
+Signals in FrankJStein are designed for **primitive values only**. Never use `createComputedSignal` to return a DOM node. The framework will treat the DOM node as a primitive and render `[object HTMLElement]`.
+
+```javascript
+// ❌ FATAL ERROR: Renders "[object HTMLDivElement]" text.
+const loaderSignal = createComputedSignal(isProcessing, p => p ? div() : '');
+div(loaderSignal);
+
+// ✅ CORRECT: Use ctx.$block for reactive conditional DOM rendering.
+div(ctx => {
+    ctx.$block(isProcessing, (ctxBlock) => {
+        if (isProcessing.value) ctxBlock.div("Loading...");
+    });
+});
+```
+
+---
+
+## 🛑 HALLUCINATION ALERTS (DO NOT USE)
+- **NO Implicit Tracking**: There is no magic detection of used signals inside a callback.
+- **NO `effect()` or `watch()`**: Use `.subscribe()` for side effects, but ONLY if they are non-DOM related.
+- **NO Direct `.value` in Templates**: Using `.value` inside string literals evaluates it statically. Always pass the Signal object directly.
+
+```javascript
+// ❌ WRONG (Static)
+tags.p`Count: ${sig.value}`;
+
+// ✅ CORRECT (Reactive)
+tags.p(sig);
+// or
+tags.p`Count: ${sig}`;
+```
+
+---
+
+## Critical Patterns for KageBunshin (Signals)
+
+Reactivity in FrankJStein is **hyper-granular**. Mutating a signal NEVER re-renders the entire component; it only repaints the specific text node or attribute tied to the signal in the DOM.
+
+### 3. The Two-Way Binding Paradox (MANDATORY)
+FrankJStein is **explicit**. Do NOT assume that because a property is reactive (Signal), it will automatically update when the user interacts with the DOM (like in Vue or Angular).
+
+- **Signals handle State-to-UI flow** (Output).
+- **Directives handle UI-to-State flow** (Input/Binding).
+
+If you want a Signal to stay in sync with an input, you MUST use the `@bind:value` directive from `TuJsHtml`. Simply assigning a Signal to `input({ value: signal })` only creates a one-way output.
+
+```javascript
+// ❌ WRONG: Static/One-way suposition from other frameworks
+input({ value: mySignal });
+
+// ✅ CORRECT: Explicit binding
+input({ "@bind:value": mySignal });
+```
+
+### 4. Creation and Basic Reading
+
+```javascript
+import { createSignal } from "frankjstein";
+
+const counter = createSignal(0);
+console.log(counter.value); // Reads the static value
+```
+
+### 5. Direct Mutation (PREFERRED)
+Assignment triggers the DOM update magically in the next tick. For simple logic (counters, toggles), this is the cleanest and most recommended way.
+```javascript
+counter.value++;
+counter.value = 10;
+```
+
+### 6. Destructuring into Tuples (asTuple)
+Used when you need to separate the getter from the setter (e.g., React-like patterns, dependency injection, or complex/ambiguous setting logic). 
+
+**Where does `asTuple` shine?**
+- **Semantics and Intent**: Sometimes `setLoading(true)` conveys much more meaning than mutating `.value`.
+- **Complexity and Encapsulation**: If setting requires validation or side effects, encapsulating that logic in a setter is preferable.
+- **Dependency Injection**: Ideal for passing only the setter to child components ("Dumb Components") that don't need to know the current state.
+
+```javascript
+const [getCounter, setCounter] = counter.asTuple;
+
+// ✅ RECOMMENDED: Use for semantics in complex flows
+const [, setApiResponse] = apiResponse.asTuple;
+
+btnFetch[$].on("click", async () => {
+    setApiResponse("Loading from server..."); // Clear intent
+    const data = await fetch(...);
+    setApiResponse(await data.json());
+});
+```
+
+### 7. Reactive Objects (`createKageBunshinObject`)
+Recommended for large objects where creating individual signals for every property would be tedious or memory-intensive.
+
+#### The Reactive Node Pattern ($) for Objects
+When using `createKageBunshinObject`, properties are accessed in two ways:
+1.  **`clon.power`**: Primitive value (Static Snapshot).
+2.  **`clon.$power`**: **Subscribable (Reactive Node)**. Use this in `TuJsHtml`.
+
+> [!IMPORTANT]
+> **Critical Difference**: 
+> - Standalone Signals: Pass the instance **directly** to the template (has `.value`).
+> - Bunshin Object Properties (`$`): You **MUST** use the `$` prefix. They are **Subscribables**, NOT Signals.
+> - **NO `.value`**: Reactive nodes (`$`) do NOT have a `.value` property. They are optimized for UI injection only.
+
+```javascript
+import { createKageBunshinObject, createSignal } from "frankjstein";
+
+const count = createSignal(0);
+const user = createKageBunshinObject({ name: "Naruto" });
+
+// ❌ WRONG: Non-reactive. UI will NOT update when power changes.
+tags.p`Level: ${clon.power}`; 
+
+// ✅ CORRECT
+tags.div((ctx) => {
+    ctx.p(count);                // Standalone Signal
+    ctx.p`User: ${user.$name}`;  // Bunshin Object Property
+});
+
+// ✅ REACTIVITY TRIGGER: Direct mutation on the CLONE is the trigger.
+// By assigning a value, the Proxy detects the change and fires all linked '$' nodes.
+clon.power = 9000; // ⚡ Triggers UI update in ctx.p(user.$power)
+
+// ❌ NEVER mutate the original object directly, as the engine will not detect it.
+// naruto.power = 9000; // 🔇 Silent, non-reactive.
+```
+
+### 8. Reactivity Traps 🚨
+Here are common pitfalls when working with KageBunshin.
+
+#### Trap 1: Reference Identity in Arrays and Objects
+KageBunshin compares signal values by **identity** (`===`). If you set a signal with the **same object or array reference**, it detects no change and does NOT trigger an update.
+
+```javascript
+// ❌ TRAP: service.getAll() returns 'this.items' — same reference
+const data = await service.getAll();
+setItems(data);   // signal sees: data === data → SKIPS update
+
+// ✅ FIX: Force a new reference
+setItems([...data]);       // spread array
+setItems({ ...data });     // spread object
+```
+
+#### Trap 2: Proxy Identity and instanceof
+Most KageBunshin tools (`createKageBunshinObject`) return a **Proxy**.
+- **The Problem**: Proxies do NOT pass `instanceof` checks against their target class.
+- **The Fix**: Use duck-typing, brand properties, or `obj.constructor === TargetClass`.
+
+```javascript
+const userProxy = createKageBunshinObject(new User());
+
+// ❌ FAILS: Returns false
+console.log(userProxy instanceof User); 
+
+// ✅ WORKS: Reliable check
+console.log(userProxy.constructor === User);
+```
+
+### 9. Optimal Fix for Large Datasets: Version Signal Pattern
+The service exposes a `versionSignal` it increments on every mutation. The reactive block observes `versionSignal` and reads the array directly from the service.
+
+```javascript
+ctx.$block(service.versionSignal, (ctxBlock) => {
+    for (const item of service.getAll()) {
+        ctxBlock.li(item.name);
+    }
+});
+```
+
+
+---
+# Source: .agents/skills/frankjstein-remote/SKILL.md
+
+---
+name: frankjstein-remote
+description: >
+  Patterns for executing Web Workers and Multi-Threading with RemoteModule in FrankJStein.
+  Trigger: Heavy tasks, Web Workers, secondary threads, RemoteModule, intense async processing.
+license: Apache-2.0
+metadata:
+  author: gentleman-programming
+  version: "1.0"
+---
+
+Never block the Main Thread with heavy calculations, cryptography, or massive array manipulations. Delegate that work to a native transparent Worker using the `RemoteModule` class.
+
+### ⚠️ CRITICAL: The "Alias Infection" Warning
+**NEVER use Import Map Aliases (`#/`, `@/`) inside code that will be loaded by a Worker.** 
+Workers run in a separate context that DOES NOT INHERIT the Import Map from the HTML page. 
+
+- **Symptom**: `Worker Failure: Loading or execution error... Likely due to unsupported Import Map Aliases (#/@)`.
+- **Solution**: Use relative paths (`./`, `../`) or the `TuDiscovery` pattern to resolve dependencies without relying on aliases.
+
+### 1. The Isolated Service (Worker)
+Create a class that extends `RemoteModule` and expose it at the end of the file by invoking its own inherited static method `register()`. NEVER use `RemoteModule.register()` directly! Always use the child class.
+
+```javascript
+// worker.js
+// @since 0.1.1-alpha
+import { RemoteModule } from "frankjstein";
+
+export class HeavyService extends RemoteModule {
+    processGiantMatrix() {
+        // ...hard synchronous algorithm that takes 3 seconds...
+        return result;
+    }
+}
+
+// CORRECT: Register the class itself, not the parent abstract class.
+HeavyService.register(import.meta);
+```
+
+### 2. The Transparent Client (Main Thread)
+In your UI or controller (`app.js`), you must import the class declared in the worker **not to instantiate it with `new`**, but to connect it through its child class static method, returning a "Mirror Proxy".
+
+```javascript
+// app.js
+import { HeavyService } from "./worker.js"; // Import the class
+
+async function startProcess() {
+    // 1. Gets a Mirror Proxy. Every call will be forwarded to the real Worker.
+    const workerProxy = await HeavyService.connect({ name: 'HeavyJob' });
+    
+    // 2. Execute. Notice that even though "processGiantMatrix"
+    // was synchronous in the class, here it returns a Promise!
+    const result = await workerProxy.processGiantMatrix();
+    
+    console.log("Finished without freezing the tab:", result);
+}
+
+### 2.1 The Connection Race Condition (CRITICAL)
+RemoteModule proxies are created asynchronously via `.connect()`. 
+If you try to render a UI that depends on the worker before the connection is established, the application will CRASH or fail to bind events (e.g., `TypeError: worker.doSomething is not a function`).
+
+**MANDATORY SOLUTION**: Always wrap the worker connection and the UI components that depend on it inside a **`$f` (Suspense)** block. This ensures the proxy is ready before any interaction occurs.
+
+```javascript
+// ✅ CORRECT: Suspense Pattern for Worker initialization
+tags.$f(async (ctx) => {
+    // 1. Wait for connection inside the suspense block
+    const worker = await HeavyService.connect();
+    
+    // 2. Build UI that relies on the worker safely
+    ctx.button({ 
+        "@on": { click: () => worker.processGiantMatrix() } 
+    }, "Start Process");
+}, (ctx) => {
+    ctx.p("Establishing Sovereign Bridge...");
+});
+```
+```
+
+### 3. Lifecycle Variants (Namespace `Remote`)
+Instead of manually passing configuration options to `connect()`, you should extend the specific pre-configured class depending on the required lifecycle:
+
+- `RemoteModule` (`Remote.Simple`): Standard isolated instance.
+- `RemoteLocalModule` (`Remote.Local`): **Tab Singleton**. The worker is shared across all components in the current tab.
+- `RemoteSharedModule` (`Remote.Shared`): **Multi-Tab**. SharedWorker architecture to sync multiple tabs.
+- `RemoteGlobalModule` (`Remote.Global`): **Browser Singleton**. Only one instance runs for the entire browser session.
+
+```javascript
+// ❌ CRITICAL BUG: NEVER use bare specifiers like "frankjstein" inside a worker.
+// The Worker does NOT inherit the main thread's Import Map.
+import { Remote } from "frankjstein"; 
+
+// ✅ CORRECT (Option A): Use a relative path to the library
+import { Remote } from "../../dist/frankjstein.js";
+
+// ✅ CORRECT (Option B - BEST): Use the Hub (Bridge Pattern)
+import { Hub, Remote } from "../core/hub.js";
+
+// By extending Remote.Local, the worker becomes a tab-wide singleton automatically.
+export class GlobalDBService extends Remote.Local {
+    // ...
+}
+
+// Register using the child class
+GlobalDBService.register(import.meta);
+```
+
+### 4. The TuDiscovery Pattern & Bridge (Worker Safe)
+When your worker needs dependencies, use a central Hub that re-exports FrankJStein utilities using relative paths. This prevents "Alias Infection".
+
+**Example**:
+```javascript
+// hub.js (Project Bridge)
+import { TuDiscovery, Remote } from "./frankjstein.js"; // Relative path!
+
+export const Hub = TuDiscovery.create({
+    repo: () => import("./repositories/DataRepo.js"),
+    math: () => import("./utils/Math.js")
+});
+
+export { Remote };
+
+// worker.js
+import { Hub, Remote } from "./../core/hub.js"; // Only one import!
+
+export class MyService extends Remote.Local {
+    async run() {
+        const repo = await Hub.repo;
+        return repo.fetch();
+    }
+}
+MyService.register(import.meta);
+```
+
+
+---
+# Source: .agents/skills/frankjstein-tucontainer/SKILL.md
+
+---
+name: frankjstein-tucontainer
+description: >
+  Dependency Injection (DI) patterns with TuContainer in FrankJStein.
+  Trigger: Business logic, services, TuContainer, TuLazyInject, data architecture.
+license: Apache-2.0
+metadata:
+  author: gentleman-programming
+  version: "1.1"
+---
+
+## Critical Patterns for TuContainer (DI)
+
+Keep the UI clean from heavy network calls or spaghetti global state. Isolate
+logic in pure JavaScript/TypeScript classes and connect them using the
+`TuContainer` as the central orchestrator (Kernel).
+
+### 1. Service Registration
+
+Registered in the kernel at some entry point of the application.
+
+- `addSingleton`: Creates a SINGLE instance for the lifetime of the app. Ideal
+  for Authentication, Configuration, or global shared state.
+- `addTransient`: Creates a NEW instance every time this dependency is
+  requested. Ideal for rapidly mutating services or isolated component state.
+- `addScope`: Creates one instance per Scope hierarchy (Context). While
+  Singleton is enough for SPAs, scoped shines in Node.js/Bun servers to isolate
+  user requests.
+
+```javascript
+import { TuContainer } from "frankjstein";
+
+TuContainer.addSingleton(AuthService);
+TuContainer.addTransient(ApiService);
+
+// ⚠️ CRITICAL RULE: Registration MUST occur before any call to .resolve()
+// Ensure the Kernel/Entry point is loaded before your components try to inject.
+```
+
+### 2. Recommended Injection: `TuLazyInject`
+
+Whenever a service depends on another (e.g., ApiService needs to read tokens
+from AuthService), **the recommended and clean way** is to inject it lazily
+using `TuLazyInject` (or the `DI.LazyInject` namespace alias).
+
+This avoids any memory registration order collisions and protects against
+circular references during instantiation.
+
+> [!WARNING]
+> **TypeScript Strict Typing Required** In pure `.js` environments, autocomplete
+> works naturally. However, in `.ts` files, the type inference will often
+> default to `unknown`, causing strict linter errors. **When generating
+> TypeScript code**, you MUST explicitly pass the generic type to the injection
+> method to guarantee semantic type safety and prevent linter crashes:
+>
+> ```typescript
+> import { DI, TuLazyInject } from "frankjstein";
+>
+> export class ApiService {
+>   // ✅ CORRECT: Injecting via Abstract Token (Interface simulation)
+>   #auth = TuLazyInject<IAuthService>(() => IAuthService);
+>
+>   // ✅ CORRECT: Injecting via Concrete Token (Pragmatic approach)
+>   #config = TuLazyInject<AppConfig>(() => AppConfig);
+> }
+> ```
+
+```javascript
+import { TuLazyInject } from "frankjstein";
+import { IAuthService } from "./interfaces/IAuthService.js";
+
+export class ApiService {
+  // RECOMMENDED: Lazy injection via Abstract Token
+  #auth = TuLazyInject(() => IAuthService);
+
+  async fetchDashboard() {
+    // Used transparently via the contract defined in IAuthService
+    if (!this.#auth.user.isLogged) throw new Error("Not logged in");
+    return await fetch(`/api/user/${this.#auth.user.name}`);
+  }
+}
+```
+
+### 3. Injection Methods Comparison — `TuLazyInject` vs `TuInject` vs `TuContainer.resolve()`
+
+> [!IMPORTANT]
+> **`TuLazyInject` is NOT restricted to classes.** It works in any context — classes, functions, module scope — because it is **lazy**: it defers resolution until the first time the value is actually accessed. This makes it **safer and preferable** to `TuContainer.resolve()` even inside UI component functions.
+
+| Method | Resolves | Works in | Fails if registration is after? |
+|--------|----------|----------|----------------------------------|
+| `TuLazyInject(() => Token)` | On first access | Anywhere (class, function, module) | ❌ No — lazy, waits |
+| `TuInject(Token)` | Immediately | Anywhere | ✅ Yes — resolves at call site |
+| `TuContainer.resolve(Token)` | Immediately | Anywhere | ✅ Yes — resolves at call site |
+
+```javascript
+// ✅ IN A CLASS (canonical pattern — using private field # syntax)
+export class ApiService {
+  #auth = TuLazyInject(() => IAuthService);  // # is class-only JS syntax
+}
+
+// ✅ IN A FUNCTION/COMPONENT — also valid, even preferred over resolve()
+export function MyComponent(tags) {
+  // TuLazyInject works here — resolves lazily on first use, not at this line
+  const service = TuLazyInject(() => IMyService);  // ✅ no # needed, just const
+  return tags.div(() => { /* use service here */ });
+}
+
+// ⚠️  TuInject — resolves immediately, order-sensitive
+export function MyComponent(tags) {
+  const service = TuInject(IMyService);  // ⚠️ registration MUST have happened before this line
+}
+
+// ⚠️  TuContainer.resolve() — same behavior as TuInject, order-sensitive
+export function MyComponent(tags) {
+  const service = TuContainer.resolve(IMyService);  // ⚠️ same constraint
+}
+```
+
+> [!CAUTION]
+> **The `#field` syntax is JavaScript private class field syntax — it is NOT part of `TuLazyInject`.** It only exists inside `class` bodies. If you try to use `#varname =` inside a plain function you will get:
+> ```
+> Uncaught SyntaxError: Private field '#varname' must be declared in an enclosing class
+> ```
+> The fix is simple: drop the `#` and use a regular `const` or `let`. `TuLazyInject` itself is perfectly valid outside a class.
+>
+> ```javascript
+> // ❌ JS SyntaxError — # is class-only syntax
+> export function MyComponent(tags) {
+>     #service = TuLazyInject(() => IMyService);  // 💥 SyntaxError (the # is the problem)
+> }
+>
+> // ✅ CORRECT — same TuLazyInject, no # needed
+> export function MyComponent(tags) {
+>     const service = TuLazyInject(() => IMyService);  // ✅ Works perfectly
+> }
+> ```
+
+### 4. Resolution from the UI (Views/Controllers)
+
+To access a service from the UI builder function (`TuJsHtml`), prefer `TuLazyInject`
+over `TuContainer.resolve()` — the lazy resolution gives more flexibility on
+registration order and is safer for dynamic module loading scenarios.
+
+```javascript
+import { TuLazyInject } from "frankjstein";
+import { IApiService } from "./services.js";
+
+export function DashboardView(tags) {
+  // ✅ PREFERRED: lazy, order-independent
+  const api = TuLazyInject(() => IApiService);
+
+  // ✅ ALSO VALID: immediate, but registration must precede this
+  // const api = TuContainer.resolve(IApiService);
+
+  return tags.div(function(ctx) {
+    ctx.$f(async (ctxAsync) => {
+      const data = await api.fetchDashboard();
+      ctxAsync.p(data.title);
+    });
+  });
+}
+```
+
+
+---
+# Source: .agents/skills/frankjstein-tudiscovery/SKILL.md
+
+---
+name: frankjstein-tudiscovery
+description: >
+  Service Discovery and Lazy Loading patterns with TuDiscovery.
+  Trigger: Dependency management, Service Locator, Hub patterns, Lazy Loading, or worker-safe resolution.
+license: Apache-2.0
+metadata:
+  author: gentleman-programming
+  version: "1.0"
+---
+
+## Critical Patterns for TuDiscovery
+
+`TuDiscovery` is the **Service Locator** of FrankJStein. It allows you to define a map of services that are only imported and instantiated when they are actually accessed (Lazy Loading).
+
+### 1. The Project Hub (Worker Safe)
+This is the most critical use case. Web Workers cannot use Import Map Aliases or Bare Specifiers. By creating a `hub.js` using `TuDiscovery`, you centralize service resolution using relative paths that work everywhere.
+
+```javascript
+// core/hub.js
+// ❌ WRONG (Inside Worker): import { TuDiscovery } from "frankjstein";
+// ✅ CORRECT (Worker Safe): Use relative path to the library
+import { TuDiscovery } from "../dist/frankjstein.js"; 
+// alternative CDN
+// import { TuDiscovery } from "https://esm.sh/gh/tuadmin/frankjstein";
+
+export const Hub = TuDiscovery.create({
+    // Services are defined as dynamic imports
+    stats: () => import("../services/StatsService.js"),
+    auth: () => import("../services/AuthService.js"),
+    db: () => import("../services/Database.js")
+});
+```
+
+### 2. Consuming Services (Main Thread vs Worker)
+Accessing a property on a Discovery object returns a **Promise** (if it's not yet resolved) or a **Proxy** that resolves to the instance.
+
+```javascript
+import { Hub } from "./core/hub.js";
+
+async function initApp() {
+    // RESOLUTION: The first access triggers the dynamic import
+    const stats = await Hub.stats; 
+    stats.calculate();
+}
+```
+
+### 3. Verification and Graph Integrity (`$verify`)
+`TuDiscovery` includes a built-in method to validate that all registered services are reachable and their factories don't crash. Use this in testing environments or during initialization in development.
+
+```javascript
+const discovery = TuDiscovery.create({ ... });
+
+// Internal tool for AIs and Devs to check the health of the dependency graph
+const report = await discovery.$verify(); 
+// Returns: { serviceName: "✅ Resolved" | "❌ Failed - Error message" }
+```
+
+### 4. Why use TuDiscovery instead of TuContainer?
+- **TuContainer**: Best for **Dependency Injection** in the Main Thread. Services are usually registered at startup and resolved by type/token.
+- **TuDiscovery**: Best for **Service Location and Lazy Loading**, especially in **Web Workers**. It avoids circular dependencies and the "Alias Infection" problem by using dynamic imports.
+
+### 5. AI Architecture Rule: The Alias Trap
+- **The Problem**: Main threads usually have bundlers (Vite) or Import Maps that resolve aliases like `#services/*` or `"frankjstein"`. Workers DO NOT.
+- **The Solution**: If a file is intended to be used by a Worker (like a Hub), you MUST use relative paths (starting with `./` or `../`) for EVERY import, including the framework itself.
+- **Detection**: If you see a bare specifier in a file that might be imported by a Worker, flag it as a CRITICAL BUG.
+
+
+---
+# Source: .agents/skills/frankjstein-tujshtml/SKILL.md
+
+---
+name: frankjstein-tujshtml
+description: >
+  UI building patterns with TuJsHtml in FrankJStein.
+  Trigger: DOM construction, UI manipulation, events, or when using TuJsHtml.
+license: Apache-2.0
+metadata:
+  author: gentleman-programming
+  version: "1.4"
+---
+
+# 📜 Whitelist of Abstractions (THE SOVEREIGN WAY)
+
+In FrankJStein, complexity is handled through rigid, high-performance patterns. There are ONLY three valid ways to construct a tag. Any other syntax (especially hybrids) is a hallucination.
+
+## 0. The `tags` Proxy Convention and JSDoc
+The variables `tags` and `ctx` are just **naming conventions** for the TuJsHtml Proxy Context passed to your components or callbacks. 
+**DO NOT try to import them from the framework:**
+```javascript
+// ❌ FATAL ERROR: 'tags' is not exported by frankjstein!
+import { tags } from "frankjstein";
+```
+To enable autocomplete and prevent hallucinations, ALWAYS use JSDoc to type the `tags` parameter in your components:
+```javascript
+/**
+ * @param {import("frankjstein").TuJsHtml.Types.Tags} tags
+ */
+export function MyComponent(tags) {
+    const { div, h1, p } = tags; // Destructure the tags proxy here
+    return div(
+        h1("Title"),
+        p("Content")
+    );
+}
+```
+
+### 0.1 The `TuJsHtml_NativeTags` Interface and the `.d.ts` Source of Truth
+The `tags` proxy is strictly typed under the hood using the `TuJsHtml_NativeTags` interface. HTML tags are mapped to specific function types depending on their behavior (e.g., `SpecificTagFunction`, `MetadataTagFunction`, `InputTagFunction`), guaranteeing exact DOM typings:
+```typescript
+// Examples from the .d.ts file:
+div: SpecificTagFunction<HTMLDivElement>;
+script: MetadataTagFunction<HTMLScriptElement>;
+input: InputTagFunction<HTMLInputElement>;
+```
+This behaves like a mathematical domain. The Linter knows exactly which attributes belong to which tag (e.g., `href` is valid on `a`, but not on `div`), enforcing a 1:1 mapping with the native DOM.
+
+> [!TIP]
+> **🔍 WHEN IN DOUBT:** If you are unsure about what attributes or parameters a tag accepts, **DO NOT HALLUCINATE**. 
+> Find the `frankjstein.d.ts` file in your workspace (it might be in `dist/`, `node_modules/frankjstein/`, or downloaded locally). Inspect it (e.g., search for ` script:` or ` input:`) to see its exact JSDoc and TypeScript interface. If you cannot find the `.d.ts` file in the project, **ASK THE USER** to provide it or clarify the interface before proceeding.
+
+## 1. The Trinity of Tag Invocation
+
+### I. Pure Function Call (N-Arguments) — THE GOLD STANDARD
+Used for 99% of UI building. It is type-safe, allows **infinite nesting**, and prevents string-parsing bugs. You can mix plain strings, nodes, and callbacks in a single call.
+```javascript
+// ✅ CORRECT: Deep N-Arguments composition
+div({ className: "card" }, 
+    h1`Hello World`,
+    p(ctx2 => {
+        ctx2.span("Nested inside a callback ");
+        ctx2.strong(ctx3 => ctx3`and even deeper!`);
+    }),
+    p("Back to inline siblings")
+);
+```
+
+### II. Pure Tagged Template
+Used **ONLY** for pure text nodes with simple signal interpolation. NEVER use with configuration objects.
+```javascript
+// ✅ CORRECT: Pure text interpolation
+h1`Title: ${titleSignal}`;
+```
+
+### III. CSS Selector Abstraction
+Used for design system tokens and reusable atoms.
+```javascript
+// ✅ CORRECT
+const { "button.btn.btn-primary": PrimaryButton } = tags;
+PrimaryButton({ "@on": { click: save } }, "Save Chang
+## 2. Reactivity Whitelist (Signals in DOM)
+
+There are ONLY two ways to bind reactivity to the UI:
+
+### I. Standalone Signal
+For primitive signals created via `createSignal(T)`.
+```javascript
+const count = createSignal(0);
+// ✅ Correct: Pass the signal object itself as a child
+p(count);
+```
+```javascript
+// ✅ Correct: Or via pure Tagged Template
+p`Clicks: ${count}`;
+```
+
+### II. Bunshin Property ($)
+For reactive objects created via `createKageBunshinObject(T)`.
+```javascript
+const user = createKageBunshinObject({ name: "Naruto" });
+// ✅ Correct: Use the $ prefix to pass the Signal
+p(user.$name);
+```
+
+---
+
+## 3. Structural Refactoring Evaluation (The Nesting Limit)
+
+As a Senior Architect, you must evaluate when a template is becoming "Spaghetti Code". While `TuJsHtml` supports infinite nesting, you should follow these triggers to propose or perform a refactoring:
+
+### 3.1 The "4-Level Rule"
+If your nesting exceeds **4 levels of indentation** inside a single callback, STOP and evaluate:
+- **Repetitive Logic?** -> Extract to a separate sub-component function (e.g., `renderItem(tags, data)`).
+- **Static vs Dynamic?** -> Use the **Destructured Selectors** pattern for local tags to keep the main flow readable.
+
+### 3.2 Single Source of Truth (SSOT)
+If you detect that the same structural fragment (like a Menu Link or a Card Header) is used in two different places (e.g., Mobile vs Desktop), you **MUST** extract it into a dedicated function.
+
+```javascript
+// ✅ CORRECT: Extracting shared logic (e.g., Header links)
+/**
+ * @param {import('frankjstein').TuJsHtml.Types.Callback<HTMLAnchorElement>} aTag
+ */ 
+function menuLinks(aTag) {
+    aTag({ href: "#home" }, "Home");
+    aTag({ href: "#services" }, "Services");
+}
+/**
+ * @param {import('frankjstein').TuJsHtml.Types.Tags} tags
+ */ 
+export function Header(tags) {
+    return tags.header(ctx => {
+        // Desktop
+        ctx.nav(({ a }) => menuLinks(a));
+        // Mobile
+        ctx.div({ className: "mobile-menu" }, ({ a }) => menuLinks(a));
+    });
+}
+```
+
+### 3.3 Destructured Selectors (Local Components)
+For large sections (like Success Cases) that are not reused elsewhere, use destructuring to define "local tags" with their Tailwind classes. This keeps the loop body clean.
+
+```javascript
+// ✅ CORRECT: Cleaning loops with local tag destructuring
+_.div({ className: "grid" }, ({ "article[class=card-style]": articleCard, h3, p }) => {
+    for (const item of data) {
+        articleCard(
+            h3(item.title),
+            p(item.desc)
+        );
+    }
+});
+```
+
+---
+
+## 4. 🛑 THE BLACKLIST (FATAL ERRORS)
+
+### 4.1 The Tag Invocation Trap (Hybrid Nesting)
+Never use a configuration object and a Tagged Template simultaneously.
+```javascript
+// ❌ FATAL ERROR: Throws TypeError because div returns an Element, not a function.
+div({ className: "error" })`This is wrong`;
+```
+
+### 4.2 The Computed DOM Signal Trap
+Signals in FrankJStein are designed for **primitive values only**. Never use `createComputedSignal` to return a DOM node.
+```javascript
+// ❌ FATAL ERROR: Renders "[object HTMLDivElement]" text.
+const loaderSignal = createComputedSignal(isProcessing, p => p ? div() : '');
+div(loaderSignal);
+```
+
+### 4.3 BEWARE: String Interpolation vs Tagged Templates
+When injecting a **Signal** or a **DOM Node** into a text node, you MUST use the framework's **Tagged Template** syntax or N-Arguments. Avoid standard JS template literals (backticks without tag).
+
+```javascript
+// ❌ CRITICAL BUG: Static string evaluation.
+tags.p(`Clicks: ${count}`);
+
+// ✅ CORRECT: Tagged Template syntax.
+tags.p`Clicks: ${count}`;
+```
+
+### 4.4 The Tagged Template Nesting Trap (DX Pollution)
+NEVER nest complex tags or callbacks inside a Tagged Template literal.
+
+```javascript
+// ❌ CRITICAL DX ERROR: Technically works, but it's a mess.
+tags.div`
+    ${tags.h1("Title")}
+    ${tags.p(ctx => ctx.span("This is hard to read"))}
+`;
+```
+
+---
+x to pass the Signal
+p(user.$name);
+```
+
+---
+
+## 5. Critical Patterns for TuJsHtml
+
+### 5.1 Binding vs Output Reactivity (MANDATORY)
+This is the most frequent source of AI errors. You MUST distinguish between **Output-Only Reactivity** and **Two-Way Binding**.
+
+- **Output-Only (Native Property)**: Assigning a Signal to a native property (e.g., `value`, `disabled`, `textContent`, `src`). The DOM listens to the Signal. **NEVER use the '@' prefix for native properties**.
+```javascript
+// ❌ FATAL ERROR
+button({ "@disabled": true });
+```
+- **Two-Way Binding**: Using `@bind:value` or `@bind:checked`. This creates a bidirectional link.
+```javascript
+const query = createSignal("initial");
+// ✅ CORRECT: Two-way binding. The Signal stays in sync with user input.
+input({ "@bind:value": query });
+```
+
+### 5.2 The Async Closure Trap & Escape Hatch (CRITICAL)
+The context proxy is **highly optimized for synchronous execution**. 
+- **Rule**: NEVER use the context object inside a `setTimeout`, `setInterval`, or an `async` block that was not initiated by `$f`.
+- **Reason**: The internal builder state might have changed or been cleared by the time the async closure executes.
+- **Solution**: Use the **Native Escape Hatch** (2nd parameter) for any async or direct DOM manipulation.
+
+```javascript
+tags.div((ctx, el) => {
+    // ctx: Use for building children (Synchronous)
+    // el: The actual HTMLDivElement (Safe for anything)
+
+    // ✅ SAFE: Using the element directly for async logic
+    setTimeout(() => {
+        el.style.backgroundColor = "red";
+    }, 1000);
+});
+```
+
+### 6. Configuration Parameters and Mounting
+
+Configuration options (HTML attributes, static styles, directives) MUST **always be the first argument**.
+
+```javascript
+// ✅ CORRECT
+div({ className: "container", "@on": { click: () => {} } }, () => { });
+
+// ❌ INCORRECT: The config MUST NOT go at the end
+p("text", { className: "error" });
+```
+
+#### Mounting Rules (new TuJsHtml)
+The constructor `new TuJsHtml(callback, parent?)` executes the callback and **returns** the resulting node (DocumentFragment or HTMLElement). If `parent` is provided, it appends automatically.
+
+```javascript
+class MyWidget extends HTMLElement {
+    connectedCallback() {
+        // Manual append (constructor returns the node)
+        this.append(new TuJsHtml(tags => tags.p`Hello`));
+    }
+}
+```
+
+### 7. Builder Callbacks (Functional but NOT recommended)
+While it's possible to pass a callback to the builder to mutate the instance on the fly, **it is not the recommended practice** for readability reasons. It is preferred to use the initial configuration object or assign attributes natively.
+
+```javascript
+// NOT RECOMMENDED (Even though it works)
+button("Exit", (_) => _().style = "margin-left: 10px;");
+
+// PREFERRED (Config object always at the beginning)
+button({ style: { marginLeft: "10px" } }, "Exit");
+```
+
+### 8. DOM Utility and Events (`ELEMENT_UTIL as $`)
+The library exposes a special Symbol to attach utilities. Alias it to `$` in your imports for faster typing. Alternatively, you can use the native `.addEventListener`.
+
+```javascript
+import { ELEMENT_UTIL as $ } from "frankjstein";
+const btn = button`Add`;
+
+// Using the framework's utility
+btn[$].on("click", () => { /* ... */ });
+
+// Conventional native DOM
+btn.addEventListener("click", () => { /* ... */ });
+```
+
+### 9. Async Suspense (`$f`)
+Purely native asynchronous handling without blocking the hierarchy.
+
+```javascript
+tags.$f(async ({ h2 }) => {
+  const data = await fetchData();
+  h2`Loaded: ${data}`;
+}, function fallback({ p }) {
+  p`Loading...`;
+});
+```
+
+### 10. Native Property Reactivity (`innerHTML`, `textContent`, etc.)
+You do NOT need special `@` directives for standard DOM properties. Thanks to the framework's strict typing, **any writable native property accepts a `Signal` directly**.
+
+```javascript
+const userHtml = createSignal("<b>Loading...</b>");
+const isDisabled = createSignal(true);
+
+// ✅ CORRECT: Pass the Signal directly to the native property! No @ needed.
+button({ 
+  innerHTML: userHtml, 
+  disabled: isDisabled,
+  className: "btn"
+});
+```
+
+### 11. Context Isolation (Arrow vs Traditional Functions)
+`TuJsHtml` uses extreme optimization by sharing a context pointer for arrow functions, making rendering 3x faster. However, this shared pointer is strictly sequential.
+- **Arrow Functions:** Use for ALL synchronous DOM building. Extremely fast. **NEVER use async operations inside them**.
+- **Traditional Functions:** Forces `TuJsHtml` to create a dedicated, isolated root context for that element. Safe for async operations, but slightly slower.
+
+```javascript
+// ❌ WRONG: Arrow function + async = elements render in the wrong parent!
+tags.div((ctx) => {
+    setTimeout(() => ctx.p("I am lost in the DOM"), 10);
+});
+
+// ✅ CORRECT: Traditional function locks the context safely.
+tags.div(function(ctx) {
+    setTimeout(() => ctx.p("I am safely inside the div"), 10);
+});
+```
+
+### 12. Avoid Crossing Contexts in Blocks/Fragments
+When using async suspense or fragments, the callback receives a new context parameter. **You MUST use the tags from this internal context to render elements inside the block.** Using the outer tags inside an async block will corrupt the DOM hierarchy.
+
+```javascript
+const { div, $f } = tags;
+
+// ❌ WRONG: Crossing contexts (using outer 'div' inside async suspense)
+$f(async (ctx) => {
+    div("ERROR: This injects in the wrong place");
+});
+
+// ✅ CORRECT: Use the internal context
+$f(async (ctx) => {
+    ctx.div("CORRECT: Safe injection");
+});
+```
+
+### 13. The ".value" Reactivity Trap (CRITICAL)
+When using Tagged Templates with Signals, you MUST pass the **Signal object itself**, not its primitive value. Using `.value` inside a template literal resolves the value statically at render time and **KILLS granular reactivity**.
+
+```javascript
+const count = createSignal(0);
+
+// ❌ STATIC (Dead): Will show "0" and never update.
+tags.p`Count: ${count.value}`; 
+
+// ✅ REACTIVE (Alive): The framework subscribes to the Signal.
+tags.p`Count: ${count}`;
+```
+
+### 14. Descheduled CSS Selectors (Local Components)
+The `tags` Proxy allows destructuring keys that are valid CSS selectors. This creates a "base element" that can be reused as a local component.
+
+```javascript
+// ✅ POWERFUL PATTERN: Base Tag Abstraction
+const { 
+    "main.card": Card, 
+    "div.actions": Actions,
+    "button.btn.btn-primary": BaseButton 
+} = tags;
+
+Card(() => {
+    BaseButton({ 
+        id: "btn-inc", 
+        "@addClass": "increment" // Appends a specific class to the base ones
+    }, "Increment");
+});
+```
+
+### 15. Configuration Directives — Complete Reference
+All configuration keys starting with `@` are **special TuJsHtml directives**. Most accept `SignalOr<T>` (static or a Signal).
+
+| Directive | Type | Description |
+|-----------|------|-------------|
+| `@classToggle` | `{ [className]: SignalOr<boolean> }` | Toggle one or more CSS classes. |
+| `@addClass` | `SignalOr<string>` | Appends one or more class names to the element. |
+| `@attrs` | `GetRawAttributesMap<TElement>` | Set raw HTML/SVG/MathML attributes. |
+| `@on` | `EventListenerMap<TElement>` | Attach persistent event listeners. |
+| `@one` / `@once` | `EventListenerMap<TElement>` | Attach one-time event listeners. |
+| `@bind:value` | `SignalOr<string \| number \| string[]>` | Two-way binding for input value. |
+| `@bind:checked` | `SignalOr<boolean>` | Two-way binding for checkbox/radio checked state. |
+| `@bind:form` | `SignalOr<FormStateObject>` | Captures form submit data into a Signal. |
+
+#### `@classToggle` — Static vs Reactive
+```javascript
+// ✅ STATIC: Condition set once at render
+div({ "@classToggle": { "is-admin": user.isAdmin } });
+
+// ✅ REACTIVE: Signal — class toggles automatically on every change
+div({ "@classToggle": { "active": isActiveSignal } });
+
+// ✅ CORRECT: Use createComputedSignal for reactive negation
+div({ "@classToggle": { "hidden": createComputedSignal(isLoadingSignal, v => !v) } });
+```
+
+#### `@attrs` — Raw Attribute Access
+Use `@attrs` when the standard config object doesn't expose the attribute you need (SVG, ARIA).
+```javascript
+// SVG attributes not exposed at top level
+svg.circle({ "@attrs": { cx: 50, cy: 50, r: radiusSignal } });
+
+// data-* works at top level directly
+div({ "data-user-id": userId, "data-role": "admin" });
+```
+
+#### `@bind:*` — Two-Way Reactive Binding
+```javascript
+const query = createSignal("");
+
+// @bind:value keeps the signal in sync with the input automatically
+input({ "@bind:value": query, type: "search" });
+
+// @bind:form — captures all form fields on submit
+const formData = createSignal({});
+form({
+    "@bind:form": formData,
+    "@on": { submit: () => console.log(formData.value) }
+});
+```
+
+### 16. N-Arguments in the Tags Proxy (Inline vs Callback Children)
+The `tags` Proxy accepts **N children arguments** directly. You are NOT forced to use a single callback for children.
+
+```javascript
+// ✅ MIXED: Inline node + callback (both valid children)
+tags.p(
+    tags.span("label"),
+    (childs) => childs.strong("value")
+);
+```
+
+| Approach | When to Use |
+|----------|-------------|
+| `tags.p(child1, child2)` | Static children, no parent DOM reference needed. Clean and flat. |
+| `tags.p((ctx, parentEl) => { ... })` | When you need `parentEl` to call `.classList`, `.focus()`, or add listeners. |
+| `tags.p(function(ctx, parentEl) { ... })` | When children contain async operations (`setTimeout`, `fetch`). |
+
+### 17. Context API — Special Methods and What Does NOT Exist
+The context object supports any valid HTML tag plus these **special extension methods**:
+
+| Method | Description |
+|--------|-------------|
+| `ctx.$block(signal, fn)` | Reactive block. Destroys and recreates its DOM subtree whenever signal changes. |
+| `ctx.$f(asyncFn, fallbackFn?)` | Async Suspense. Executes asyncFn without blocking the DOM hierarchy. |
+| `ctx.$fragment(fn)` | Isolated fragment. Groups nodes without a wrapper element. |
+| `ctx.$insert(node)` | Inserts an **already-created external** DOM node. |
+
+**CAUTION**: Methods like `forEach`, `map`, `repeat`, or `if` **do NOT exist** on the context. Do not invent them. Use native JavaScript inside a `$block` callback instead.
+
+```javascript
+// ✅ CORRECT: Native iteration inside a reactive block
+ctx.$block(listSignal, (ctxBlock) => {
+    for (const item of listSignal.value) {
+        ctxBlock.li(item.name);
+    }
+});
+```
+
+### 18. `$insert` — When to Use and When NOT To
+`$insert` is for injecting **externally-created or externally-owned** DOM nodes.
+```javascript
+// ✅ VALID: External DOM node not created by this context
+const legacy = document.getElementById("legacy-widget");
+ctx.$insert(legacy);
+
+// ❌ UNNECESSARY: MyComponent already builds inside ctx
+ctx.$insert(MyComponent(ctx));
+
+// ✅ CORRECT: Call directly — it builds in-place
+MyComponent(ctx);
+```
+
+### 19. Deep Async Nesting
+When combining async blocks, **always use the innermost context to build DOM**. Each block creates its own context pointer. Crossing to an outer context inside an async block will silently inject nodes into the wrong DOM parent.
+
+```javascript
+// ❌ WRONG: Using outer context inside nested async block
+ctx.$block(versionSignal, (ctxBlock) => {
+    ctx.$f(async (ctxF) => { // ❌ ctx is outer
+        ctxF.p`data loaded`;
+    });
+});
+
+// ✅ CORRECT: Each level uses ITS OWN context
+ctx.$block(versionSignal, (ctxBlock) => {
+    ctxBlock.$f(async (ctxF) => { // ✅ $f lives inside ctxBlock
+        ctxF.p`data loaded`;
+    });
+});
+```
+
+
+---
+# Source: .agents/skills/frankjstein-utils/SKILL.md
+
+---
+name: frankjstein-utils
+description: Core and Web utilities for high-performance async orchestration and data handling.
+license: Apache-2.0
+metadata:
+  author: gentleman-programming
+  version: "1.1"
+---
+
+## High-Performance Utilities (TUtils & TuWebUtils)
+
+These utilities are essential for maintaining O(1) performance and professional-grade error handling within the FrankJStein ecosystem.
+
+### 1. Async Caching for Suspense (`cachedAsync`)
+**Rule**: Always use `TUtils.cachedAsync` for data fetching or dynamic imports inside components that might re-render (like those using `$f` or `$block`).
+
+```javascript
+// ✅ PREFERRED: The fetch will only run ONCE even if the component re-renders
+const fetchUser = TUtils.cachedAsync((id) => fetch(`/api/user/${id}`).then(r => r.json()));
+
+// ✅ NEW (v1.1): Memoization by arguments (useful for shared pools)
+const fetchProduct = TUtils.cachedAsyncByArgs(
+    (id) => fetch(`/api/p/${id}`).then(r => r.json()),
+    (id) => `product_${id}` // Cache key resolver
+);
+
+$f(async (ctx) => {
+    const user = await fetchUser(userId);
+    ctx.p(user.name);
+});
+```
+
+### 1.1 Chainable Execution (`repeatCall`)
+**Rule**: Use `TUtils.repeatCall` for creating fluid logging or event-aggregation chains.
+```javascript
+const log = TUtils.repeatCall((msg) => console.log(msg));
+log("F")("R")("A")("N")("K"); // Executes 5 times, returns self.
+```
+
+---
+
+### 2. Go-Style Error Handling (`safe`)
+**Rule**: Avoid deep `try/catch` nests. Use `TUtils.safe` to handle promises as tuples.
+
+```javascript
+// ✅ PREFERRED: Clean control flow
+const [err, data] = await TUtils.safe(myService.getData());
+if (err) return ctx.p("Error loading data");
+ctx.b(data.title);
+```
+
+### 3. Time Slicing for Heavy Iterations (`forEachAsync`)
+**Rule**: NEVER use native `.forEach` or `.map` for collections larger than 1,000 items if you are performing DOM operations or heavy logic. Use `TuWebUtils.forEachAsync` to prevent UI freezing.
+
+```javascript
+// ✅ PREFERRED: UI stays responsive during processing
+await TuWebUtils.forEachAsync(hugeArray, (item) => {
+    process(item);
+}, { batchSize: 50 });
+```
+
+### 4. Smart Form Handling (`formToObject`)
+**Rule**: Use `TuWebUtils.formToObject` for form submissions. It handles native validation and `name[]` array grouping automatically.
+
+```javascript
+const onSubmit = (e) => {
+    e.preventDefault();
+    const data = TuWebUtils.formToObject(e.target);
+    if (!data) return; // Validation failed
+    api.save(data);
+};
+```
+
+### 5. Task Scheduling
+- Use `TUtils.scheduleTask(fn)` for microtasks (before paint).
+- Use `TUtils.scheduleTask(fn, true)` for macrotasks (after paint/next loop).
+- Use `TUtils.sleepAsync(ms, signal)` for cancelable delays.
+
+### 6. Visibility and Layout
+- Use `TuWebUtils.whenVisibleAsync(el)` for lazy-loading or on-scroll animations.
+- Use `TuWebUtils.debounce(fn, ms)` for high-frequency events (resize/scroll).
+
+
+# SECTION: WORKFLOWS (OPERATIONAL PROTOCOLS)
+> Deterministic guides for maintenance, testing, and deployment.
+
+
+---
+# Source: .agents/workflows/skill-maintenance.md
+
+---
+description: Blue-Green Skill Versioning Strategy to prevent AI destruction of instructions.
+---
+
+# Skill Maintenance Workflow (v1.0)
+
+This workflow MUST be followed whenever an AI agent needs to modify or update any skill in `.agents/skills/`.
+
+## 1. Version Detection
+- Read the current `SKILL.md` file.
+- Extract the version from the YAML frontmatter (e.g., `version: "1.0"`).
+
+## 2. Backup Current State
+- Copy `SKILL.md` to `SKILL-v[CURRENT_VERSION].md`.
+- Example: `cp SKILL.md SKILL-v1.0.md`.
+
+## 3. Prepare New Version
+- Calculate the incremental version (e.g., `1.0` -> `1.1`).
+- Create `SKILL-v[NEW_VERSION].md` with the proposed changes.
+- Update the `version` field in the frontmatter of the new file.
+
+## 4. Architectural Validation
+- Compare `SKILL-v[NEW_VERSION].md` against `SKILL-v[CURRENT_VERSION].md`.
+- Check for:
+  - Contradictions with "Golden Rules" in `AGENTS.md`.
+  - Loss of critical context.
+  - Regression in architectural standards.
+  - "AI Sludge" (mediocre or redundant explanations).
+
+## 5. Promotion
+- If the validation passes, copy the content of `SKILL-v[NEW_VERSION].md` to `SKILL.md`.
+- The version history remains in the ignored `-v*.md` files for local recovery if needed.
+
+## 6. Final Sync
+- After updating `SKILL.md`, ensure the `skill-registry.md` in `.atl/` is updated if necessary (e.g., if a new trigger or metadata field was added).
+
+
+---
+# Source: .agents/workflows/testing-protocol.md
+
+---
+description: Este documento define el estándar determinístico para la creación de pruebas de integración en FrankJStein. Tanto humanos como agentes de IA deben seguir estas reglas para garantizar la estabilidad del framework y la veracidad de la documentación.
+---
+
+# Protocolo de Testing Soberano (FrankJStein)
+
+Este documento define el estándar determinístico para la creación de pruebas de integración en FrankJStein. Tanto humanos como agentes de IA deben seguir estas reglas para garantizar la estabilidad del framework y la veracidad de la documentación.
+
+## 1. Mandatos Principales
+
+- **Lenguaje Obligatorio**: Todos los tests deben escribirse en **TypeScript (`.ts`)**. Esto garantiza que el framework es compatible con el autocompletado y valida el archivo `dist/frankjstein.d.ts`.
+- **Tipado Fuerte**: Se prohíbe el uso de `any`. Los tests deben servir como ejemplo de cómo tipar correctamente el uso del framework.
+- **Documentación Interna**: Cada `test()` o `describe()` debe estar comentado explicando **qué** está validando y **por qué** es importante para el contrato del framework.
+
+## 2. Estructura y Organización
+
+Los tests deben organizarse de forma modular, reflejando la estructura de las **Skills**:
+
+```text
+tests/
+├── setup.ts             # Configuración de Happy-DOM y entorno global
+├── tujshtml.test.ts     # Pruebas de construcción de UI y Templates
+├── kagebunshin.test.ts  # Pruebas de Reactividad y Signals
+├── tucontainer.test.ts  # Pruebas de Inyección de Dependencias
+└── utils.test.ts        # Pruebas de utilidades (TUtils/TuWebUtils)
+```
+
+### Fraccionamiento de Tests Grandes
+Si un archivo de test supera las 300 líneas o se vuelve complejo de leer:
+1. Crear una subcarpeta con el nombre del módulo (ej: `tests/tujshtml/`).
+2. Dividir en sub-archivos lógicos (ej: `attributes.test.ts`, `nesting.test.ts`).
+3. Importar las utilidades comunes si es necesario.
+
+## 3. Patrón de Implementación
+
+Cada test debe seguir el patrón **AAA** (Arrange, Act, Assert) y estar alineado con los ejemplos de `docs/`.
+
+```typescript
+import { expect, test, describe } from "bun:test";
+import { TUtils } from "../dist/frankjstein.js";
+
+describe("Módulo de Utilidades", () => {
+    /**
+     * @description Verifica que cachedAsync previene la ejecución múltiple de una promesa.
+     * @rationale Vital para el rendimiento de componentes asíncronos ($f).
+     */
+    test("Debe cachear el resultado de una función asíncrona", async () => {
+        // Arrange
+        let count = 0;
+        const fn = TUtils.cachedAsync(async () => { count++; return "ok"; });
+
+        // Act
+        await fn();
+        const result = await fn();
+
+        // Assert
+        expect(result).toBe("ok");
+        expect(count).toBe(1); // La prueba de que solo corrió una vez
+    });
+});
+```
+
+## 4. Limitaciones Conocidas
+
+- **Web Workers**: Debido a que el entorno de test corre en Bun/Happy-DOM, las pruebas de `RemoteModule` y Workers no son posibles de forma nativa en esta suite. Estos módulos se validan mediante **Pruebas Manuales** o ejemplos en la carpeta `examples/`.
+- **IntersectionObserver / requestIdleCallback**: Happy-DOM tiene soporte limitado para estos. Si el test falla por falta de implementación en el entorno de pruebas, debe marcarse como `test.todo()` o saltarse con una explicación.
+
+## 5. Validación de la IA (Protocolo para Agentes)
+
+Antes de dar un test por válido, el agente debe:
+1. Ejecutar `bun test tests/` y verificar que el código no tiene errores de sintaxis TS.
+2. Asegurarse de que el test no deja procesos colgados (ej: timers no limpiados).
+3. Verificar que el test apunta al archivo `dist/frankjstein.js` y no a archivos locales inexistentes.
+
+
+# SECTION: DOCUMENTATION (DOMAIN KNOWLEDGE)
+> Comprehensive framework manuals and usage guides.
+
+
+---
+# Source: docs/component-design.md
+
+# Diseño de Componentes en FrankJStein
+
+FrankJStein no impone un sistema de componentes rígido. En su lugar, promueve un enfoque funcional basado en **Composición de Contextos** y **Soberanía del DOM**.
+
+## 1. El Átomo Funcional (Pure Function)
+La forma más eficiente de crear componentes reutilizables es mediante funciones puras que reciben el constructor `tags`.
+
+### Estándar de Tipado (Clean JSDoc)
+Para mantener el código elegante, define los tipos al inicio del archivo.
+
+```javascript
+/** @typedef {import("frankjstein").TuJsHtml.Types.Tags} Tags */
+
+/**
+ * @param {Tags} tags
+ * @param {string} label
+ */
+export function MyButton(tags, label) {
+    return tags.button({ className: "btn-primary" }, label);
+}
+
+/**
+ * @param {Tags} tags
+ * @param {string} label
+ * @return {HTMLButtonElement}
+ */
+export function MyButtonDefault({'button.btn.btn-default':btn}, label) {
+    return btn(label);
+}
+```
+
+## 2. Componentes Inteligentes (Smart Components)
+Cuando un componente necesita lógica de negocio, inyectamos servicios desde el `TuContainer` (DI) y usamos `Signals` para el estado local.
+
+```javascript
+import { createSignal, TuLazyInject } from "frankjstein";
+import { IAuthService } from "../services/auth.js";
+
+export function UserProfile(tags) {
+    //ts : auth = TuLazyInject<IAuthService>(()=>IAuthService);
+    const auth = TuLazyInject(()=>IAuthService);
+    const user = createSignal(auth.currentUser);
+
+    return tags.div({ className: "profile" }, (ctx) => {
+        ctx.h2`Bienvenido, ${user}`;
+        ctx.button({ "@on": { click: () => auth.logout() } }, "Salir");
+    });
+}
+```
+
+## 3. Matriz de Decisión: ¿Qué usar?
+
+| Tipo | Herramienta | Cuándo usarlo |
+| :--- | :--- | :--- |
+| **UI Básica** | Función + `tags` | Botones, inputs, layouts simples. Máximo rendimiento. |
+| **Estado Local** | Función + `Signals` | Contadores, formularios, toggles. |
+| **Encapsulación** | `CustomElements` | Si necesitas Shadow DOM o interoperabilidad con otros frameworks. |
+| **Lógica Global** | `TuContainer` | Autenticación, API Clients, State Stores compartidos. |
+
+## 4. Custom Elements (Nativos)
+FrankJStein se integra perfectamente con la API de Web Components. Puedes usar `TuJsHtml` dentro del `connectedCallback` de un elemento nativo.
+
+```javascript
+import { TuJsHtml } from "frankjstein";
+
+class MyWidget extends HTMLElement {
+    connectedCallback() {
+        this.append(new TuJsHtml((tags) => {
+            tags.p`Soy un Web Component nativo`;
+        })); // Inyectamos el componente en 'this'
+    }
+}
+customElements.define("my-widget", MyWidget);
+```
+
+## 5. Reglas de Oro para Componentes
+1. **Propiedad de Contexto**: Siempre usa el `ctx` inyectado en los callbacks hijos para evitar corromper la jerarquía del DOM.
+2. **Silo de Reactividad**: No mezcles lógica de red o de base de datos dentro del renderizado. Para eso están los **Servicios** en `TuContainer`.
+3. **Inmutabilidad de Tags**: No intentes modificar el objeto `tags` global; úsalo solo para construir.
+4. **Escape Hatch Nativo**: Usa siempre el segundo parámetro del callback (`(ctx, el) => ...`) si necesitas manipular el elemento directamente o inyectarlo en librerías de terceros.
+
+---
+*FrankJStein: Arquitectura para el rendimiento, libertad para el desarrollador.*
+
+
+---
+# Source: docs/kagebunshin.md
+
+# KageBunshin (Signals & Reactividad)
+
+`KageBunshin` es el nombre en código para el subsistema de reactividad en FrankJStein. Está basado fuertemente en el concepto moderno de **Signals**, proveyendo reactividad granular pura (Fine-grained reactivity) que aniquila la necesidad del ciclo de reconciliación de un Virtual DOM.
+
+## El Concepto de Reactividad Granular
+Cuando un Signal cambia, no "re-renderiza un componente". Simplemente muta directamente el atributo HTML específico o el nodo de texto (TextNode) con el que fue linkeado en el DOM. Esto resulta en operaciones de costo `O(1)` en tiempo real.
+
+## Uso Básico
+
+### Creación (`createSignal`)
+```javascript
+import { createSignal } from "frankjstein";
+const contador = createSignal(0);
+```
+
+### Mutación Directa vs Tuplas
+Puedes mutar el valor usando la propiedad `.value`:
+```javascript
+contador.value = 1;
+```
+O puedes desestructurarlo para conseguir inmutabilidad referencial a través de la propiedad nativa `.asTuple` (útil si prefieres el estilo setter clásico):
+```javascript
+const [getContador, setContador] = contador.asTuple;
+setContador(getContador() + 1);
+```
+
+## Computados (`createComputedSignal`)
+A diferencia de React, Vue o las propuestas actuales de TC39 donde los computed tienen "watchers automáticos mágicos", en FrankJStein **las dependencias deben declararse explícitamente como argumentos antes del callback**. 
+
+Esto tiene dos beneficios brutales:
+1. **Rendimiento O(1)**: El motor sabe exactamente a qué suscribirse sin escaneo profundo de dependencias implícitas (que es costoso).
+2. **Conciencia del Linter**: Autocompletado y validación perfecta de los valores inyectados en el callback.
+
+```javascript
+const sig1 = createSignal(10);
+const sig2 = createSignal(20);
+
+// Declaración explícita -> Inyección en el callback
+const total = createComputedSignal(sig1, sig2, (v1, v2) => v1 + v2);
+```
+
+## La Frontera Signal-UI (Sin Effects)
+A diferencia de otros frameworks, los Signals de FrankJStein **no tienen una función `effect()`** genérica por diseño. La reactividad se consume de dos formas:
+
+1. **Inyección en el DOM (Vía TuJsHtml)**: Al pasar un Signal a un Tagged Template (ej: `` tags.p`${count}` ``), el framework crea automáticamente un vínculo granular.
+2. **Suscripción Manual**: Para efectos secundarios no-visuales (logs, sincronización externa), usa `.subscribe()`.
+
+```javascript
+// ✅ Correcto para UI (Granular y Automático)
+tags.p`Contador: ${count}`;
+
+// ✅ Correcto para efectos secundarios (Manual)
+count.subscribe(val => console.log("Cambió a:", val));
+```
+
+### Sincronización Bidireccional
+Por defecto, la reactividad es **de salida** (Signal -> DOM). Para habilitar la sincronización bidireccional (DOM -> Signal), FrankJStein utiliza directivas en el motor de renderizado. Consulta la documentación de [TuJsHtml: Directivas @bind](./tujshtml/README.md#directivas-especiales-) para más detalles.
+
+## Trampas de Reactividad (Identidad Referencial)
+
+KageBunshin compara los valores de los Signals mediante **identidad estricta (`===`)** por razones de rendimiento. Si actualizas un Signal con la **misma referencia de memoria** de un array u objeto, el motor asume que no hubo cambios y **no actualizará la UI**, aunque hayas mutado sus propiedades internas.
+
+```javascript
+const itemsSignal = createSignal([]);
+
+// ❌ ERROR: Mutar el array original y asignarlo de nuevo
+const data = itemsSignal.value;
+data.push("Nuevo item");
+itemsSignal.value = data; // Kagebunshin dice: data === data -> SKIPS UPDATE
+
+// ✅ SOLUCIÓN: Forzar una nueva referencia (Spread)
+itemsSignal.value = [...data];
+```
+*(Nota: Para evitar el costo de memoria de clonar arrays gigantes, considera usar el patrón `Version Signal` donde solo incrementas un contador cuando la data subyacente muta).*
+
+
+## Objetos Reactivos (`createKageBunshinObject`)
+
+Cuando tienes un objeto grande o complejo y no quieres crear un Signal por cada propiedad, `createKageBunshinObject` crea un clon Proxy que sincroniza todas las instancias en tiempo real.
+
+### El Patrón de Nodo Reactivo ($)
+
+Para mantener el rendimiento y la claridad, las propiedades de un objeto Bunshin se dividen en dos:
+1.  **`clon.power`**: Devuelve el valor primitivo (Snapshot). **NO** es reactivo en la UI.
+2.  **`clon.$power`**: Devuelve un **Nodo de Suscripción (Subscribable)**. Es un objeto que posee un método `.subscribe()` y `.once()`. 
+
+> [!IMPORTANT]
+> **Diferencia con Signals**: A diferencia de un Signal estándar, los nodos `$` **NO tienen la propiedad `.value`**. Son conductos de eventos reactivos optimizados para ser pasados directamente a `TuJsHtml`.
+
+```javascript
+import { createKageBunshinObject } from "frankjstein";
+
+const naruto = { name: "Naruto", power: 10 };
+const clon = createKageBunshinObject(naruto);
+
+// ✅ Correcto: Pasa el nodo directamente a la UI
+tags.p`Poder actual: ${clon.$power}`;
+
+// ❌ ERROR: Los nodos '$' no tienen .value
+// console.log(clon.$power.value); 
+
+// ✅ DISPARADOR DE REACTIVIDAD (Trigger): 
+// La mutación SIEMPRE debe hacerse sobre el clon. Al asignar un valor, 
+// el motor detecta el cambio y dispara automáticamente los nodos '$'.
+clon.power = 9000; 
+
+// ❌ ERROR: Mutar el objeto raíz no dispara la reactividad.
+// naruto.power = 9000; 
+```
+
+## Borradores e Inmutabilidad (`ReactiveDraft`)
+
+Basado en la misma tecnología de Proxies, `ReactiveDraft` permite crear una copia aislada de un objeto para edición (como un formulario). Los cambios permanecen en el "clon de sombra" y solo viajan al objeto original cuando se llama explícitamente a `.update()`.
+
+*(Esta implementación es el precursor de la convergencia de estado en arquitecturas complejas).*
+
+> [!CAUTION]
+> **Advertencia Arquitectónica**: Los Signals de FrankJStein **NO SON** iguales a los de React, SolidJS o la propuesta actual de TC39. **No poseen implicit watchers ni `effect()` automáticos**. 
+> Si vienes de otros frameworks, evita el error de intentar usar reactividad implícita. Aquí todo es explícito y granular para garantizar el máximo rendimiento y control total sobre el Event Loop.
+
+## La Trampa del Proxy (MANDATORIO)
+Casi todas las herramientas de KageBunshin (`createKageBunshinObject`, `TuLazyInject`, etc.) devuelven un **Proxy**. 
+- **Regla**: El Proxy se comporta como el objeto real para accesos a propiedades y llamadas a métodos.
+- **Limitación CRÍTICA**: Los chequeos de identidad como `instanceof` **fallarán**. 
+    - *Prueba Empírica*: Un objeto creado con `createKageBunshinObject(realUser)` devolverá `false` al hacer `instanceof User`.
+    - *Razón*: El Proxy es una entidad distinta que no preserva la cadena de prototipos nativa para el operador `instanceof`. 
+- **Solución**: Si necesitas validación de tipos estricta, usa propiedades de marca o el constructor directamente (`obj.constructor === User`).
+
+
+---
+# Source: docs/project-blueprint.md
+
+# FrankJStein: Project Blueprint & Architectural Map
+
+Este documento actúa como el **Mapa Estelar** de FrankJStein. Su propósito es guiar a futuros arquitectos (humanos o IAs) a través de la estructura del repositorio, explicando no solo qué hay en cada carpeta, sino el **porqué** de su existencia.
+
+## 🎯 Filosofía del Repositorio
+FrankJStein es un proyecto **Dev-Centric con Gobernanza AI-Augmented**. Esto significa que el framework está diseñado primordialmente para la legibilidad, el rendimiento y la cordura del desarrollador humano. Sin embargo, su estructura está optimizada para que los agentes de IA puedan asistir en el mantenimiento y la evolución del código sin violar la soberanía arquitectónica, gracias a contratos estrictos y validaciones automáticas.
+
+---
+
+## 🗺 Mapa de Directorios
+
+### 🧠 `.agents/` (The Brain)
+Aquí residen las **AI Skills**. Son instrucciones especializadas y granulares que enseñan a la IA cómo manejar diferentes pilares del framework (Reactividad, DI, Workers). 
+- **Política**: Siguen una estrategia "Blue-Green" (versionado inmutable) para evitar que cambios accidentales rompan el conocimiento de la IA.
+
+### 📜 `.atl/` (The Registry)
+Contiene el **Skill Registry**, el manifiesto que dicta qué reglas se aplican a cada parte del código y en qué orden de importancia. Es la "conciencia" del sistema de orquestación.
+
+### 📦 `dist/` (The Body)
+El código compilado y listo para producción. 
+- **Soberanía**: FrankJStein se distribuye como un único archivo `.js` para maximizar la compatibilidad y simplicidad, acompañado de su `.d.ts`.
+
+### 📚 `docs/` (The Knowledge Base)
+Documentación técnica profunda en español. A diferencia de las skills (que son reglas para la IA), los docs son guías conceptuales para el entendimiento humano y el contexto de alto nivel de las IAs. Cubre desde el núcleo de UI hasta utilidades de alto rendimiento (`TUtils`, `TuWebUtils`).
+
+### 🧪 `examples/` (The Proof of Life)
+Implementaciones de referencia. Cada ejemplo es una prueba viviente de que el framework funciona de forma nativa en el navegador sin herramientas de construcción complejas.
+
+### 🔬 `tests-ia/` (The Calibration Suite)
+La "Cámara de Pruebas" de IA. Contiene exámenes de calibración bajo una política de **Examen Ciego** (especificaciones en `.md` visibles, resultados en `.test.ts` ignorados por Git). Sirve para validar que un agente es capaz de razonar y escribir código idiomático de FrankJStein desde cero.
+
+### 🎨 `assets/` (The Visual Identity)
+Recursos estáticos, logotipos y media que definen la marca visual y la estética del proyecto.
+
+### 🛠 `scripts/` (The Sovereign Engine)
+Aquí vive el motor de auditoría y las herramientas de mantenimiento.
+- **Arquitectura**: Los scripts están construidos usando el mismo kernel de IoC de FrankJStein. Es la "víbora que se come a sí misma": el framework se usa para auditar su propia integridad.
+
+---
+
+## 🔑 Archivos Críticos
+
+### 📄 `AGENTS.md` (El Manifiesto)
+Es el punto de entrada para cualquier IA. Define la personalidad (Senior Architect), las reglas de oro y el índice de soberanía. **Es la ley suprema del repositorio.**
+
+### 📘 `frankjstein.d.ts` (Source of Truth)
+Este archivo define el contrato técnico total. Es el validador último de que el código propuesto es válido dentro del ecosistema.
+
+### ⚙️ `tsconfig.json` (The Policy)
+Configurado para **ESNext** y **Bun**. Refleja nuestra apuesta por el rendimiento moderno y el uso de TypeScript como linter estricto más que como compilador pesado.
+
+---
+
+## 🐍 El Ciclo de Soberanía
+Cualquier cambio estructural debe pasar por los scripts de auditoría (`bun scripts/verify-agents.ts`). Si un cambio rompe el **Blueprint** o el **Registry**, el sistema se bloquea. Esto garantiza que FrankJStein mantenga su integridad a través de los años, sin importar quién (o qué) lo esté editando.
+
+> "En FrankJStein, la arquitectura no es una sugerencia; es el código mismo validándose."
+
+
+---
+# Source: docs/remote.md
+
+# RemoteModule (Web Workers Bridge)
+
+`RemoteModule` es un subsistema puente integrado para ejecutar procesos de forma concurrente mediante la API nativa de Web Workers, ocultando la complejidad del pase de mensajes (`postMessage`).
+
+## Funcionamiento Interno (Mirror Proxy)
+FrankJStein utiliza el patrón "Mirror Proxy". Cuando invocas `.connect()`, el framework levanta un Worker en el fondo y te devuelve un objeto que emula a la clase original.
+La gran diferencia es que **todo método en este proxy devuelve una Promesa**, incluso si el método original era síncrono. Esto permite a la interfaz esperar sin bloquear el Event Loop.
+
+### El Host (Worker)
+Cualquier archivo de worker debe tener una clase que herede de `RemoteModule` y ejecutarse a sí mismo invocando el método estático desde la clase hija: `MiClase.register(import.meta)`. 
+El framework analiza el entorno y si detecta que está en un `WorkerGlobalScope`, activa el lado servidor de este puente RPC. Es **vital** registrar la clase hija para que el framework sepa qué métodos instanciar.
+
+### El Cliente (Main Thread)
+Al llamar a `HeavyService.connect({ name: 'WorkerName' })`, se compila internamente la URL desde donde se importó y se levanta.
+
+## Variantes del Namespace `Remote`
+El framework provee clases pre-configuradas (disponibles en el namespace `Remote` o como exportaciones directas) para manejar los ciclos de vida y ámbitos del Worker sin tener que pasar configuraciones repetitivas en cada llamada a `connect()`:
+
+1. **`RemoteModule` (o `Remote.Simple`)**: Puente estándar. Por defecto, cada `connect()` crea una instancia nueva y aislada de Web Worker.
+2. **`RemoteLocalModule` (o `Remote.Local`)**: *Tab Singleton*. Garantiza que haya una única instancia compartida dentro de la PESTAÑA ACTUAL (SPA). Múltiples vistas o componentes que se conecten hablarán con el mismo Worker en background.
+3. **`RemoteSharedModule` (o `Remote.Shared`)**: *Multi-Tab*. Utiliza la API nativa de `SharedWorker`. Permite que varias pestañas o ventanas abiertas compartan exactamente la misma instancia del Worker.
+4. **`RemoteGlobalModule` (o `Remote.Global`)**: *Browser Singleton*. Una única instancia maestra para toda la sesión del navegador en su totalidad.
+
+## ⚠️ El Problema de los "Bare Specifiers" (IMPORTANTE)
+Los Web Workers **no soportan Import Map Aliases** (ej: `#services/`) en la mayoría de los navegadores. 
+- **REGLA DE ORO**: Todo import dentro de un archivo de Worker (o dependencias que el Worker consuma) DEBE usar rutas relativas puras (`./` o `../`).
+- Si ves un error de resolución al hacer `.connect()`, revisa tus imports.
+
+## ¿Qué variante de `Remote` elegir?
+
+| Variante | Cuándo usarla | Beneficio |
+| :--- | :--- | :--- |
+| **`Simple`** | Tareas pesadas únicas y aisladas. | Máximo aislamiento de memoria. |
+| **`Local`** | Procesamiento de datos de la sesión actual (SPA). | Ahorro de recursos al reutilizar el Worker en la pestaña. |
+| **`Shared`** | Sincronización entre múltiples pestañas del mismo sitio. | Estado persistente entre ventanas. |
+
+## Restricciones y Arquitectura
+- **Datos Transferibles**: Los argumentos deben ser serializables. No puedes pasar funciones o referencias al DOM.
+- **Aislamiento**: Dentro del worker, NO tienes acceso a `document` o `window`.
+
+
+---
+# Source: docs/tucontainer.md
+
+# TuContainer (Dependency Injection)
+
+`TuContainer` es el contenedor de inversión de control (IoC) y orquestador de
+dependencias de FrankJStein. Está diseñado para centralizar la instanciación de
+servicios y aislar la lógica de negocio pura del entorno visual o de red.
+
+## Ciclos de Vida
+
+El contenedor maneja dos tipos de instanciación principales:
+
+### Singleton (`addSingleton`)
+
+Crea una única instancia del servicio. Toda la aplicación comparte exactamente
+el mismo objeto. Ideal para:
+
+- Servicios de Autenticación.
+- Almacenamiento local (LocalStorage/SessionStorage abstractions).
+- Conexiones a bases de datos o websockets globales.
+
+### Transient (`addTransient`)
+
+Crea una nueva instancia cada vez que el servicio es inyectado o resuelto. Ideal
+para:
+
+- Servicios de estado efímero (como un formulario que se abre y cierra).
+- Controladores específicos de una vista que no deben compartir datos entre
+  ellos.
+- Objetos que deben reiniciarse cada vez que se accede a ellos.
+
+### Scoped (`addScope`)
+
+Registra una dependencia que mantiene una única instancia _por jerarquía de
+Scope (Contexto)_. 
+
+**Realidad en la Web:** En aplicaciones Web Single-Page (SPA) tradicionales, el `addScope` casi no tiene utilidad real frente al Singleton, a menos que quieras crear **"Micro Universos"** (aislamiento total de contextos para un módulo específico). Sin embargo, brilla en entornos SSR (Server Side Rendering), Bun o servidores Node.js.
+
+Puedes crear contextos anidados usando `TuContainer.createScope()`. Esto te permite aislar instancias por cada petición HTTP (fetch) de un usuario, evitando que los datos de la sesión del Usuario A se mezclen con los del Usuario B en el mismo servidor.
+
+## Inyección Lazy (`TuLazyInject`)
+
+La característica más fuerte de `TuContainer` es su capacidad de inyección
+perezosa mediante `TuLazyInject`. Esto permite que un módulo, clase o función 
+declare sus dependencias, pero el framework solo las instanciará o resolverá 
+en la fracción de milisegundo en la que se lea por primera vez.
+
+A diferencia de otros métodos de resolución, **`TuLazyInject` funciona perfectamente tanto en clases como en funciones regulares** (componentes UI), siendo el patrón preferido para evitar problemas de orden de inicialización en arquitecturas complejas.
+
+**Beneficios Técnicos:**
+
+1. Elimina errores de Dependencias Circulares (A depende de B, B depende de A).
+2. Mejora drásticamente el tiempo de inicio de la aplicación, ya que los
+   servicios no se cargan todos juntos al arranque.
+
+> [!WARNING]
+> **Trade-off: Verbosidad vs Autocompletado (TS vs JS)**
+> 
+> En entornos puramente `.js`, el autocompletado funciona mágicamente porque JSDoc/TS infiere el tipo de retorno de la función `() => IConfigService`. **En JavaScript, `TuLazyInject` nunca es verboso.**
+> 
+> Sin embargo, en archivos `.ts`, la inferencia de tipos de funciones anónimas que devuelven abstracciones suele resolverse como `unknown`. Para tener autocompletado en TS tienes dos opciones:
+> 1. **(Recomendado) Usar `TuLazyInject<IConfigService>(...)`**: Es verboso porque requiere pasar el Genérico `<T>`, pero **mantiene la magia del Lazy Evaluation** (evita dependencias circulares y acelera el inicio).
+> 2. **Usar `TuInject(IConfigService)` o `TuContainer.resolve(IConfigService)`**: No es verboso (TS infiere el tipo por el constructor) y da autocompletado perfecto. Pero **pierdes el Lazy Evaluation**, lo que puede causar errores si la dependencia aún no ha sido registrada o si hay dependencias circulares.
+
+### Uso en Clases vs Funciones (Tokens Abstractos vs Concretos)
+
+Puedes inyectar **Interfaces/Clases Abstractas** (para un desacoplamiento formal) o directamente **Clases Concretas**. 
+
+> [!NOTE]
+> **La magia del Override:** No es obligatorio usar interfaces (`IConfigService`). Puedes inyectar una clase concreta (`AppConfig`). Si en 5 años necesitas cambiar la lógica, no tienes que modificar los cientos de archivos que inyectan `AppConfig`. Simplemente cambias el Kernel: `TuContainer.addSingleton(AppConfig, AppConfigV2030)`. El contenedor inyectará la nueva versión automáticamente.
+
+```typescript
+import { DI, TuContainer, TuLazyInject } from "frankjstein";
+
+// --- USO EN CLASES (Patrón Convencional) ---
+class ApiService {
+    // REGLA OBLIGATORIA EN TS: Pasar el genérico <IConfigService>
+    // En JS puro, el genérico no es necesario: const config = TuLazyInject(() => IConfigService)
+    #config = TuLazyInject<IConfigService>(() => IConfigService);
+
+    fetchData() {
+        console.log("Token:", this.#config.token);
+    }
+}
+
+// --- USO EN FUNCIONES / COMPONENTES UI (TuJsHtml) ---
+export function MyComponent(tags) {
+    // Fuera de una clase usamos 'const'. No usamos '#' ya que es sintaxis privada de clase JS.
+    const config = TuLazyInject<IConfigService>(() => IConfigService);
+
+    return tags.div(() => {
+        // La dependencia se instanciará RECIÉN en este punto de renderizado
+        tags.p(`El token actual es: ${config.token}`);
+    });
+}
+```
+
+## Desacoplamiento con Clases Abstractas (Tokens)
+Para lograr un desacoplamiento real y facilitar el testing (Mocking), se recomienda usar **clases abstractas** como tokens de inyección. Esto permite inyectar una interfaz y registrar una implementación específica.
+
+```javascript
+// 1. Definición (El Contrato)
+class IApiService { 
+    async getData() { throw new Error("Not implemented"); }
+}
+
+// 2. Implementación Real
+class RealApiService extends IApiService {
+    async getData() { return fetch(...); }
+}
+
+// 3. Inyección (Patrón Lazy)
+class MyComponent {
+    // SIEMPRE usar una arrow function para evitar dependencias circulares
+    #api = TuLazyInject(() => IApiService); 
+}
+
+// 4. Registro Simple
+TuContainer.addSingleton(IApiService, RealApiService);
+```
+## Registros con Factorías (Casos Avanzados)
+
+A veces no basta con pasar la clase; quizás necesitás pasarle parámetros al constructor o resolver otras dependencias de forma manual. Para eso usamos las **Factorías**.
+
+### Factoría Simple
+Útil para pasar configuraciones, tokens o mocks en tests.
+```javascript
+TuContainer.addScope(IApiService, () => new RealApiService("api-key-123", "https://prod.api.com"));
+```
+
+### Factoría con Contexto (DI)
+Podés recibir el contexto del contenedor (`di` o `ctx`) para resolver otras dependencias antes de crear tu instancia.
+```javascript
+TuContainer.addSingleton(IApiService, (di) => {
+    // Resolvemos dependencias manualmente antes de instanciar
+    const config = di.resolve(IConfigService);
+    const http = di.resolve(IHttpClient);
+    
+    return new RealApiService(config.token, http);
+});
+```
+
+
+> [!TIP]
+> Al registrar el par `(Abstracción, Implementación)`, podés cambiar el comportamiento de toda la app (por ejemplo, para tests o entornos de desarrollo) modificando una sola línea en el Kernel.
+
+
+---
+# Source: docs/tudiscovery.md
+
+# TuDiscovery: Localizador de Servicios Funcional
+
+`TuDiscovery` es una utilidad liviana basada en Proxies diseñada para centralizar las importaciones de módulos y proporcionar carga perezosa (lazy loading) con resolución en modo dual (Promesa/Callback).
+
+## El "Por qué" (Contexto Arquitectónico)
+
+La razón principal de la existencia de `TuDiscovery` NO es suplantar a los Import Map Aliases (`#/`, `@/`) en tu aplicación principal, sino resolver la **"Infección de Alias"** en Web Workers y entornos multihilo.
+
+### El Problema: Aislamiento del Contexto del Worker
+Los Web Workers se ejecutan en un contexto de ejecución separado. En muchos entornos (navegadores nativos, ciertos runtimes), el Worker **no hereda el Import Map** definido en el documento HTML principal. Si tu código o cualquiera de sus dependencias usa un alias como `#utils/math.js`, el Worker fallará al intentar resolverlo.
+
+## La Regla del "Grafo sin Alias" (CRITICO)
+
+Al usar `TuDiscovery` para proveer módulos a un **Worker/RemoteModule**, debes seguir esta regla:
+
+> **Todo el grafo de dependencias de un módulo registrado en un hub de TuDiscovery destinado a un Worker DEBE estar libre de Import Map Aliases.**
+
+## El Patrón "Bridge" (Hub como punto de entrada único)
+
+Para maximizar la seguridad en Workers, se recomienda que el archivo donde defines el `Hub` actúe como un puente, re-exportando las utilidades de `FrankJStein` necesarias. De esta forma, el Worker solo importa el Hub y nada más.
+
+### 1. Definir el Hub y el Bridge
+```javascript
+// src/core/hub.js
+// Importamos usando rutas RELATIVAS reales
+import { TuDiscovery, Remote } from "./frankjstein.js"; 
+
+export const Hub = TuDiscovery.create({
+    math: () => import("../utils/math.js"),
+    auth: () => import("../services/auth.js")
+});
+
+// Re-exportamos utilidades para que el Worker no tenga que buscarlas
+export { Remote };
+```
+
+### 2. Consumo Simplificado en el Worker
+```javascript
+// src/workers/heavy-task.js
+// El Worker SOLO importa el Hub. Sin alias, sin dependencias externas.
+import { Hub, Remote } from "../core/hub.js";
+
+export class HeavyTask extends Remote.Simple {
+    async run() {
+        // Resolución segura y aislada
+        const math = await Hub.math;
+        return math.complexCalc();
+    }
+}
+HeavyTask.register(import.meta);
+```
+
+## Modos de Consumo
+
+- **Promesa (Awaitable)**: `const m = await Hub.math;`
+- **Callback (Lazy)**: `Hub.math(m => m.doSomething());`
+- **Verificación**: `await Hub.$verify();` (Úsalo durante el desarrollo para validar que todas las rutas del grafo sean resolubles).
+
+## ¿Cuándo usarlo?
+
+| Caso de Uso | Recomendación |
+| :--- | :--- |
+| **Hilo Principal (UI)** | Usa **Import Map Aliases** (#/@) normalmente. |
+| **Workers / RemoteModule** | **Obligatorio** usar `TuDiscovery` y el patrón Bridge. |
+| **Módulos Críticos** | Recomendado para módulos que requieran pruebas de humo (`.$verify()`). |
+
+---
+
+*FrankJStein: El rendimiento es lo primero, la arquitectura es la base.*
+
+
+---
+# Source: docs/tujshtml/README.md
+
+# TuJsHtml (DOM Builder & UI)
+
+`TuJsHtml` es el motor de renderizado primario. A diferencia de React o Vue, aquí no hay un "Virtual DOM" intermedio. El código interactúa de manera directa y optimizada con el Document Object Model (DOM) real del navegador, usando abstracciones ligeras.
+
+## Documentación Avanzada (Deep Dives)
+- [Suspense y Bloques Reactivos (`$f`, `$block`)](./suspense-and-blocks.md): Para manejo de asincronía y reactividad extrema vinculada a Signals.
+- [Templates y Clonación Masiva (`createTemplateHtml`)](./templates.md): Para optimización de renderizado masivo y reutilización de nodos de alto rendimiento.
+
+## Template Literals y Tagged Templates
+La construcción idiomática de la UI en FrankJStein es a través de funciones Template Tagged proporcionadas por el framework (`h1`, `p`, `div`, etc.).
+
+```javascript
+tags.p`Hola mundo, el valor es ${contadorSignal}`;
+```
+Esto es internamente convertido a operaciones eficientes de TextNodes reactivos.
+
+> [!WARNING]
+> **Error Común: String Interpolation vs Tagged Templates**
+> Es muy fácil confundir la sintaxis de invocación de función `()` con la sintaxis de Tagged Template `\``, y la diferencia de rendimiento/comportamiento es abismal.
+> 
+> **Escenario 1: Renderizado Estándar (Reactividad Granular)**
+> Si utilizas paréntesis `()` con interpolación nativa de JavaScript `${}`, JS resuelve el string devolviendo el valor inicial de la Signal y la reactividad **se rompe**.
+> ```javascript
+> // ❌ MAL: JS resuelve el string y muere la reactividad granular.
+> ctx.p(`Clicks actuales: ${count}`);
+> 
+> // ✅ BIEN (Tagged Template): El framework intercepta la Signal y crea un TextNode reactivo.
+> ctx.p`Clicks actuales: ${count}`;
+> ```
+> 
+> **Escenario 2: Nodos DOM Inyectados**
+> NUNCA uses interpolación nativa para inyectar Nodos del DOM, o JS llamará a su método `.toString()` destruyéndolos visualmente.
+> ```javascript
+> // ❌ ERROR CRÍTICO: Imprime "Clicks actuales: [object HTMLElement]"
+> ctx.p(`Clicks actuales: ${ctx.i(count)}`);
+> 
+> // ✅ BIEN: El Tagged Template maneja el objeto Nodo correctamente.
+> ctx.p`Clicks actuales: ${ctx.i(count)}`;
+> ```
+> 
+> **Excepción de Rendimiento: Dentro de un `$block`**
+> Si estás *dentro* de un `$block` reactivo, el bloque entero ya se destruye y re-renderiza con cada cambio. En este caso específico, usar un Tagged Template para un valor primitivo crearía una doble-suscripción redundante (una del bloque, una del nodo de texto). Aquí, **sí se recomienda** usar interpolación nativa para valores primitivos.
+> ```javascript
+> $block(count, (ctx) => {
+>    // ⚡ SUPER RÁPIDO: El bloque maneja la reactividad, el string literal es estático y barato.
+>    ctx.p(`Clicks actuales: ${count}`);
+> });
+> ```
+
+## Parámetros de Configuración (`ConfigureAttributes`)
+Todo elemento en TuJsHtml recibe un parámetro opcional inicial: un objeto de configuración que se alinea fuertemente con la interfaz de TypeScript `ConfigureAttributes`.
+**Regla estricta:** Este objeto siempre debe ir como el primer argumento. Lo que pasas aquí se asigna como si hicieras `elemento.propiedad = valor` en el DOM nativo.
+```javascript
+// Configuración válida (observa que style es un OBJETO, como en el DOM nativo)
+tags.button({ id: "main-btn", style: { color: "red", marginTop: "10px" } }, "Aceptar");
+```
+
+## Referencias a Nodos Reales
+Cuando llamas a una función de etiqueta (`p`, `div`), esta **retorna** inmediatamente el elemento HTML puro. Esto permite mutarlo usando la API estándar del DOM antes de que siquiera se monte en pantalla.
+
+```javascript
+const miBoton = tags.button`Confirmar`;
+miBoton.addEventListener("click", () => { ... });
+miBoton.style.color = "blue";
+```
+
+## Atajos de Utilidad (`ELEMENT_UTIL`)
+Para no usar la sintaxis imperativa de `addEventListener` todo el tiempo, el framework provee un símbolo (`ELEMENT_UTIL` alias `$`) que inyecta superpoderes a cualquier elemento renderizado.
+
+```javascript
+import { ELEMENT_UTIL as $ } from "frankjstein";
+
+btn[$].on("click", (e) => { ... });
+```
+
+## Rendimiento vs Asincronía: Arrow Functions vs Traditional Functions
+Una de las optimizaciones más extremas de `TuJsHtml` (aporta un x3 en velocidad) es el reuso del contexto. 
+Aunque en JavaScript moderno `() => {}` y `function() {}` a veces son intercambiables, en `TuJsHtml` tienen significados arquitectónicos diametralmente opuestos para los constructores:
+
+1. **Arrow Function `(ctx, parent) => {}`:** Reusa un puntero de contexto global súper rápido. Todo se renderiza secuencialmente a la máxima velocidad posible. **PELIGRO:** Si metes asincronía (ej. un `setTimeout`) dentro de este callback, para cuando el timeout se ejecute, el puntero global ya estará apuntando a otro lado y renderizarás elementos en el padre equivocado o en la raíz.
+2. **Traditional Function `function(ctx, parent) {}`:** Fuerza al motor a instanciar un contexto cerrado, seguro y raíz para ese elemento. Es ligeramente más lento, pero el contexto sobrevive a tareas asíncronas.
+
+```javascript
+// ✅ RAPIDÍSIMO Y SEGURO (Síncrono)
+tags.p((ctx) => ctx.span("Render secuencial"));
+
+// ❌ ERROR CRÍTICO: 'div' terminará en cualquier otro nodo
+tags.p((ctx) => {
+    setTimeout(() => ctx.div("error"), 10);
+});
+
+// ✅ SEGURO ASÍNCRONO: Función tradicional ancla el contexto
+tags.p(function(ctx) {
+    setTimeout(() => ctx.div("ok"), 10);
+});
+```
+
+### El Escape Hatch Nativo (2do Parámetro)
+Todos los callbacks de `TuJsHtml` reciben un segundo parámetro opcional: la **instancia real del elemento DOM** que se está construyendo. Este es el "escape hatch" oficial para manipulaciones de bajo nivel o asincronía segura.
+
+```javascript
+tags.div((ctx, el) => {
+    // ctx: Proxy para hijos (Síncrono)
+    // el: El objeto HTMLDivElement real
+
+    // ✅ Ideal para librerías externas o timers
+    setTimeout(() => {
+        el.classList.add("fade-in");
+    }, 100);
+});
+```
+*(Nota: Para asincronía real, se recomienda fuertemente usar el Suspense nativo `$f` o `$block` detallados en la Documentación Avanzada en vez de forzar setTimeouts manuales).*
+
+## Alias y Selectores CSS Nativos
+El objeto `tags` provee capacidades mágicas al desestructurar. Puedes crear una etiqueta preconfigurada pasándole clases e IDs como si fuera un selector de CSS clásico, ahorrando código.
+```javascript
+// Genera una función constructora para un <section id="hero" class="main">
+const { "section#hero.main": sectionHero } = tags;
+
+sectionHero({ className: "extra-class" }, () => { ... });
+```
+
+## Directivas Especiales (`@`)
+Dentro del objeto de configuración, FrankJStein provee directivas especiales prefijadas con `@` para manejar casos de uso complejos de forma declarativa:
+- **`@classToggle`**: Añade o remueve clases dinámicamente. Acepta un mapa donde los valores pueden ser booleanos estáticos o Signals.
+- **`@addClass`**: Añade una o múltiples clases, combinándose con `className`.
+- **`@attrs`**: Setea atributos puros usando `setAttribute()` (muy útil para SVG, MathML, ARIA o `data-attributes`). Todo aquí soporta Signals.
+- **`@on` / `@one` / `@once`**: Bindea eventos nativos o custom.
+- **`@bind:*`** (`@bind:value`, `@bind:checked`, `@bind:form`): Enlace bidireccional (Two-way binding) automático. 
+
+> [!IMPORTANT]
+> **Reactividad Nativa vs Binding**: 
+> Si asignas un Signal a una propiedad nativa (`input({ value: mySignal })`), la reactividad es **solo de salida** (Si el signal cambia, el input se actualiza). Para que el input **también actualice el Signal** al escribir, DEBES usar la directiva `@bind:value`.
+
+> [!TIP]
+> **Atributos Nativos Reactivos (El poder del motor sin magia)**
+> No necesitas directivas especiales para propiedades mutables del DOM. Gracias a la inferencia del framework, **las propiedades de escritura estándar del DOM (no excluidas por el linter)** aceptan Signals directamente. 
+> 
+> *Nota Arquitectónica:* Esto es posible porque el tipado de `TuJsHtml` bloquea propiedades inseguras, de solo lectura o internas (como `outerHTML`, `childNodes`, o `nodeValue`) usando una lista negra (`SpecialExclusionsProps`). Pero las propiedades útiles y seguras como `innerHTML`, `textContent`, `id` o `disabled` se benefician del motor reactivo sin parches:
+> ```javascript
+> const textSignal = createSignal("Cargando...");
+> tags.button({ textContent: textSignal, disabled: true }); // ⚡ Funciona nativamente
+> ```
+
+
+## Multiverso de Renderizado (HTML, SVG, MathML)
+FrankJStein aisla estrictamente los contextos (Namespaces) del DOM para evitar mutaciones inválidas. El motor `TuJsHtml` posee tres multiversos:
+1. **HTML**: El contexto base (`tags.div`, `tags.p`).
+2. **SVG (`$svg`)**: El contexto vectorial (Aún inmaduro / Experimental).
+3. **MathML (`$math`)**: El contexto matemático (Aún inmaduro / Experimental).
+
+*(Nota: SVG y MathML están en fase de experimentación, por lo que su uso profundo está reservado para casos muy específicos o pruebas de estrés del linter)*.
+
+## Sobrecargas Mixtas (Composición Extrema)
+El constructor acepta una mezcla brutal de primitivas en cualquier orden (después del objeto de configuración). Strings, números, nodos directos o callbacks; todo se orquesta en su lugar correspondiente.
+```javascript
+tags.p({ className: "ejemplo" }, 13, "texto", tags.b`bold`, ctx => {
+    ctx.span("Inyectado desde callback");
+});
+```
+
+## El Linter como Salvavidas (TypeScript / Deno)
+Dado el inmenso poder de las sobrecargas de `TuJsHtml`, es **absolutamente obligatorio o altamente recomendado** desarrollar bajo un linter (TypeScript Server o Deno) apalancado en `frankjstein.d.ts`. 
+
+El linter es el encargado de:
+- Evitar que pases propiedades HTML inválidas (`invalido: 2`).
+- Bloquear inyecciones de hijos en etiquetas vacías (Void elements como `<img />` o `<circle />`).
+- Garantizar que respetes las fronteras entre HTML, SVG y MathML.
+
+
+---
+# Source: docs/tujshtml/suspense-and-blocks.md
+
+# Suspense y Bloques Reactivos
+
+El motor `TuJsHtml` de FrankJStein incluye herramientas de renderizado avanzado para el manejo declarativo de asincronía y reactividad, sin depender de un Virtual DOM. Esto se logra mediante etiquetas especiales (`$`) en el constructor.
+
+## 1. Async Suspense (`$f` / `$fragment`)
+El framework está diseñado orgánicamente para comportarse como un **"Suspense Tree Engine"**. Permite manejar estados de espera (Loadings o Skeleton UIs) de manera nativa mientras se resuelve una promesa (como un `fetch` a una API), sin bloquear el renderizado del resto del árbol DOM.
+
+`$f` (o su alias completo `$fragment`) acepta dos callbacks:
+1. **Callback Principal**: Una función que puede ser `async`. Se ejecuta y suspende la inyección de sus nodos hasta que la promesa se resuelva.
+2. **Fallback (Opcional)**: Una función síncrona que renderiza nodos inmediatamente en el lugar del fragmento. Cuando la promesa del callback principal se resuelve, estos nodos de fallback son destruidos y reemplazados por el contenido real.
+
+### Ejemplo de Uso
+```javascript
+import { TuJsHtml } from "frankjstein";
+
+const app = new TuJsHtml(function(tags) {
+    const { div, h2, p, $f } = tags;
+
+    div({ className: "container" }, () => {
+        h2`Perfil del Usuario`;
+
+        // Renderizado asíncrono con Suspense
+        $f(async (ctx) => {
+            const data = await fetch('/api/user/1').then(res => res.json());
+            
+            // Esto se renderizará cuando el fetch termine
+            ctx.div({ className: "user-card" }, () => {
+                ctx.b(`Nombre: ${data.name}`);
+                ctx.p(`Email: ${data.email}`);
+            });
+
+        }, function fallback(ctx) {
+            // Esto aparece inmediatamente en pantalla (Skeleton UI)
+            ctx.p({ className: "skeleton-loader" }, "Cargando perfil...");
+        });
+    });
+});
+```
+*Ventaja Arquitectónica:* A diferencia de forzar `await` en todo el componente bloqueando el árbol, `$f` permite que el resto de tu aplicación (`h2` en el ejemplo) se renderice de forma instantánea.
+
+## 2. Bloques Reactivos (`$block`)
+Mientras que `$f` reacciona a Promesas, **`$block` reacciona a Signals y Objetos Reactivos**. 
+Crea un bloque de renderizado (un `DocumentFragment` gestionado internamente) que vigila activamente las dependencias en su interior. Cuando la dependencia (ej. un `Signal`) cambia de valor, FrankJStein destruye únicamente el contenido del `$block` y lo vuelve a ejecutar.
+
+Esto te permite crear componentes reactivos extremadamente granulares sin afectar el rendimiento de los nodos hermanos.
+
+### Ejemplo de Uso
+```javascript
+import { TuJsHtml, createSignal } from "frankjstein";
+
+const app = new TuJsHtml(function(tags) {
+    const { div, h2, button, p, $block } = tags;
+    
+    const count = createSignal(0);
+    const [, setCount] = count.asTuple;
+
+    div(() => {
+        h2`Contador Reactivo`;
+        
+        button({ 
+            "@on": { click: () => setCount(prev => prev + 1) } 
+        }, "Incrementar");
+
+        // Este bloque se re-renderiza completamente cuando 'count' muta.
+        $block(count, (ctx) => {
+            if (count.value > 5) {
+                // Al estar dentro de un $block, usar interpolación nativa es más rápido.
+                // Evita crear una subscripción secundaria redundante en el TextNode.
+                ctx.p({ style: { color: "green" } }, `¡Superaste 5! Vas por: ${count}`);
+            } else {
+                ctx.p(`Clicks actuales: ${count}`);
+            }
+        });
+    });
+});
+```
+
+## 3. Regla de Oro: Cuidado con el Cruce de Contextos
+Al usar `$f`, `$block` o `$tpl`, el callback interno recibe un nuevo parámetro de contexto (usualmente lo llamamos `ctx`).
+**Es CRÍTICO que utilices las etiquetas de ese `ctx` interno y no las etiquetas del scope padre.**
+
+Cruzar contextos (intentar renderizar un `div` del scope padre dentro de un bloque hijo asíncrono) corrompe la jerarquía del DOM y genera comportamientos inesperados, ya que el motor intenta inyectar el nodo en el padre equivocado.
+
+```javascript
+const { div, p, $f } = tags;
+
+// ❌ MAL: Cruce de contextos (usando el 'div' del padre dentro de $f)
+$f(async (ctx) => {
+    div("ERROR: Este div se insertará en el lugar incorrecto");
+});
+
+// ✅ BIEN: Usar el contexto interno
+$f(async (ctx) => {
+    ctx.div("CORRECTO: Inyección segura en el fragmento");
+});
+```
+
+*Nota: Sí es completamente válido hacer referencias directas a objetos o nodos ya construidos del padre para mutar sus propiedades (ej: `_refDiv.style.color = "red"`), lo que está prohibido es invocar sus constructores.*
+
+## 4. Re-Renderizado Manual (El método `.reset()`)
+Si observas el archivo de tipos `.d.ts`, notarás que tanto `$f`, `$fragment` como `$block` devuelven una instancia de tipo `TuJsHtml`. 
+
+Esto significa que guardan internamente todo el estado y el `DocumentFragment`. Si por alguna razón necesitas forzar una recarga manual del bloque completo (por ejemplo, para volver a ejecutar el *fetch* de un `$f` de manera imperativa), puedes llamar al método `.reset()` sobre la instancia retornada:
+
+```javascript
+const myBlock = $f(async (ctx) => {
+    const data = await fetch('/api/random').then(r => r.json());
+    ctx.p(`Dato: ${data}`);
+});
+
+// En algún evento externo, forzamos que se vuelva a cargar y re-renderizar
+btnActualizar[$].on("click", () => {
+    myBlock.reset();
+});
+```
+
+## 🎯 Resumen: ¿Cuándo usar qué?
+
+| Herramienta | Caso de Uso | Mecanismo |
+| :--- | :--- | :--- |
+| **Funciones (`div(() => {})`)** | Estructura base de la UI. | Renderizado directo. Actualizaciones granulares vía Signals. |
+| **`$f` / `$fragment`** | Carga de datos de API o Módulos. | **Suspense**: Espera una Promesa y muestra un fallback (Skeleton UI). |
+| **`$block`** | Lógica condicional compleja (IF/ELSE). | **Re-renderizado total** del bloque cuando el Signal cambia. |
+| **`$tpl`** | Fragmentos estáticos o pre-construidos. | **Aislamiento**: Crea un DocumentFragment sin inyectarlo al padre. |
+
+> [!IMPORTANT]
+> Para el 90% de los casos de reactividad simple (cambiar un texto, un color o un atributo), **no uses `$block`**. Simplemente inyecta el Signal en un Tagged Template. Reserva el `$block` para cambios estructurales profundos (ej: mostrar un formulario o una lista basada en un estado).
+
+
+---
+# Source: docs/tujshtml/templates.md
+
+# Templates y Clonación Masiva
+
+La fábrica `createTemplateHtml` (y su contraparte nativa `$tpl` dentro de
+TuJsHtml) es el mecanismo de más alto rendimiento en FrankJStein para el
+renderizado masivo.
+
+Cuando necesitas renderizar listas de 10.000 elementos (como una tabla de datos
+pesada o un log infinito), construir nodos individualmente con la API estándar
+de TuJsHtml genera un ligero overhead. Para estos casos extremos, usas
+`createTemplateHtml`.
+
+## ¿Cómo Funciona?
+
+`createTemplateHtml` toma un callback y lo ejecuta **una única vez** en memoria,
+construyendo un fragmento de HTML crudo. Luego, devuelve una fábrica optimizada
+que puede generar cientos de clones (utilizando internamente
+`Node.cloneNode(true)`) a una velocidad brutal.
+
+Aún mejor: te permite **inferir referencias** a nodos específicos del clon
+resultante, dándote autocompletado en TypeScript para manipularlos de forma
+directa y síncrona.
+
+## 1. Múltiples Elementos con Inferencia de Nodos Expuestos
+
+Podés construir una plantilla compleja y extraer referencias directas a los
+nodos que vas a necesitar mutar más adelante.
+
+```javascript
+import { createTemplateHtml } from "frankjstein";
+
+// Definimos la plantilla UNA SOLA VEZ
+const templateLi = createTemplateHtml((root) => {
+    const refs = {
+        texto: document.createTextNode("texto inicial"),
+    };
+
+    root(({ li, span, b, i }) => {
+        li(() => {
+            i`italic `;
+            b(refs.texto); // Insertamos el nodo de texto vivo
+            span(" span");
+        });
+    });
+
+    // Retornamos el objeto con las referencias que queremos exponer
+    return refs;
+});
+```
+
+### Método A: Clonación por Propiedad (`clone()`)
+
+El método `.clone()` genera el nodo raíz clonado e inyecta las referencias
+expuestas en una propiedad llamada `refs` (por defecto) en el propio elemento
+del DOM.
+
+```javascript
+const ul = document.createElement("ul");
+
+for (let i = 0; i < 3; i++) {
+    // Genera un elemento <li> que internamente contiene la propiedad 'refs'
+    const li = templateLi.clone();
+
+    // Autocompletado nativo: sabe que li.refs.texto es un TextNode
+    li.refs.texto.textContent = `Elemento número ${i}`;
+    ul.appendChild(li);
+}
+```
+
+### Método B: Clonación en Tupla (`cloneAsTuple()`)
+
+El método `.cloneAsTuple()` devuelve un array donde el primer elemento es el
+Fragment/Elemento raíz clonado, y el segundo elemento es el objeto de
+referencias aisladas. Es ideal para desestructuración.
+
+```javascript
+for (let i = 0; i < 3; i++) {
+    const [li, refs] = templateLi.cloneAsTuple();
+
+    // Referencia aislada y fuertemente tipada
+    refs.texto.textContent = `Tupla número ${i}`;
+    ul.appendChild(li);
+}
+```
+
+## 2. Inferencia Automática con Tagged Literals
+
+Si prefieres usar `template literals` crudos para construir el HTML, la fábrica
+lo soporta y permite utilizar selectores DOM estándar (`querySelector`) para
+inferir las referencias que devolverás.
+
+```javascript
+const templateCard = createTemplateHtml((root) => {
+    // Generamos el DOM crudo usando el Tagged Template del root
+    const dom =
+        root`<div class="card"><span class="label">{label}</span></div>`;
+
+    return {
+        // Extraemos y nombramos las referencias expuestas
+        label: dom.querySelector(".label"),
+    };
+});
+
+const [cardNode, cardRefs] = templateCard.cloneAsTuple();
+cardRefs.label.textContent = "Usuario Premium";
+document.body.appendChild(cardNode);
+```
+
+## `$tpl`: Fragmentos Estáticos en TuJsHtml
+
+Dentro de la función principal de construcción `TuJsHtml`, tienes acceso a la
+herramienta rápida `$tpl`. A diferencia de `createTemplateHtml` (que está
+pensada para crear una fábrica externa), `$tpl` simplemente genera un
+`DocumentFragment` independiente y estático, ideal para componer interfaces
+complejas y anidarlas sin inyectarlas en el DOM real inmediatamente.
+
+```javascript
+tags.div((ctx) => {
+    const fragmentoEstilo = ctx.$tpl((fCtx) => {
+        fCtx.h1`Encabezado estático`;
+        fCtx.p`Párrafo inmutable`;
+    });
+
+    // ... en otro momento o tras una lógica condicional ...
+    ctx.div(fragmentoEstilo);
+});
+```
+
+## Cuándo usar Templates vs TuJsHtml Puro
+
+- Usa `TuJsHtml` normal (con Reactividad KageBunshin) para el 95% de la
+  aplicación.
+- Usa `createTemplateHtml` **estrictamente** cuando vas a iterar y renderizar un
+  array masivo de datos (`map` o bucles grandes), asegurando que el GC (Garbage
+  Collector) y el Motor de Renderizado no sufran el impacto de parsear callbacks
+  miles de veces.
+
+
+---
+# Source: docs/tutils.md
+
+# TUtils (Utilidades de Propósito General)
+
+`TUtils` es un conjunto de herramientas estáticas diseñadas para optimizar la lógica asíncrona, el rendimiento de la memoria y la robustez del código en FrankJStein.
+
+## 1. Caching Asíncrono (`cachedAsync`)
+
+Esta es una de las utilidades más potentes para usar junto con el sistema de **Suspense (`$f`)**. Permite que una función asíncrona (como un `fetch` o un `import` dinámico) se ejecute **una sola vez**, devolviendo el mismo resultado (o error) en todas las llamadas subsiguientes.
+
+### Uso Básico
+```javascript
+import { TUtils } from "frankjstein";
+
+// Definimos un cargador cacheado
+const loadHeavyConfig = TUtils.cachedAsync(async () => {
+    console.log("Consultando API...");
+    const res = await fetch("/config.json");
+    return res.json();
+});
+
+// Primera llamada: Ejecuta el fetch
+const config1 = await loadHeavyConfig(); 
+
+// Segunda llamada: Devuelve el resultado instantáneamente sin repetir el fetch
+const config2 = await loadHeavyConfig(); 
+```
+
+### Uso con Argumentos (`cachedAsyncByArgs`)
+Ideal para peticiones que dependen de un parámetro (ej: un ID de usuario) y quieres que cada ID tenga su propia caché.
+
+```javascript
+const fetchUser = TUtils.cachedAsyncByArgs(
+    (id) => fetch(`/api/users/${id}`).then(r => r.json()),
+    ([id]) => `user_${id}` // Generador de clave de caché
+);
+
+await fetchUser(1); // Llamada real
+await fetchUser(1); // ⚡ Caché
+await fetchUser(2); // Llamada real para ID 2
+```
+
+---
+
+## 2. Manejo Seguro de Errores (`safe`)
+
+Inspirado en patrones de lenguajes como Go o Rust, `safe` convierte cualquier promesa en una tupla `[error, data]`, eliminando la necesidad de bloques `try/catch` anidados y facilitando el flujo de control.
+
+```javascript
+const [error, data] = await TUtils.safe(fetchData());
+
+if (error) {
+    console.error("Falló la carga:", error);
+    return;
+}
+
+console.log("Datos recibidos:", data);
+```
+
+---
+
+## 3. Control del Event Loop (`scheduleTask`)
+
+Permite ejecutar callbacks de forma asíncrona priorizando microtareas (más rápido que `setTimeout(0)`) o macrotareas si no quieres bloquear el renderizado.
+
+- **Microtask (Default)**: Se ejecuta inmediatamente después del código síncrono actual, antes de que el navegador pinte.
+- **Macrotask**: Se ejecuta en el siguiente ciclo del loop (útil para tareas de baja prioridad).
+
+```javascript
+TUtils.scheduleTask(() => {
+    console.log("Esto corre después del renderizado actual");
+}, true); // true = MacroTask (setTimeout)
+```
+
+---
+
+## 4. Orquestación y Lazy Loading
+
+### `defineLazyPropertyGetter`
+Define una propiedad en un objeto que solo se calcula cuando se accede a ella por primera vez. Perfecto para inicializaciones pesadas.
+
+```javascript
+const config = {};
+TUtils.defineLazyPropertyGetter(config, "database", () => {
+    return connectToDb(); // Solo ocurre al hacer config.database
+});
+```
+
+### `sleepAsync`
+Una versión moderna de `delay` que soporta cancelación nativa mediante `AbortSignal`.
+
+```javascript
+const controller = new AbortController();
+// ... en algún punto: controller.abort();
+
+await TUtils.sleepAsync(2000, controller.signal);
+```
+
+---
+
+## 5. Llamadas Encadenadas (`repeatCall`)
+Transforma una función para que pueda ser llamada en cadena de forma infinita.
+
+```javascript
+const log = TUtils.repeatCall(msg => console.log(msg));
+log("Hola")("Mundo")("FrankJStein"); 
+// Imprime las 3 líneas secuencialmente
+```
+
+
+---
+# Source: docs/tuwebutils.md
+
+# TuWebUtils (Utilidades Específicas de la Web)
+
+`TuWebUtils` proporciona herramientas diseñadas para optimizar el rendimiento del navegador al manejar tareas comunes como procesamiento de datos masivos, formularios y visibilidad.
+
+## 1. Procesamiento Masivo con Time Slicing (`forEachAsync`)
+
+Esta es la joya de la corona para el rendimiento en FrankJStein. `forEachAsync` permite procesar colecciones enormes (arrays de 50k+ elementos) sin congelar la interfaz de usuario (el famoso "jank").
+
+### ¿Cómo funciona?
+El motor procesa una cantidad pequeña de elementos (`batchSize`), cede el control al navegador para que pueda procesar eventos de entrada (scroll, clicks) y pintar, y luego continúa.
+
+### Uso Estándar
+```javascript
+import { TuWebUtils } from "frankjstein";
+
+const hugeList = [...Array(100000).keys()];
+
+await TuWebUtils.forEachAsync(hugeList, (item, index) => {
+    // Procesa cada item
+    doHeavyMath(item);
+}, { batchSize: 100 }); 
+```
+
+### Uso de Tiempo Libre (`useIdle`)
+Si la tarea no es urgente (ej: analíticas o pre-procesamiento), puedes usar `useIdle: true`. El navegador ejecutará el bucle solo cuando esté inactivo utilizando `requestIdleCallback`.
+
+```javascript
+await TuWebUtils.forEachAsync(data, (item) => {
+    sendToAnalytics(item);
+}, { useIdle: true });
+```
+
+---
+
+## 2. Serialización Inteligente de Formularios (`formToObject`)
+
+Convierte cualquier `HTMLFormElement` en un objeto JSON plano, manejando automáticamente la validación nativa del navegador.
+
+### Características Especiales:
+- **Soporte para Arrays**: Si un input tiene `name="roles[]"`, se agrupará automáticamente en un array en el objeto resultante.
+- **Validación Integrada**: Llama internamente a `checkValidity()` y devuelve `null` si el formulario es inválido.
+
+```javascript
+const form = document.querySelector("#user-form");
+
+const data = TuWebUtils.formToObject(form);
+
+if (data) {
+    console.log("Enviando:", data.roles); // ['admin', 'editor']
+}
+```
+
+---
+
+## 3. Visibilidad Reactiva (`whenVisibleAsync`)
+
+Un wrapper optimizado de `IntersectionObserver` que devuelve una promesa que se resuelve solo cuando el elemento entra en el viewport por primera vez.
+
+```javascript
+const banner = document.querySelector(".banner-footer");
+
+// Esperamos a que sea visible para cargar el recurso pesado
+await TuWebUtils.whenVisibleAsync(banner);
+
+console.log("El banner ya es visible, cargando imagen 4k...");
+```
+
+---
+
+## 4. Medición y Optimización
+
+### `debounce`
+Crea una versión de la función que retrasa su ejecución hasta que hayan pasado 'wait' milisegundos desde la última vez que fue invocada. Ideal para búsquedas en tiempo real o redimensionamiento de ventanas.
+
+```javascript
+// ✅ Ejemplo: Filtrar una lista masiva solo cuando el usuario deja de escribir
+const search = TuWebUtils.debounce((query) => {
+   console.log("Buscando en la DB:", query);
+}, 300);
+
+input.oninput = (e) => search(e.target.value);
+```
+
+### `throttle`
+Crea una versión de la función que, al ser invocada repetidamente, solo ejecuta la original como máximo una vez cada 'wait' milisegundos. Perfecta para optimizar eventos de scroll.
+
+```javascript
+// ✅ Ejemplo: Actualizar scroll con alto rendimiento (60fps friendly)
+const onScroll = TuWebUtils.throttle((e) => {
+   console.log("Nueva posición:", window.scrollY);
+}, 100);
+
+window.addEventListener('scroll', onScroll);
+```
+
+---
+
+## 🎯 ¿Cuándo usar estas utilidades?
+
+- **`forEachAsync`**: Siempre que tengas que recorrer una lista de más de 1000 elementos y realizar alguna operación en cada uno.
+- **`formToObject`**: En cualquier envío de formulario (petición POST) para evitar el mapeo manual de campos.
+- **`whenVisibleAsync`**: Para implementar "Lazy Loading" de componentes pesados o disparar animaciones "On Reveal".
+

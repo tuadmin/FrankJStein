@@ -99,6 +99,8 @@ jobs:
                   files: |
                       dist/frankjstein.js
                       dist/frankjstein.d.ts
+                      dist/turouter.js
+                      dist/turouter.d.ts
                       ejemplos-frankjstein.zip
                       ia-frankjstein-skills.zip
                       llms.txt

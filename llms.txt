@@ -1,0 +1,40 @@
+# FrankJStein AI Index
+
+> Global roadmap for LLMs and Agentic AI.
+
+
+## 🤖 AI Skills (Architectural Rules)
+
+- [frankjstein](/.agents/skills/frankjstein/SKILL.md)
+- [frankjstein-architecture-patterns](/.agents/skills/frankjstein-architecture-patterns/SKILL.md)
+- [frankjstein-component-design](/.agents/skills/frankjstein-component-design/SKILL.md)
+- [frankjstein-ioc-templates](/.agents/skills/frankjstein-ioc-templates/SKILL.md)
+- [frankjstein-kagebunshin](/.agents/skills/frankjstein-kagebunshin/SKILL.md)
+- [frankjstein-remote](/.agents/skills/frankjstein-remote/SKILL.md)
+- [frankjstein-tucontainer](/.agents/skills/frankjstein-tucontainer/SKILL.md)
+- [frankjstein-tudiscovery](/.agents/skills/frankjstein-tudiscovery/SKILL.md)
+- [frankjstein-tujshtml](/.agents/skills/frankjstein-tujshtml/SKILL.md)
+- [frankjstein-utils](/.agents/skills/frankjstein-utils/SKILL.md)
+
+## ⚙️ Workflows (Sovereign Procedures)
+
+- [Skill Maintenance Workflow (v1.0)](/.agents/workflows/skill-maintenance.md)
+- [Protocolo de Testing Soberano (FrankJStein)](/.agents/workflows/testing-protocol.md)
+
+## 📚 Core Documentation (Aesthetics & Logic)
+
+- [Diseño de Componentes en FrankJStein](/docs/component-design.md)
+- [KageBunshin (Signals & Reactividad)](/docs/kagebunshin.md)
+- [FrankJStein: Project Blueprint & Architectural Map](/docs/project-blueprint.md)
+- [RemoteModule (Web Workers Bridge)](/docs/remote.md)
+- [TuContainer (Dependency Injection)](/docs/tucontainer.md)
+- [TuDiscovery: Localizador de Servicios Funcional](/docs/tudiscovery.md)
+- [TuJsHtml (DOM Builder & UI)](/docs/tujshtml/README.md)
+- [Suspense y Bloques Reactivos](/docs/tujshtml/suspense-and-blocks.md)
+- [Templates y Clonación Masiva](/docs/tujshtml/templates.md)
+- [TUtils (Utilidades de Propósito General)](/docs/tutils.md)
+- [TuWebUtils (Utilidades Específicas de la Web)](/docs/tuwebutils.md)
+
+## ⚡ Sovereign Payload
+
+- [llms-full.txt](/llms-full.txt): The complete FrankJStein knowledge base.

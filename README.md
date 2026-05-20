@@ -58,16 +58,26 @@ Para mantener este archivo limpio, la documentación técnica exhaustiva se divi
 - **[AGENTS.md (El Manifiesto)](./AGENTS.md)**: La ley suprema del repositorio y reglas de oro para IAs.
 - **[Project Blueprint (Mapa del Repositorio)](./docs/project-blueprint.md)**: La guía definitiva para entender la estructura, carpetas y filosofía del código.
 
-### Módulos y Subsistemas (Índice Técnico)
+### 📦 Módulos Core (Núcleo Principal)
+
+Estos módulos forman parte del núcleo principal del framework y están disponibles importando directamente desde `"frankjstein"`.
 
 - **[TuJsHtml (DOM Builder & UI)](./docs/tujshtml/README.md)**: Construcción de interfaces nativas, [templates](./docs/tujshtml/templates.md) y [suspense](./docs/tujshtml/suspense-and-blocks.md).
 - **[Component Design (Patrones y Estructura)](./docs/component-design.md)**: Cómo diseñar componentes reutilizables y "Smart Components".
 - **[KageBunshin (Signals & Reactividad)](./docs/kagebunshin.md)**: Reactividad granular extrema y estados mutables.
-- **[TuContainer (Inyección de Dependencias)](./docs/tucontainer.md)**: Kernel de DI para desacoplar lógica de negocio.
-- **[RemoteModule (Web Workers)](./docs/remote.md)**: Multi-threading nativo para tareas pesadas de CPU.
-- **[TuDiscovery (Service Discovery)](./docs/tudiscovery.md)**: Localizador de servicios y patrón Bridge para Workers.
-- **[TUtils (Utilidades Core)](./docs/tutils.md)**: Caching asíncrono, manejo de errores y control del loop.
-- **[TuWebUtils (Utilidades Web)](./docs/tuwebutils.md)**: Time-slicing para datos masivos, formularios y visibilidad.
+- **[TuContainer (Inyección de Dependencias)](./docs/tucontainer.md)**: Kernel de DI para desacoplar lógica de negocio y gestionar dependencias de forma segura.
+- **[Disposable (Gestión de Recursos)](./docs/disposable.md)**: Ciclo de vida y liberación determinista de memoria mediante patrones descartables.
+- **[RemoteModule (Web Workers)](./docs/remote.md)**: Multi-threading nativo y RPC para delegar tareas pesadas a hilos de ejecución secundarios.
+- **[TuDiscovery (Service Discovery)](./docs/tudiscovery.md)**: Localizador de servicios centralizado y patrón Bridge para comunicación asíncrona entre Workers.
+- **[TUtils (Utilidades Core)](./docs/tutils.md)**: Utilidades del núcleo para caché asíncrona, control de tiempos y robustez general.
+- **[TuWebUtils (Utilidades Web)](./docs/tuwebutils.md)**: Utilidades de alto rendimiento para el navegador (time-slicing para colecciones gigantes, formularios y observadores).
+
+### 🧩 Addons (Módulos de Extensión Opcionales)
+
+Módulos desacoplados que extienden el framework. Para mantener el core ultra ligero, se importan por separado utilizando subpath exports.
+
+- **[TuRouter (Enrutamiento Avanzado)](./docs/turouter.md)**: Enrutador desacoplado agnóstico con trie de prefijos ultra rápido ($O(L)$) y adaptadores de navegación multi-modo (`History`, `Hash`, `Query`). Se importa desde `"frankjstein/turouter"`.
+
 
 > [!TIP]
 > **El Linter es tu mejor amigo.** FrankJStein distribuye un archivo `frankjstein.d.ts` con tipados estrictos. Desarrollar en un entorno con soporte para TypeScript/JSDoc te ahorrará horas de debugging al validar tus configuraciones en tiempo real.
