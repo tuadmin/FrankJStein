@@ -16,7 +16,7 @@ describe("KageBunshin Integration", () => {
 
     describe("Identity Traps (Proxy)", () => {
         class User {
-            constructor(public name: string) { }
+            constructor(public name: string) {}
             sayHi() {
                 return `Hi ${this.name}`;
             }

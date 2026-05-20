@@ -14,7 +14,7 @@ describe("TuContainer: Dependency Injection", () => {
     }
 
     class ApiService {
-        constructor(public logger = DI.Inject<Logger>(Logger)) { }
+        constructor(public logger = DI.Inject<Logger>(Logger)) {}
     }
 
     describe("Basic Registration & Resolution", () => {
@@ -63,7 +63,7 @@ describe("TuContainer: Dependency Injection", () => {
 
     describe("Lazy Injection", () => {
         test("TuLazyInject defers resolution", () => {
-            /** 
+            /**
              * @trap TS(7022) - Inferencia Circular Intencional
              * Forzamos al compilador al límite para validar que FrankJStein
              * resuelve el ciclo mediante Proxies en tiempo de ejecución.
@@ -71,12 +71,12 @@ describe("TuContainer: Dependency Injection", () => {
 
             class CircularB {
                 // @ts-ignore: VSCode marcará error de inferencia, pero el test validará el Runtime
-                constructor(public a: CircularA = TuLazyInject<CircularA>(() => CircularA)) { }
+                constructor(public a: CircularA = TuLazyInject<CircularA>(() => CircularA)) {}
             }
 
             class CircularA {
                 // @ts-ignore: TSC no puede seguir el rastro circular en el inicializador
-                constructor(public b: CircularB = TuLazyInject<CircularB>(() => CircularB)) { }
+                constructor(public b: CircularB = TuLazyInject<CircularB>(() => CircularB)) {}
             }
             // @ts-ignore: TSC no puede seguir el rastro circular en el inicializador
             TuContainer.addSingleton(CircularA);

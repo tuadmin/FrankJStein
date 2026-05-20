@@ -6,15 +6,18 @@ import { TuWebUtils } from "../dist/frankjstein.js";
  * @standards Protocolo de Testing Soberano v1.0
  */
 describe("TuWebUtils: Async Orchestration", () => {
-
     describe("forEachAsync (Time Slicing)", () => {
         test("Process a large collection in batches", async () => {
             const items = Array.from({ length: 25 }, (_, i) => i);
             let callCount = 0;
 
-            const result = await TuWebUtils.forEachAsync(items, (item) => {
-                callCount++;
-            }, { batchSize: 5 });
+            const result = await TuWebUtils.forEachAsync(
+                items,
+                (item) => {
+                    callCount++;
+                },
+                { batchSize: 5 }
+            );
 
             expect(callCount).toBe(25);
             expect(result.completed).toBe(true);
@@ -38,9 +41,13 @@ describe("TuWebUtils: Async Orchestration", () => {
 
         test("safeForEachAsync: handle errors gracefully", async () => {
             const items = [1, 2, 3];
-            const [err, result] = await TuWebUtils.safeForEachAsync(items, (item) => {
-                if (item === 2) throw new Error("Boom");
-            }, { stopOnError: true });
+            const [err, result] = await TuWebUtils.safeForEachAsync(
+                items,
+                (item) => {
+                    if (item === 2) throw new Error("Boom");
+                },
+                { stopOnError: true }
+            );
 
             expect(err).not.toBeNull();
             expect(result).toBeNull();
@@ -58,7 +65,7 @@ describe("TuWebUtils: Async Orchestration", () => {
             fn();
 
             expect(count).toBe(0);
-            await new Promise(r => setTimeout(r, 50));
+            await new Promise((r) => setTimeout(r, 50));
             expect(count).toBe(1);
         });
 
@@ -71,7 +78,7 @@ describe("TuWebUtils: Async Orchestration", () => {
             fn();
 
             expect(count).toBe(1);
-            await new Promise(r => setTimeout(r, 60));
+            await new Promise((r) => setTimeout(r, 60));
             // depending on trailing option, might be 2
             expect(count).toBeGreaterThanOrEqual(1);
         });

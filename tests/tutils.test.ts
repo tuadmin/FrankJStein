@@ -6,7 +6,6 @@ import { TUtils } from "../dist/frankjstein.js";
  * @standards Protocolo de Testing Soberano v1.0
  */
 describe("TUtils: Core Engine Utilities", () => {
-
     test("cachedAsync: executes once and shares result", async () => {
         let callCount = 0;
         const loader = TUtils.cachedAsync(async () => {
@@ -23,10 +22,13 @@ describe("TUtils: Core Engine Utilities", () => {
 
     test("cachedAsyncByArgs: memoization by arguments", async () => {
         let callCount = 0;
-        const fetcher = TUtils.cachedAsyncByArgs(async (id: number) => {
-            callCount++;
-            return `data_${id}`;
-        }, (id) => `key_${id}`);
+        const fetcher = TUtils.cachedAsyncByArgs(
+            async (id: number) => {
+                callCount++;
+                return `data_${id}`;
+            },
+            (id) => `key_${id}`
+        );
 
         const res1 = await fetcher(1);
         const res1_again = await fetcher(1);
@@ -39,7 +41,7 @@ describe("TUtils: Core Engine Utilities", () => {
 
     test("repeatCall: creates a chainable function", () => {
         let result = "";
-        const logger = TUtils.repeatCall((msg: string) => result += msg);
+        const logger = TUtils.repeatCall((msg: string) => (result += msg));
 
         // Chainable call
         logger("F")("R")("A")("N")("K");

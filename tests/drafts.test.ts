@@ -7,7 +7,6 @@ import { ObservableDraft, ReactiveDraft } from "../dist/frankjstein.js";
  * @warning Posible colisión de nombres detectada (debounce).
  */
 describe("FrankJStein: Reactive Drafts (EXPERIMENTAL)", () => {
-
     describe("ObservableDraft: Middleware & Events", () => {
         test("Basic property change and commit", () => {
             const user = { name: "Frank", age: 30 };
@@ -39,16 +38,16 @@ describe("FrankJStein: Reactive Drafts (EXPERIMENTAL)", () => {
             let globalChanged = false;
             let nameChanged = false;
 
-            draft.on("change", () => globalChanged = true);
+            draft.on("change", () => (globalChanged = true));
             // @ts-ignore: Evento de propiedad dinámico
             draft.on("$name", (val) => {
                 if (val === "Stein") nameChanged = true;
             });
 
             draft.props.name = "Stein";
-            
+
             // Los eventos de Draft son asíncronos por defecto (microtask scheduler)
-            await new Promise(r => queueMicrotask(r));
+            await new Promise((r) => queueMicrotask(r));
 
             expect(globalChanged).toBe(true);
             expect(nameChanged).toBe(true);
