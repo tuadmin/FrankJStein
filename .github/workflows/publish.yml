@@ -8,9 +8,11 @@ on:
 permissions:
     contents: write
     id-token: write
+
 jobs:
     release-and-publish:
         runs-on: ubuntu-latest
+        environment: npm-publish
 
         steps:
             # --- 🛡️ EL GUARDIA DE SEGURIDAD ---
@@ -25,7 +27,7 @@ jobs:
                     echo "❌ ERROR FATAL: El tag '$TAG' tiene un error tipográfico."
                     echo "Debe seguir el formato estricto: vX.Y.Z o vX.Y.Z-texto (Ej: v0.1.0 o v1.0.0-beta.1)"
                     echo "El flujo se detiene aquí para evitar el caos."
-                    exit 1 # Esto cancela todo el Workflow instantáneamente
+                    exit 1
                   fi
                   echo "✅ Tag '$TAG' validado correctamente. ¡Avanzando!"
 
@@ -35,7 +37,7 @@ jobs:
             - name: 🥟 Configurar Bun
               uses: oven-sh/setup-bun@v2
               with:
-                bun-version: latest
+                  bun-version: latest
 
             - name: 🔍 Audit de Documentación para IAs
               run: bun scripts/verify-agents.ts
@@ -52,21 +54,6 @@ jobs:
             #   run: |
             #     npm install
             #     npm run build
-            - name: 🔍 Validar presencia del Token de NPM
-              run: |
-                  if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
-                      echo "❌ ERROR: El secreto 'NPM_TOKEN' está vacío o no existe en GitHub."
-                      echo "Asegúrate de haberlo configurado en Settings > Secrets > Actions."
-                      exit 1
-                  fi
-
-                  # Validación básica de longitud (los tokens de NPM suelen tener más de 30 caracteres)
-                  TOKEN_LEN=${#NPM_TOKEN_REF}
-                  if [ $TOKEN_LEN -lt 20 ]; then
-                      echo "⚠️ ADVERTENCIA: El token parece demasiado corto. Revisa si lo copiaste bien."
-                  fi
-              env:
-                  NPM_TOKEN_REF: ${{ secrets.NPM_TOKEN }}
 
             - name: 🗜️ Preparar y Empaquetar los Ejemplos
               run: |
@@ -122,7 +109,4 @@ jobs:
 
             - name: 🚀 Publicar en NPM
               run: |
-                  # Crear .npmrc localmente                 
-                  npm config set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
-                  # Forzamos la publicación. Si es la primera vez, a veces ayuda usar --access public
                   npm publish --tag ${{ env.NPM_TAG }} --provenance --access public
