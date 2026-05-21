@@ -41,18 +41,17 @@ const createRollupConfig = () => {
             input: { [addon.name]: addon.jsInput },
             // IMPORTANTE: external como función directa, NO en un array, para que evalúe correctamente
             external: (id) => id.includes("frankjstein"),
-            output: [
-                {
-                    dir: "dist",
-                    format: "es",
-                    entryFileNames: "[name].js",
-                    // Reescribimos la ruta relativa para que apunte a './frankjstein.js'
-                    paths: (id) => {
-                        if (id.includes("frankjstein")) return "./frankjstein.js";
-                        return id;
-                    }
+            output: {
+                dir: "dist",
+                format: "es",
+                entryFileNames: "[name].js",
+                //compact: true,
+                // Reescribimos la ruta relativa para que apunte a './frankjstein.js'
+                paths: (id) => {
+                    if (id.includes("frankjstein")) return "./frankjstein.js";
+                    return id;
                 }
-            ],
+            },
             plugins: [
                 // Eliminamos console.logs para evitar ruido
                 strip({
