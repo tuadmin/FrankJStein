@@ -37,7 +37,10 @@ type RouteParams<T extends (args: any) => string> = Parameters<T>[0];
  * @param from The current path. / La ruta actual.
  * @returns boolean, string, or Promise. Return false to abort, or a string to redirect. / Retorna false para abortar, o un string para redireccionar.
  */
-type NavigationGuard = (to: string, from: string) => boolean | string | Promise<boolean | string>;
+type NavigationGuard = (
+    to: string,
+    from: string
+) => boolean | string | Promise<boolean | string>;
 
 /**
  * Options passed to the router during resolution or navigation.
@@ -60,9 +63,10 @@ interface RouterOptions {
     [key: string]: unknown;
 }
 
-type ExtractRouteParams<T extends string> = T extends `${string}{${infer Param}}${infer Rest}`
-    ? { [K in Param | keyof ExtractRouteParams<Rest>]: string }
-    : {};
+type ExtractRouteParams<T extends string> =
+    T extends `${string}{${infer Param}}${infer Rest}`
+        ? { [K in Param | keyof ExtractRouteParams<Rest>]: string }
+        : {};
 
 type MergeParams<Prefix extends string, SubRoute> = SubRoute extends string
     ? ExtractRouteParams<Prefix> & ExtractRouteParams<SubRoute>
@@ -354,27 +358,5 @@ declare class QueryAdapter extends RouterAdapter {
     matches(path: string): boolean;
 }
 
-export {
-    GroupUrl,
-    HashAdapter,
-    HistoryAdapter,
-    ITuRouter,
-    ITuRouterWeb,
-    QueryAdapter,
-    RouterAdapter,
-    TuPathfinder,
-    TuRouterCore,
-    TuRouterWeb,
-    createGroupUrl
-};
-export type {
-    ExtractRouteParams,
-    MergeParams,
-    NavigationGuard,
-    ParamsArg,
-    ReactiveNode,
-    RouteMatch,
-    RouteParams,
-    RouterOptions,
-    Simplify
-};
+export { GroupUrl, HashAdapter, HistoryAdapter, ITuRouter, ITuRouterWeb, QueryAdapter, RouterAdapter, TuPathfinder, TuRouterCore, TuRouterWeb, createGroupUrl };
+export type { ExtractRouteParams, MergeParams, NavigationGuard, ParamsArg, ReactiveNode, RouteMatch, RouteParams, RouterOptions, Simplify };
