@@ -1,8 +1,8 @@
 {
     "name": "frankjstein",
-    "version": "0.6.0",
+    "version": "0.6.4",
     "publishConfig": {
-        "tag": "alpha",
+        "tag": "latest",
         "access": "public"
     },
     "description": "<⚡> Fragment Reactive Async Node Kit JavaScript Suspense Tree Engine Integrated Natively",
