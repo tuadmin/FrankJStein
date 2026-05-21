@@ -35,6 +35,9 @@
             }
         }
     },
+    "files": {
+        "includes": ["**", "!dist/**"]
+    },
     "javascript": {
         "formatter": {
             "quoteStyle": "double",
