@@ -51,9 +51,9 @@ const app = new TuJsHtml((tags) => {
 document.body.append(app);
 ```
 
-## 📚 Documentación y Soberanía
+## 📚 Documentación y Arquitectura
 
-Para mantener este archivo limpio, la documentación técnica exhaustiva se divide por módulos. Si eres un desarrollador humano o una IA buscando entender las reglas de oro del framework, consulta nuestro manifiesto de soberanía:
+Para mantener este archivo limpio, la documentación técnica exhaustiva se divide por módulos. Si eres un desarrollador humano o una IA buscando entender las reglas y convenciones del framework, consultá los documentos de referencia:
 
 - **[AGENTS.md (El Manifiesto)](./AGENTS.md)**: La ley suprema del repositorio y reglas de oro para IAs.
 - **[Project Blueprint (Mapa del Repositorio)](./docs/project-blueprint.md)**: La guía definitiva para entender la estructura, carpetas y filosofía del código.
