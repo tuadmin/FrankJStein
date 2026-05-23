@@ -28,10 +28,11 @@ import { createSignal, ELEMENT_UTIL as $, TuJsHtml } from "frankjstein";
 
 ## ✨ Un Vistazo Rápido
 
-FrankJStein se compone de módulos hiper-optimizados que puedes usar en conjunto o por separado. Observa cómo `TuJsHtml` y `KageBunshin` (Signals) se combinan para crear una UI reactiva sin esfuerzo:
+FrankJStein se adapta a tu estilo de código. El mismo counter reactivo, dos formas de escribirlo:
 
+**Estilo anidado** — estructura jerárquica explícita con callbacks:
 ```javascript
-import { createSignal, ELEMENT_UTIL as $, TuJsHtml } from "frankjstein";
+import { createSignal, TuJsHtml } from "frankjstein";
 
 /** @param {import("frankjstein").TuJsHtml.Types.Tags} tags */
 const app = new TuJsHtml((tags) => {
@@ -50,6 +51,34 @@ const app = new TuJsHtml((tags) => {
 
 document.body.append(app);
 ```
+**Estilo declarativo** — destructuring de elementos, más expresivo y compacto:
+```javascript
+import { createSignal, ELEMENT_UTIL as $, TuJsHtml } from "https://esm.sh/frankjstein@0.6.4";
+
+
+const app = new TuJsHtml( tags => {
+  const contador = createSignal(0);
+  const {
+    "div.counter-card":Box,
+    h1:Title,
+    p,
+    "button[style=margin-top:10px]":Btn
+  } = tags;
+  Box(
+    Title`Hola FrankJStein`,
+    p`Clicks actuales: ${contador}`,
+    _ => {
+      // [$] wraps the element with framework helpers (autocomplete-friendly)
+      // equivalent to: Btn`Incrementar`.addEventListener("click", ...)
+      Btn`Incrementar`[$].on("click", () => contador.value++)
+    }
+  )
+});
+document.body.append(app);
+```
+
+> `ELEMENT_UTIL` (importado como `$`) es un helper de conveniencia con soporte completo de autocompletado para eventos, estilos y más.
+
 
 ## 📚 Documentación y Arquitectura
 
@@ -82,30 +111,27 @@ Módulos desacoplados que extienden el framework. Para mantener el core ultra li
 > [!TIP]
 > **El Linter es tu mejor amigo.** FrankJStein distribuye un archivo `frankjstein.d.ts` con tipados estrictos. Desarrollar en un entorno con soporte para TypeScript/JSDoc te ahorrará horas de debugging al validar tus configuraciones en tiempo real.
 
-## 🧠 Filosofía y Contribuciones (¿Dónde está `/src`?)
+## 🧠 Filosofía y Contribuciones
 
-Si exploras el repositorio notarás una particularidad: **no existe una carpeta
-`/src` tradicional**.
+**FrankJStein** es, literalmente, un "monstruo de Frankenstein". Su **core**
+(TuJsHtml, KageBunshin, TuContainer, RemoteModule) nace de la unificación de
+múltiples librerías privadas internas, creadas y maduradas en proyectos
+comerciales reales. Por eso, el código fuente del core **no vive en este repo**
+— `/dist` es el artefacto compilado y distribuido desde esas fuentes privadas.
 
-Esto no es un error. **FrankJStein** es, literalmente, un "monstruo de
-Frankenstein". Nace de la unificación de múltiples librerías privadas internas
-(TuJsHtml, KageBunshin, TuContainer, RemoteModule) que fueron creadas, maduradas
-y probadas en el fragor de la batalla de otros proyectos comerciales y privados.
+Los **Addons** son diferentes: módulos de extensión opcionales como `TuRouter`
+que se desarrollan abiertamente en `/src/addons/`. Estos sí aceptan
+contribuciones directas de código.
 
-Este repositorio público actúa como el **ensamblador y distribuidor central**
-(`/dist`). Su objetivo principal es la estandarización arquitectónica para mi
-"yo del futuro" y para agentes de Inteligencia Artificial que consuman la
-librería.
+En resumen:
 
-Por esta razón, aunque el código se distribuye bajo licencia **Apache-2.0** y
-cualquiera es libre de usarlo:
+| Parte | Dónde vive | ¿Acepta PRs de código? |
+|-------|-----------|----------------------|
+| Core (`TuJsHtml`, `KageBunshin`, `TuContainer`, etc.) | Privado → compilado a `/dist` | Issues bienvenidos · PRs de código no |
+| Addons (`TuRouter`, futuros addons) | `/src/addons/` | Sí |
+| Documentación, ejemplos, tests | Este repo | Sí |
 
-- **Las Pull Requests con modificaciones al código core (`/dist`) son muy
-  difíciles de procesar**, ya que el código fuente real vive distribuido en
-  otros proyectos privados.
-- Si encuentras un bug o tienes una idea para una característica, eres
-  bienvenido a abrir un Issue, pero ten en cuenta que la integración dependerá
-  de cómo afecte al ecosistema privado de donde proviene el código original.
+> Consultá [CONTRIBUTING.md](./CONTRIBUTING.md) para los detalles sobre cómo contribuir.
 
 > [!WARNING]
 > **Estado del Proyecto: Alpha** La arquitectura central es funcional, pero
