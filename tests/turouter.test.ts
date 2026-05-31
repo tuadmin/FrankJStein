@@ -4,10 +4,10 @@ import {
     HashAdapter,
     TuRouterCore,
     TuPathfinder,
-    ITuRouter,
+    type ITuRouter,
     RouterAdapter
 } from "../src/turouter.entry.js";
-
+type HandlerCallback = () => string;
 describe("TuRouter: Web Routing Integration", () => {
     let router: TuRouterWeb;
 
@@ -96,7 +96,7 @@ describe("TuRouter: Web Routing Integration", () => {
             getCurrentPath() {
                 return "/my-app/index.html/users/abc";
             }
-            updateUrl(_path: string) {}
+            updateUrl(_path: string) { }
         }
 
         const mockRouter = new TuRouterWeb({
@@ -105,7 +105,7 @@ describe("TuRouter: Web Routing Integration", () => {
         });
 
         expect(mockRouter.base).toBe("/my-app");
-        // @ts-ignore
+
         expect(mockRouter.currentPath.get()).toBe("/users/abc");
     });
 
@@ -117,7 +117,7 @@ describe("TuRouter: Web Routing Integration", () => {
             getCurrentPath() {
                 return "/users/123";
             }
-            updateUrl(_path: string) {}
+            updateUrl(_path: string) { }
         }
 
         const mockRouter = new TuRouterWeb({
@@ -149,13 +149,13 @@ describe("TuRouter: Decoupled Core Architecture (Pathfinder + Core)", () => {
     test("Resolves static routes (Fast-path)", async () => {
         router.add("/home", () => "HomeComponent");
         const match = await router.resolve("/home");
-        expect((match!.handler as Function)()).toBe("HomeComponent");
+        expect((match?.handler as HandlerCallback)()).toBe("HomeComponent");
     });
 
     test("Resolves dynamic parameters {id}", async () => {
         router.add("/user/{id}/profile", () => "UserProfile");
         const match = await router.resolve("/user/123/profile");
-        expect((match!.handler as Function)()).toBe("UserProfile");
+        expect((match?.handler as HandlerCallback)()).toBe("UserProfile");
         expect(match!.params.id).toBe("123");
     });
 
@@ -173,7 +173,7 @@ describe("TuRouter: Decoupled Core Architecture (Pathfinder + Core)", () => {
         // Hydrates on-demand upon route resolution
         const match = await router.resolve("/admin/settings");
         expect(hydrated).toBe(true);
-        expect((match!.handler as Function)()).toBe("AdminSettings");
+        expect((match?.handler as HandlerCallback)()).toBe("AdminSettings");
     });
 
     test("Asynchronous Lazy Hydration (Promises / Imports)", async () => {
@@ -190,13 +190,13 @@ describe("TuRouter: Decoupled Core Architecture (Pathfinder + Core)", () => {
 
         const match = await router.resolve("/dashboard/stats");
         expect(hydrated).toBe(true);
-        expect((match!.handler as Function)()).toBe("DashboardStats");
+        expect((match?.handler as HandlerCallback)()).toBe("DashboardStats");
     });
 
     test("Wildcard Routing *", async () => {
         router.add("/files/*", () => "FileHandler");
         const match = await router.resolve("/files/images/vacaciones/foto.jpg");
-        expect((match!.handler as Function)()).toBe("FileHandler");
+        expect((match?.handler as HandlerCallback)()).toBe("FileHandler");
         expect(match!.params["*"]).toBe("images/vacaciones/foto.jpg");
     });
 
@@ -241,7 +241,7 @@ describe("TuRouter: Decoupled Core Architecture (Pathfinder + Core)", () => {
         ]);
 
         expect(loadCount).toBe(1); // Loader executed only once
-        expect((match1!.handler as Function)()).toBe("Race1");
-        expect((match2!.handler as Function)()).toBe("Race2");
+        expect((match1!.handler as HandlerCallback)()).toBe("Race1");
+        expect((match2!.handler as HandlerCallback)()).toBe("Race2");
     });
 });

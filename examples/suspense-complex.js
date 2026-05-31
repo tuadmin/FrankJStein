@@ -27,7 +27,7 @@ function renderProductCard({ "div.product-card": div, img, p, b }, id) {
 // Lazy loading
 export default () =>
     new TuJsHtml((tags) => {
-        const { div, section, h2 } = tags;
+        const { section } = tags;
         // Los estilos de esqueleto (Skeleton UI) son cortesía de skeleton-screen-css
         // por nullilac (MIT License).
         document.head.appendChild(tags.link({ href: "./skeleton.css", rel: "stylesheet" }));

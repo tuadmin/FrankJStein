@@ -113,7 +113,10 @@ export class TuRouterWeb extends TuRouterCore {
         window.removeEventListener("popstate", this.#onPopState);
         window.removeEventListener("hashchange", this.#onHashChange);
 
-        this.#slots.forEach((slot) => slot.set(null));
+        //this.#slots.forEach((slot) => slot.set(null));
+        for (const slot of this.#slots) {
+            slot.set(null);
+        }
         this.#slots.clear();
         this.#persistentSlots.clear();
         // de lo contrario se crean zombis

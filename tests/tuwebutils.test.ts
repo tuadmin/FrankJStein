@@ -13,7 +13,7 @@ describe("TuWebUtils: Async Orchestration", () => {
 
             const result = await TuWebUtils.forEachAsync(
                 items,
-                (item) => {
+                (_item) => {
                     callCount++;
                 },
                 { batchSize: 5 }

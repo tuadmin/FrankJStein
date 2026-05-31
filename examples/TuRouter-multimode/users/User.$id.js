@@ -9,7 +9,7 @@ export default function UserDetail({ params }) {
     // Usamos el 'veneno' (link) que viene en params para encontrar el scope correcto
     const router = TuLazyInject(ITuRouterWeb, { context: params });
 
-    const _currentUser = userList.find((u) => u.id == params.id) ?? {
+    const _currentUser = userList.find((u) => String(u.id) === String(params.id)) ?? {
         id: 0,
         name: "[Unknown]"
     };

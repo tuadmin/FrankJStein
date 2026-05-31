@@ -1,6 +1,6 @@
 # AGENTS.md — FrankJStein Architectural Sovereignty
 
-This document defines the core patterns, constraints, and AI-governance rules for the FrankJStein framework (v0.6.4). **All AI agents MUST strictly adhere to these standards.**
+This document defines the core patterns, constraints, and AI-governance rules for the FrankJStein framework (v0.7.0). **All AI agents MUST strictly adhere to these standards.**
 
 ## 🎯 Project Mission
 FrankJStein is an **AI-First, multi-threaded framework** designed for maximum granularity and performance. It prioritizes explicit reactivity (KageBunshin), robust Dependency Injection (TuContainer), and native Web Worker execution (RemoteModule).
@@ -20,6 +20,7 @@ The repository contains specialized instructions for different architectural pil
 | **IoC Patterns** | [.agents/skills/frankjstein-ioc-templates/SKILL.md](.agents/skills/frankjstein-ioc-templates/SKILL.md) | Service/Repository interfaces & DI logic. |
 | **Discovery** | [.agents/skills/frankjstein-tudiscovery/SKILL.md](.agents/skills/frankjstein-tudiscovery/SKILL.md) | Lazy Loading & Service Locators. |
 | **Utils & Performance** | [.agents/skills/frankjstein-utils/SKILL.md](.agents/skills/frankjstein-utils/SKILL.md) | Async caching, Time Slicing & Form handling. |
+| **Routing** | [.agents/skills/frankjstein-turouter/SKILL.md](.agents/skills/frankjstein-turouter/SKILL.md) | Routing patterns, guards, & TuRouter. |
 
 ## ⚠️ The "Golden Rules" (Non-Negotiable)
 

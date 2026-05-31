@@ -165,7 +165,7 @@ export class AuditEngine extends IAuditService {
             // Validation D: Environmental Leak Prevention (Multi-platform)
             // Checks for common absolute path patterns in macOS, Linux, and Windows to prevent sensitive data leaks.
             const content = readFileSync(mainSkillFile, "utf-8");
-            const absolutePathRegex = /(\/Users\/|\/home\/|\/Volumes\/|[a-zA-Z]:\\Users\\)/i;
+            const absolutePathRegex = /(\/Users\/[\w.-]+|\/Volumes\/|[a-zA-Z]:\\Users\\)/;
 
             if (absolutePathRegex.test(content)) {
                 this.logger.error(

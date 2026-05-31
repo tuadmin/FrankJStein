@@ -11,6 +11,52 @@ metadata:
 
 These utilities are essential for maintaining O(1) performance and professional-grade error handling within the FrankJStein ecosystem.
 
+### TuSerializer (High-Performance Packing & Rehydration)
+
+When persisting complex state (e.g., passing data to Web Workers, saving to `localStorage`, or cross-language data transfer), DO NOT use standard JSON parsing. Use `TuSerializer`.
+
+It operates in two distinct modes:
+
+#### Mode 1: Inherited (For Domain Classes - Best DX)
+The class extends `TuSerializer`. This provides automatic integration with `JSON.stringify()` (via `toJSON`) and great TypeScript autocompletion via `.fromJSON()`.
+
+```javascript
+import { TuSerializer } from "frankjstein";
+
+class Profile extends TuSerializer {
+    static VERSION = 1; // MANDATORY for validation
+    constructor() {
+        super();
+        this.data = new Set([1, 2]);
+        this._private = "secret"; // Ignored automatically
+    }
+}
+
+// Packing: Intercepted automatically
+const json = JSON.stringify(new Profile());
+
+// 2. Unpacking: Returns properly typed `Profile` instance
+// NOTE: `Profile` is implicitly known by the engine. You only need to pass a registry `{}`
+// for *other* custom classes that might be nested inside (e.g. `{ Role }`).
+const restored = Profile.fromJSON(json, {});
+```
+
+#### Mode 2: Universal Static (For Any Object/Class)
+Used for arrays, generic objects, or external classes that cannot extend `TuSerializer`. If a class lacks `static VERSION`, it defaults to `1`. The developer must cast types manually.
+
+```javascript
+// Packing
+const json = TuSerializer.pack(anyExternalData);
+
+// Unpacking (Requires registry for classes)
+const restored = TuSerializer.unpack(json, { ExternalClass });
+```
+
+**Critical Rules for TuSerializer:**
+1. **Manifest Validation**: Unpacking will fail-fast with a `TypeError` if a class is missing from the registry or if the JSON version is higher than the local class version.
+2. **Registry Injection**: When using `Class.fromJSON(str, registry)`, the root `Class` is implicitly known. The `registry` is only required for *nested* custom classes. When using `TuSerializer.unpack(str, registry)`, you MUST pass all custom classes including the root.
+3. **Cross-Language Intent**: The packed format (`{"manifest": {...}, "payload": {"@": "ClassName", ...}}`) is designed as a cheap alternative to Protobuf.
+
 ### 1. Async Caching for Suspense (`cachedAsync`)
 **Rule**: Always use `TUtils.cachedAsync` for data fetching or dynamic imports inside components that might re-render (like those using `$f` or `$block`).
 

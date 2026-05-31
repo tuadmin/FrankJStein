@@ -170,6 +170,16 @@ For medium-to-large projects, using **Import Aliases** (e.g., `#services/`, `#ty
 - **Constraint**: If no alias system is detected, stick to standard relative paths.
 - **Suggestion**: If the project is growing and lacks aliases, suggest configuring them to the user (e.g., using Deno's native imports or Node/Bun's "subpath imports").
 
+### 7. Resource Management (The Disposable Pattern)
+
+For classes that create event listeners, timers, or spawn sub-components, memory leaks are a huge risk. FrankJStein provides a native `Disposable` base class (and `IDisposable` pattern) leveraging `Symbol.dispose`.
+
+- **When to use**: Any UI Controller or Service that manages external subscriptions, timers, or spawns other disposable instances.
+- **How to use**: Extend `Disposable` (or `TuScope` which is also disposable). Use `this._register(resource)` to tie sub-resources to the instance's lifecycle.
+- **AI Rule**: If a class you are designing has a "cleanup", "destroy", or "teardown" method, DO NOT invent your own names. ALWAYS use the standard `[DISPOSE]()` or `dispose()` method. 
+- **AI Rule (Polyfill/Compat)**: The exported `DISPOSE` symbol from FrankJStein is an alias for native `Symbol.dispose`. It provides a fallback (`Symbol.for("Symbol.dispose")`) if the environment lacks support. ALWAYS use the imported `DISPOSE` instead of raw `Symbol.dispose` to guarantee backward compatibility in older browsers.
+- **AI Rule**: Before calling methods on a service, defensively check `if (this.isDisposed) return;` if it's an asynchronous callback.
+
 ## Code Examples
 
 ### Correct Reactivity Flow (Service -> UI)
@@ -295,6 +305,8 @@ export function CustomView(tags) {
   massive DataGrid or an isolated widget), or acts as a Micro-Frontend SPA, it
   CAN and SHOULD initialize its own internal state (`createSignal`) or inject
   dependencies via `TuContainer`.
+  - **AI Rule (DI in Components)**: Do NOT abuse injections in UI components. When injecting, favor **Singletons** (like `AuthService` or `AppConfig`). Injecting Transient or Scoped services into UI components is a code smell unless strictly architected.
+  - **AI Rule (Async Context)**: If the injection happens dynamically inside a Promise or an async block within the component, you MUST pass `{ context: tags }` to `TuLazyInject` to avoid losing the UI component's scope.
 
 - **The Proxy Trap (TuLazyInject)**: Be aware that `TuLazyInject` returns a **Proxy**. It looks and behaves like the real instance, but if you need to perform `instanceof` checks or pass it to low-level libraries that don't support Proxies, you might need to access a property to trigger resolution. For 99% of UI cases, it is transparent.
 
@@ -371,6 +383,67 @@ export function Footer(tags) {
         ctx.div({ className: "social" }, renderSocialLinks(ctx));
     });
 }
+```
+
+### 8. Composition Styles & Destructuring Patterns (Side-by-Side)
+
+When composing UI in FrankJStein, there are three primary styles of tag invocation. Each has specific trade-offs regarding readability, indentation depth, and how Tailwind utility classes are handled:
+
+#### I. Callback-Style (Inline Builder Callbacks)
+Children are defined inside a callback function that receives a nested tags context (usually named `ctx` or `item`).
+*   **Pros:** Access to the native parent element (`el`), easy to debug inline, very direct.
+*   **Cons:** Can lead to deep nesting/indentation ("callback hell") if overused.
+*   **Best for:** When you need the native DOM element reference, or for highly dynamic blocks (like event handlers/async loaders).
+
+```javascript
+info.div({ className: "contact-item" }, (item) => {
+    item.div({ className: "contact-ico" }, ci.icon);
+    item.div({}, (d) => {
+        d.p({ className: "contact-lbl" }, ci.lbl);
+        d.p({ className: "contact-val" }, ci.render);
+    });
+});
+```
+
+#### II. Pure N-Arguments Style (Nested Functions)
+Tags are invoked as pure functions that receive children as sequential arguments (without callbacks).
+*   **Pros:** Clean, declarative, behaves like React/Hyperapp nested functions, no callback indentation.
+*   **Cons:** Less inline debuggability, no direct access to parent elements within the child nodes unless wrapped.
+*   **Best for:** Standard tree nesting where no native element handles/callbacks are needed.
+
+```javascript
+const { div, p } = info;
+return div({ className: "contact-item" },
+    div({ className: "contact-ico" }, ci.icon),
+    div(
+        p({ className: "contact-lbl" }, ci.lbl),
+        p({ className: "contact-val" }, ci.render)
+    )
+);
+```
+
+#### III. Destructuring with Selector-Keys (CSS Abstraction Style)
+Destructure the `tags` or `info` proxy using CSS selectors to declare Tailwind-styled tags as local components.
+*   **Pros:** ZERO callback nesting, extremely clean markup, matches Tailwind utility conventions perfectly, reusable in the same scope.
+*   **Cons:** Overhead of destructuring declarations at the top of the function.
+*   **Best for:** Large components, Tailwind-heavy layouts, loops, and keeping indentation flat.
+
+```javascript
+const {
+    "div.contact-item": divContactItem,
+    "div.contact-ico": divContactIco,
+    "div.contact-lbl": divContactLbl,
+    "div[class=contact-val]": divContactVal, // Using attribute selectors
+    div
+} = info;
+
+return divContactItem(
+    divContactIco(ci.icon),
+    div(
+        divContactLbl(ci.lbl),
+        divContactVal(ci.render)
+    )
+);
 ```
 
 ---
@@ -513,13 +586,15 @@ By default, inject dependencies into **private class fields** (`#field`) using
 This prevents circular dependencies. Constructor injection is strictly reserved
 for Mocking/Testing environments.
 
+- **AI Rule (Async Boundaries)**: When injecting properties directly in the class body or in the constructor, you do NOT need options. But if you dynamically inject a dependency **inside** an asynchronous method, Promise, or callback, you MUST pass `{ context: this }` to `TuLazyInject` or `TuInject` to retain the Service's DI Scope.
+
 ```javascript
 import { TuLazyInject } from "frankjstein";
 import { IApiService } from "./IApiService.js";
 
 export class UserService {
     /** @type {IApiService} */
-    #api = TuLazyInject(() => IApiService);
+    #api = TuLazyInject(() => IApiService); // ✅ Sync property initialization (No context needed)
 
     // Constructor injection is ONLY for tests/mocks!
     constructor(mockApi = null) {
@@ -529,6 +604,12 @@ export class UserService {
     async getUser() {
         // The Linter provides 100% Autocomplete here!
         return await this.#api.fetchData();
+    }
+    
+    async lazyFeature() {
+        // ✅ Async injection REQUIRES context explicitly to avoid losing scope
+        const dynamicService = TuLazyInject(() => IFeatureService, { context: this });
+        return await dynamicService.execute();
     }
 }
 ```
@@ -1119,6 +1200,38 @@ export function DashboardView(tags) {
   });
 }
 ```
+
+### 5. Contextual Injection & Async Environments (Advanced)
+
+By default, `TuLazyInject` and `TuInject` synchronously capture the current DI Scope during component/class instantiation. **You do NOT need options for 99% of normal property initializations.**
+
+However, if you are calling an injection dynamically from **inside an async closure, a promise, or dynamic module loading (e.g., a Router)**, the synchronous `currentScope` is lost.
+
+> [!IMPORTANT]
+> **AI INSTRUCTION: Preventing Zombie Scopes:** Whenever injecting inside an asynchronous boundary, you MUST explicitly provide the `context` option (usually `this` or the `tags/params` object) to trace back the scope. Failing to do so will cause the DI Kernel to fallback to Root, creating memory leaks.
+> 
+> ```javascript
+> // ❌ WRONG (Inside Async): currentScope is lost!
+> setTimeout(() => {
+>   const api = TuLazyInject(() => IApiService); // Will fallback to Root unexpectedly!
+> }, 100);
+> 
+> // ✅ CORRECT (Inside Async):
+> setTimeout(() => {
+>   const api = TuLazyInject(() => IApiService, { context: this }); 
+> }, 100);
+> ```
+
+**The `optional` Flag:**
+If you pass `{ context: target }`, the DI kernel expects that `target` is linked to a valid Scope. If it is not, it strictly throws an error to prevent DI corruption. 
+
+If you are building a generic/hybrid component that *might* be used outside a Scope (e.g. in the Root app), pass `{ optional: true }` so it falls back gracefully:
+```javascript
+// ✅ For Reusable/Hybrid UI Components that might not have a dedicated Scope
+const auth = TuLazyInject(() => IAuthService, { context: this, optional: true });
+```
+> [!WARNING]
+> **AI INSTRUCTION:** NEVER append `{ optional: true }` randomly or defensively in regular classes. Only use it when the component is explicitly designed to live both inside and outside of Router Scopes.
 
 
 ---
@@ -1713,6 +1826,52 @@ metadata:
 
 These utilities are essential for maintaining O(1) performance and professional-grade error handling within the FrankJStein ecosystem.
 
+### TuSerializer (High-Performance Packing & Rehydration)
+
+When persisting complex state (e.g., passing data to Web Workers, saving to `localStorage`, or cross-language data transfer), DO NOT use standard JSON parsing. Use `TuSerializer`.
+
+It operates in two distinct modes:
+
+#### Mode 1: Inherited (For Domain Classes - Best DX)
+The class extends `TuSerializer`. This provides automatic integration with `JSON.stringify()` (via `toJSON`) and great TypeScript autocompletion via `.fromJSON()`.
+
+```javascript
+import { TuSerializer } from "frankjstein";
+
+class Profile extends TuSerializer {
+    static VERSION = 1; // MANDATORY for validation
+    constructor() {
+        super();
+        this.data = new Set([1, 2]);
+        this._private = "secret"; // Ignored automatically
+    }
+}
+
+// Packing: Intercepted automatically
+const json = JSON.stringify(new Profile());
+
+// 2. Unpacking: Returns properly typed `Profile` instance
+// NOTE: `Profile` is implicitly known by the engine. You only need to pass a registry `{}`
+// for *other* custom classes that might be nested inside (e.g. `{ Role }`).
+const restored = Profile.fromJSON(json, {});
+```
+
+#### Mode 2: Universal Static (For Any Object/Class)
+Used for arrays, generic objects, or external classes that cannot extend `TuSerializer`. If a class lacks `static VERSION`, it defaults to `1`. The developer must cast types manually.
+
+```javascript
+// Packing
+const json = TuSerializer.pack(anyExternalData);
+
+// Unpacking (Requires registry for classes)
+const restored = TuSerializer.unpack(json, { ExternalClass });
+```
+
+**Critical Rules for TuSerializer:**
+1. **Manifest Validation**: Unpacking will fail-fast with a `TypeError` if a class is missing from the registry or if the JSON version is higher than the local class version.
+2. **Registry Injection**: When using `Class.fromJSON(str, registry)`, the root `Class` is implicitly known. The `registry` is only required for *nested* custom classes. When using `TuSerializer.unpack(str, registry)`, you MUST pass all custom classes including the root.
+3. **Cross-Language Intent**: The packed format (`{"manifest": {...}, "payload": {"@": "ClassName", ...}}`) is designed as a cheap alternative to Protobuf.
+
 ### 1. Async Caching for Suspense (`cachedAsync`)
 **Rule**: Always use `TUtils.cachedAsync` for data fetching or dynamic imports inside components that might re-render (like those using `$f` or `$block`).
 
@@ -1781,6 +1940,180 @@ const onSubmit = (e) => {
 ### 6. Visibility and Layout
 - Use `TuWebUtils.whenVisibleAsync(el)` for lazy-loading or on-scroll animations.
 - Use `TuWebUtils.debounce(fn, ms)` for high-frequency events (resize/scroll).
+
+
+---
+# Source: .agents/skills/frankjstein-turouter/SKILL.md
+
+---
+name: frankjstein-turouter
+description: >
+  Routing patterns, configuration, and navigation with TuRouter in FrankJStein.
+  Trigger: Routing, navigation, URL parameters, router guards, TuRouterWeb, TuRouterCore, TuPathfinder.
+license: Apache-2.0
+metadata:
+  author: gentleman-programming
+  version: "1.0"
+---
+
+## When to Use
+
+- Configuring single-page application (SPA) routing.
+- Managing URL state, adapters (Hash, History, Query).
+- Protecting routes using navigation guards.
+- Loading components lazily (Dynamic Imports) based on routes.
+- Defining routing constants and URL builders.
+
+## Critical Patterns
+
+### 0. The Addon Import Rule (MANDATORY)
+
+TuRouter is an **addon**, it is NOT part of the core `frankjstein` bundle. You must import it from its specific subpath.
+
+```javascript
+// ❌ WRONG: It does not live in the core package
+import { TuRouterWeb } from "frankjstein";
+
+// ✅ CORRECT: Import from the turouter addon path
+import { TuRouterWeb } from "frankjstein/turouter";
+```
+
+### 1. Single Source of Truth (SSOT) for Route URLs
+
+**Never hardcode string paths in your templates or router configuration.** Always define routes as factory functions or constants in a centralized `routes.js` file. This provides intelligent autocompletion and centralizes changes.
+
+```javascript
+// ✅ CORRECT: Centralized route definitions
+export const URL_HOME = () => "/";
+export const URL_USERS = () => "/usuarios";
+// Dynamic routes use parameters with defaults for easy definition
+export const URL_USER_DETAIL = ({ id = "{id}" } = {}) => `/usuario/${id}`;
+
+// ❌ WRONG: Hardcoded strings scattered in code
+router.navigate("/usuario/123"); 
+```
+
+### 2. Router Initialization and Adapters
+
+`TuRouterWeb` orchestrates the navigation on the frontend. It relies on `RouterAdapter` implementations to interact with the browser's URL.
+
+- `HistoryAdapter`: Clean URLs (`/usuarios`). Requires server-side fallback to `index.html`.
+- `HashAdapter`: Hash URLs (`#!/usuarios`). Safe for static hosts without rewrite rules.
+- `QueryAdapter`: Query parameter URLs (`?ruta=/usuarios`).
+
+```javascript
+import { TuRouterWeb, TuPathfinder, HistoryAdapter } from "frankjstein/turouter";
+
+const router = new TuRouterWeb({
+    pathfinder: new TuPathfinder(),
+    adapters: [new HistoryAdapter()],
+    base: window.location.pathname.substring(0, window.location.pathname.lastIndexOf("/")) // Optional base path
+});
+```
+
+### 3. Route Registration & Lazy Loading
+
+`TuRouter` natively supports Promises and dynamic imports. 
+
+- **Convention `Tpl`**: If the dynamically imported module exports a default function ending in `Tpl` (e.g., `UserListTpl`), you can wrap it in `TuJsHtml` at the orchestrator level, keeping the router configuration perfectly clean.
+- **Lazy Groups**: Use `createGroupUrl` and `router.group()` to group related routes and load them only when the user accesses the group prefix.
+
+```javascript
+import { createGroupUrl } from "frankjstein/turouter";
+
+// Define a group of URLs
+export const URL_PAGES = createGroupUrl("/pages", {
+    HOME: () => "/home",
+    CONTACT: () => "/contacto"
+});
+
+export function setupRoutes(router) {
+    // 1. Direct Dynamic Import (Module exports a function)
+    router.add(URL_USER_DETAIL, () => import("./users/User.$id.js"));
+
+    // 2. Lazy Route Group (Routes are only registered when hitting /pages/*)
+    router.group(URL_PAGES, (add) => {
+        add(URL_PAGES.HOME, () => import("./pages/Home.js"));
+        add(URL_PAGES.CONTACT, () => import("./pages/Contact.js"));
+    });
+}
+```
+
+### 4. Navigation Guards (`beforeEach`)
+
+Guards are async interceptors executed before entering a route. They can allow navigation (`true`), abort it (`false`), or redirect (return a `string`).
+
+```javascript
+import { DI } from "frankjstein";
+import { IAuthService } from "./contracts.js";
+// (Note: TuRouter itself is imported from frankjstein/turouter, but DI is from core)
+
+router.beforeEach(async (to, from) => {
+    // Check if the route is protected
+    if (to.startsWith("/usuario/")) {
+        const auth = DI.Inject(IAuthService); // Or TuContainer.resolve(IAuthService)
+        if (auth.isLoggedIn) return true;
+        
+        // Redirect to login
+        return URL_LOGIN(); 
+    }
+    return true; // Allow navigation
+});
+```
+
+### 5. Orchestrator Integration (DI and Scope)
+
+When integrating `TuRouter` into a robust `TuContainer` setup (like multiple scopes or advanced DI), you must handle the component rendering manually in your app root.
+
+`router.resolve(path)` returns the matching route (`{ handler, params }`). The orchestrator should invoke the handler and render the result.
+
+```javascript
+// Inside your App orchestrator listening to router.currentPath changes:
+const match = await router.resolve(targetPath);
+if (!match?.handler) {
+    renderNotFound();
+    return;
+}
+
+// Pass parameters (including AbortSignal for cancellation)
+const module = await match.handler(match.params);
+
+if (module[Symbol.toStringTag] === "Module") {
+    const component = module.default;
+    
+    // ILUSTRA CONVENTION (IPageTpl): Function ends in 'Tpl'
+    if (component.name.endsWith("Tpl")) {
+        // Wrap in TuJsHtml to enable TuLazyInject to detect current Scope
+        viewElement.appendChild(new TuJsHtml(tags => component(tags, match.params)));
+    } else {
+        // Standard Vanilla JS component
+        const result = component({ params: match.params });
+        viewElement.appendChild(result);
+    }
+}
+```
+
+### 6. Cancellation (AbortSignal)
+
+Since routes are lazily loaded and components might fetch data on mount, the orchestrator should generate an `AbortController` on every route change and inject its `signal` into the route `params`. Components MUST listen to this signal to cancel pending fetches if the user navigates away before loading completes.
+
+```javascript
+// In the orchestrator:
+const signal = this.currentAbortController.signal;
+match.params.signal = signal; // Inject into params
+
+// In the component:
+export async function UserDetailTpl(tags, params) {
+    const data = await fetch(`/api/users/${params.id}`, { signal: params.signal });
+    // ...
+}
+```
+
+## Architectural Anti-Patterns (NEVER DO)
+
+- **❌ Hardcoding string URLs in links**: `tags.button({ "@on": { click: () => router.navigate("/login") } })`. Use `URL_LOGIN()` instead.
+- **❌ Heavy sync work in guards**: Guards block the navigation pipeline. Keep them fast (e.g., checking token existence).
+- **❌ Ignoring the AbortSignal**: If you do heavy async work in a route, ignoring the signal can cause the component to render *after* the user has already navigated to a different page, corrupting the DOM.
 
 
 # SECTION: WORKFLOWS (OPERATIONAL PROTOCOLS)
@@ -1998,6 +2331,99 @@ customElements.define("my-widget", MyWidget);
 
 
 ---
+# Source: docs/disposable.md
+
+# Disposable (Gestión de Memoria)
+
+Para aplicaciones robustas y de largo aliento (como SPAs pesadas o procesos en segundo plano), la gestión de memoria y el "cleanup" (limpieza de recursos) es un aspecto crítico.
+
+FrankJStein provee una arquitectura estandarizada de gestión de memoria basada en el patrón `IDisposable` y el reciente estándar nativo de JavaScript `Symbol.dispose` a través del módulo central `TuCore/v1/Disposable.js`.
+
+## ¿Por qué usar Disposable?
+
+Cuando creás servicios, controladores o componentes UI que:
+1. Registran Listeners de eventos en el DOM (ej. `window.addEventListener`).
+2. Tienen ciclos recursivos como `setInterval` o `requestAnimationFrame`.
+3. Instancian sub-componentes u otras clases complejas.
+4. Establecen conexiones Websocket.
+
+Si esos componentes son destruidos (ej. el usuario cambia de ruta en el Router), **sus eventos o timers seguirán vivos en memoria**, causando memory leaks severos (Zombis).
+
+## La Clase Abstracta `Disposable`
+
+Extendiendo la clase base `Disposable`, podés vincular todos los sub-recursos al ciclo de vida principal de tu clase, garantizando que se limpien en cascada de forma automática.
+
+```javascript
+import { Disposable } from "frankjstein";
+
+class MyController extends Disposable {
+    constructor() {
+        super();
+        
+        // 1. Registrando otro componente Disposable
+        this.socket = this._register(new WebSocketService());
+
+        // 2. Registrando un timer o función manual
+        const interval = setInterval(() => this.tick(), 1000);
+        this._register({ dispose: () => clearInterval(interval) });
+    }
+
+    tick() {
+        // Buena práctica asíncrona: abortar si ya fue destruido
+        if (this.isDisposed) return;
+        console.log("Tick!");
+    }
+}
+```
+
+### Limpieza (El método `dispose`)
+
+Cuando necesites matar a tu controlador, simplemente llamas a `.dispose()`.
+El controlador cambiará `this.isDisposed` a `true` y llamará en cascada al `dispose()` (o `[DISPOSE]()`) de **todos** los recursos que hayas registrado previamente mediante `_register()`.
+
+```javascript
+const controller = new MyController();
+
+// Más tarde, cuando el controlador ya no se usa:
+controller.dispose();
+// ¡Automáticamente se limpia el WebSocketService y el setInterval!
+```
+
+## `DisposableStore` (El Coleccionista)
+
+Si no puedes heredar de la clase `Disposable` (porque ya heredas de otra), puedes usar el motor interno directamente: el `DisposableStore`.
+
+```javascript
+import { DisposableStore, DISPOSE } from "frankjstein";
+
+class LegacyClass extends AnotherFramework {
+    #disposables = new DisposableStore();
+
+    init() {
+        this.#disposables.add(new SomeSubComponent());
+        this.#disposables.add({ dispose: () => console.log("Limpio!") });
+    }
+
+    destroy() {
+        // Ejecuta la limpieza de todos los recursos almacenados
+        this.#disposables.dispose(); // O equivalentemente this.#disposables[DISPOSE]()
+    }
+}
+```
+
+## Compatibilidad e Idempotencia
+
+- **Soporte Nativo y Fallback (`DISPOSE`)**: El símbolo exportado `DISPOSE` actúa como un puente de compatibilidad. Internamente usa `Symbol.dispose` nativo (introducido en el nuevo estándar ECMAScript de Resource Management). Si el entorno (como navegadores antiguos) no lo soporta, genera un símbolo de fallback (`Symbol.for("Symbol.dispose")`). Esto permite modernizar tu código hoy sin romper entornos viejos.
+- **Idempotencia**: Llamar a `dispose()` múltiples veces sobre la misma instancia es 100% seguro. Sólo se ejecutará la rutina de limpieza la primera vez.
+- **Fail-Fast**: La función `add` (y `_register`) valida en tiempo real si el objeto que pasaste tiene un método de limpieza válido (`dispose` o `[DISPOSE]`). Si le pasas algo inválido, explotará inmediatamente, evitando bugs silenciosos.
+- **Tolerancia a Fallos**: Cuando se destruye una colección de recursos, si uno de ellos explota y tira un `Error`, la clase `Disposable` lo atrapa y continúa destruyendo al resto de sus hermanos.
+
+### Integración con TuScope
+
+Todos los `TuScope` creados por el framework de Inyección de Dependencias de FrankJStein son por naturaleza `Disposable`. Cuando destruís un Scope (e.g. `routerScope.dispose()`), el Scope limpiará sus dependencias y vaciará su caché.
+
+
+---
 # Source: docs/kagebunshin.md
 
 # KageBunshin (Signals & Reactividad)
@@ -2137,7 +2563,7 @@ Casi todas las herramientas de KageBunshin (`createKageBunshinObject`, `TuLazyIn
 Este documento actúa como el **Mapa Estelar** de FrankJStein. Su propósito es guiar a futuros arquitectos (humanos o IAs) a través de la estructura del repositorio, explicando no solo qué hay en cada carpeta, sino el **porqué** de su existencia.
 
 ## 🎯 Filosofía del Repositorio
-FrankJStein es un proyecto **Dev-Centric con Gobernanza AI-Augmented**. Esto significa que el framework está diseñado primordialmente para la legibilidad, el rendimiento y la cordura del desarrollador humano. Sin embargo, su estructura está optimizada para que los agentes de IA puedan asistir en el mantenimiento y la evolución del código sin violar la soberanía arquitectónica, gracias a contratos estrictos y validaciones automáticas.
+FrankJStein es un proyecto **Dev-Centric con Gobernanza AI-Augmented**. Esto significa que el framework está diseñado primordialmente para la legibilidad, el rendimiento y la cordura del desarrollador humano. Sin embargo, su estructura está optimizada para que los agentes de IA puedan asistir en el mantenimiento y la evolución del código sin violar la integridad arquitectónica, gracias a contratos estrictos y validaciones automáticas.
 
 ---
 
@@ -2152,7 +2578,10 @@ Contiene el **Skill Registry**, el manifiesto que dicta qué reglas se aplican a
 
 ### 📦 `dist/` (The Body)
 El código compilado y listo para producción. 
-- **Soberanía**: FrankJStein se distribuye como un único archivo `.js` para maximizar la compatibilidad y simplicidad, acompañado de su `.d.ts`.
+- **Independencia**: FrankJStein se distribuye como un único archivo `.js` para maximizar la compatibilidad y simplicidad, acompañado de su `.d.ts`.
+
+### 🧩 `src/addons/` (The Extensions)
+El ecosistema de módulos opcionales. Aquí habitan piezas clave como `TuRouter`, las cuales mantienen una arquitectura desacoplada y se compilan independientemente del núcleo principal para mantener el tamaño final al mínimo.
 
 ### 📚 `docs/` (The Knowledge Base)
 Documentación técnica profunda en español. A diferencia de las skills (que son reglas para la IA), los docs son guías conceptuales para el entendimiento humano y el contexto de alto nivel de las IAs. Cubre desde el núcleo de UI hasta utilidades de alto rendimiento (`TUtils`, `TuWebUtils`).
@@ -2160,13 +2589,19 @@ Documentación técnica profunda en español. A diferencia de las skills (que so
 ### 🧪 `examples/` (The Proof of Life)
 Implementaciones de referencia. Cada ejemplo es una prueba viviente de que el framework funciona de forma nativa en el navegador sin herramientas de construcción complejas.
 
+### ⚙️ `tests/` (The Reliability Core)
+La suite principal de pruebas unitarias y de integración escritas en TypeScript y ejecutadas con Bun. Validan el núcleo reactivo, inyección de dependencias, utilidades y enrutamiento avanzado.
+
 ### 🔬 `tests-ia/` (The Calibration Suite)
 La "Cámara de Pruebas" de IA. Contiene exámenes de calibración bajo una política de **Examen Ciego** (especificaciones en `.md` visibles, resultados en `.test.ts` ignorados por Git). Sirve para validar que un agente es capaz de razonar y escribir código idiomático de FrankJStein desde cero.
+
+### ⚡ `benchmarks/` (The Performance Vault)
+Aquí se almacenan los micro-benchmarks oficiales del framework. Sirven para medir y asegurar el máximo rendimiento de partes críticas (como el enrutamiento o el sistema de reactividad) bajo millones de iteraciones concurrentes, previniendo regresiones de performance.
 
 ### 🎨 `assets/` (The Visual Identity)
 Recursos estáticos, logotipos y media que definen la marca visual y la estética del proyecto.
 
-### 🛠 `scripts/` (The Sovereign Engine)
+### 🛠 `scripts/` (The Automation Engine)
 Aquí vive el motor de auditoría y las herramientas de mantenimiento.
 - **Arquitectura**: Los scripts están construidos usando el mismo kernel de IoC de FrankJStein. Es la "víbora que se come a sí misma": el framework se usa para auditar su propia integridad.
 
@@ -2175,9 +2610,15 @@ Aquí vive el motor de auditoría y las herramientas de mantenimiento.
 ## 🔑 Archivos Críticos
 
 ### 📄 `AGENTS.md` (El Manifiesto)
-Es el punto de entrada para cualquier IA. Define la personalidad (Senior Architect), las reglas de oro y el índice de soberanía. **Es la ley suprema del repositorio.**
+Es el punto de entrada para cualquier IA. Define la personalidad (Senior Architect), las reglas de oro y el índice de integridad. **Es la ley suprema del repositorio.**
 
-### 📘 `frankjstein.d.ts` (Source of Truth)
+### 📦 `package.json` (The Meta-Configuration)
+Define el empaquetado del framework y los subpath exports (como `./turouter`), comandos de pruebas, dependencias de desarrollo y linting. Es el mapa de dependencias y construcción de todo el proyecto.
+
+### 📜 `dist/frankjstein.js` (The Final Build)
+El núcleo entero de FrankJStein minificado y listo para ser importado nativamente. Todo el código base del framework se consolida aquí de forma agnóstica.
+
+### 📘 `dist/frankjstein.d.ts` (Source of Truth)
 Este archivo define el contrato técnico total. Es el validador último de que el código propuesto es válido dentro del ecosistema.
 
 ### ⚙️ `tsconfig.json` (The Policy)
@@ -2185,7 +2626,7 @@ Configurado para **ESNext** y **Bun**. Refleja nuestra apuesta por el rendimient
 
 ---
 
-## 🐍 El Ciclo de Soberanía
+## 🐍 El Ciclo de Integridad
 Cualquier cambio estructural debe pasar por los scripts de auditoría (`bun scripts/verify-agents.ts`). Si un cambio rompe el **Blueprint** o el **Registry**, el sistema se bloquea. Esto garantiza que FrankJStein mantenga su integridad a través de los años, sin importar quién (o qué) lo esté editando.
 
 > "En FrankJStein, la arquitectura no es una sugerencia; es el código mismo validándose."
@@ -2278,34 +2719,24 @@ Puedes crear contextos anidados usando `TuContainer.createScope()`. Esto te perm
 
 ## Inyección Lazy (`TuLazyInject`)
 
-La característica más fuerte de `TuContainer` es su capacidad de inyección
-perezosa mediante `TuLazyInject`. Esto permite que un módulo, clase o función 
-declare sus dependencias, pero el framework solo las instanciará o resolverá 
-en la fracción de milisegundo en la que se lea por primera vez.
+La característica más fuerte de `TuContainer` es su capacidad de inyección perezosa mediante `TuLazyInject`. Esto permite que un módulo, clase o función declare sus dependencias, pero el framework solo las instanciará o resolverá en la fracción de milisegundo en la que se lea por primera vez.
 
 A diferencia de otros métodos de resolución, **`TuLazyInject` funciona perfectamente tanto en clases como en funciones regulares** (componentes UI), siendo el patrón preferido para evitar problemas de orden de inicialización en arquitecturas complejas.
 
 **Beneficios Técnicos:**
-
 1. Elimina errores de Dependencias Circulares (A depende de B, B depende de A).
-2. Mejora drásticamente el tiempo de inicio de la aplicación, ya que los
-   servicios no se cargan todos juntos al arranque.
+2. Mejora drásticamente el tiempo de inicio de la aplicación.
 
-> [!WARNING]
-> **Trade-off: Verbosidad vs Autocompletado (TS vs JS)**
+### Opciones Avanzadas de Inyección (`{ context, optional }`)
+
+En el 99% de los casos (propiedades de clases normales o componentes sincrónicos), `TuLazyInject` captura automáticamente el Scope porque la instanciación ocurre de forma sincrónica durante la fase de inyección. **No necesitas pasar opciones.**
+
+Sin embargo, hay **Casos Especiales** (como la carga dinámica de módulos con `import()`, integraciones con Micro-Frontends o callbacks asíncronos) donde la inyección ocurre **fuera** del ciclo síncrono del contenedor.
+
+> [!IMPORTANT]
+> **Secuestro Asíncrono:** Si inyectás una dependencia de forma dinámica dentro de una promesa, un macro-task (`setTimeout`) o una resolución diferida, el motor de DI **perderá el rastro del Scope actual** y caerá silenciosamente en el Root Container, lo que causa zombificación o sobre-escritura de dependencias.
 > 
-> En entornos puramente `.js`, el autocompletado funciona mágicamente porque JSDoc/TS infiere el tipo de retorno de la función `() => IConfigService`. **En JavaScript, `TuLazyInject` nunca es verboso.**
-> 
-> Sin embargo, en archivos `.ts`, la inferencia de tipos de funciones anónimas que devuelven abstracciones suele resolverse como `unknown`. Para tener autocompletado en TS tienes dos opciones:
-> 1. **(Recomendado) Usar `TuLazyInject<IConfigService>(...)`**: Es verboso porque requiere pasar el Genérico `<T>`, pero **mantiene la magia del Lazy Evaluation** (evita dependencias circulares y acelera el inicio).
-> 2. **Usar `TuInject(IConfigService)` o `TuContainer.resolve(IConfigService)`**: No es verboso (TS infiere el tipo por el constructor) y da autocompletado perfecto. Pero **pierdes el Lazy Evaluation**, lo que puede causar errores si la dependencia aún no ha sido registrada o si hay dependencias circulares.
-
-### Uso en Clases vs Funciones (Tokens Abstractos vs Concretos)
-
-Puedes inyectar **Interfaces/Clases Abstractas** (para un desacoplamiento formal) o directamente **Clases Concretas**. 
-
-> [!NOTE]
-> **La magia del Override:** No es obligatorio usar interfaces (`IConfigService`). Puedes inyectar una clase concreta (`AppConfig`). Si en 5 años necesitas cambiar la lógica, no tienes que modificar los cientos de archivos que inyectan `AppConfig`. Simplemente cambias el Kernel: `TuContainer.addSingleton(AppConfig, AppConfigV2030)`. El contenedor inyectará la nueva versión automáticamente.
+> **Solo para estos casos especiales**, `TuLazyInject` exige pasar el contexto al cual atarse, usando un objeto de opciones: `{ context: target }`.
 
 ```typescript
 import { DI, TuContainer, TuLazyInject } from "frankjstein";
@@ -2314,6 +2745,8 @@ import { DI, TuContainer, TuLazyInject } from "frankjstein";
 class ApiService {
     // REGLA OBLIGATORIA EN TS: Pasar el genérico <IConfigService>
     // En JS puro, el genérico no es necesario: const config = TuLazyInject(() => IConfigService)
+    
+    // NOTA: Para clases normales instanciadas síncronamente, NO es necesario pasar { context: this }
     #config = TuLazyInject<IConfigService>(() => IConfigService);
 
     fetchData() {
@@ -2330,6 +2763,19 @@ export function MyComponent(tags) {
         // La dependencia se instanciará RECIÉN en este punto de renderizado
         tags.p(`El token actual es: ${config.token}`);
     });
+}
+```
+
+### Componentes Híbridos (El Flag `optional`)
+
+A veces creás un componente UI puro o una clase de servicio que puede ser instanciada **dentro de un Entorno Aislado** (donde tendrá un Scope vinculado) o directamente en el **Root de la app** (donde no lo tendrá).
+
+Si le pasás `{ context: this }` y el contexto no está en el ScopeRegistry, el framework por seguridad **crasheará**. Para decirle a FrankJStein que es legítimo que este componente a veces no tenga Scope, usamos `{ optional: true }`:
+
+```javascript
+class ReusableComponent {
+  // Si 'this' está en un Scope, lo usará. Si no (ej. root app), hará fallback al Singleton general sin explotar.
+  #service = TuLazyInject(() => MyService, { context: this, optional: true });
 }
 ```
 
@@ -2356,6 +2802,25 @@ class MyComponent {
 // 4. Registro Simple
 TuContainer.addSingleton(IApiService, RealApiService);
 ```
+
+## Inyección Sincrónica (`TuInject`)
+
+Aunque `TuLazyInject` es la norma en FrankJStein gracias a los beneficios de la carga diferida, a veces necesitás resolver la dependencia de forma **inmediata** y **sincrónica** (por ejemplo, cuando querés interactuar con la instancia real y no con un Proxy, o al inicializar configuraciones críticas).
+
+Para esto usamos `TuInject`. Al igual que su contraparte perezosa, respeta el contexto de forma segura:
+
+```javascript
+class LoginController {
+    async init() {
+        // TuInject instancia y devuelve el objeto REAL inmediatamente.
+        // También protege el ciclo de vida exigiendo { context: this }.
+        const auth = TuInject(IAuthService, { context: this });
+        
+        await auth.checkSession();
+    }
+}
+```
+
 ## Registros con Factorías (Casos Avanzados)
 
 A veces no basta con pasar la clase; quizás necesitás pasarle parámetros al constructor o resolver otras dependencias de forma manual. Para eso usamos las **Factorías**.
@@ -2367,12 +2832,12 @@ TuContainer.addScope(IApiService, () => new RealApiService("api-key-123", "https
 ```
 
 ### Factoría con Contexto (DI)
-Podés recibir el contexto del contenedor (`di` o `ctx`) para resolver otras dependencias antes de crear tu instancia.
+Podés recibir el contexto del contenedor (`scope` o `ctx`) para resolver otras dependencias antes de crear tu instancia.
 ```javascript
-TuContainer.addSingleton(IApiService, (di) => {
+TuContainer.addSingleton(IApiService, (scope) => {
     // Resolvemos dependencias manualmente antes de instanciar
-    const config = di.resolve(IConfigService);
-    const http = di.resolve(IHttpClient);
+    const config = scope.resolve(IConfigService);
+    const http = scope.resolve(IHttpClient);
     
     return new RealApiService(config.token, http);
 });
@@ -2478,7 +2943,7 @@ Esto es internamente convertido a operaciones eficientes de TextNodes reactivos.
 
 > [!WARNING]
 > **Error Común: String Interpolation vs Tagged Templates**
-> Es muy fácil confundir la sintaxis de invocación de función `()` con la sintaxis de Tagged Template `\``, y la diferencia de rendimiento/comportamiento es abismal.
+> Es muy fácil confundir la sintaxis de invocación de función `()` con la sintaxis de Tagged Template ``` ` ```, y la diferencia de rendimiento/comportamiento es abismal.
 > 
 > **Escenario 1: Renderizado Estándar (Reactividad Granular)**
 > Si utilizas paréntesis `()` con interpolación nativa de JavaScript `${}`, JS resuelve el string devolviendo el valor inicial de la Signal y la reactividad **se rompe**.
@@ -2900,6 +3365,262 @@ tags.div((ctx) => {
   array masivo de datos (`map` o bucles grandes), asegurando que el GC (Garbage
   Collector) y el Motor de Renderizado no sufran el impacto de parsear callbacks
   miles de veces.
+
+
+---
+# Source: docs/turouter.md
+
+# 🧭 TuRouter: Enrutamiento Avanzado para FrankJStein
+
+El sistema de enrutamiento de **FrankJStein** no es el típico router pegado con cinta que encontrás en otros frameworks. Está diseñado bajo una arquitectura de **Arquitectura Desacoplada**: es agnóstico, multi-entorno y ridículamente rápido.
+
+## 🏗️ Arquitectura de Tres Capas
+
+Para que no te hagas un lío, el router está dividido para que cada parte haga lo que tiene que hacer:
+
+1.  **`TuPathfinder` (El Explorador)**: Lógica pura de matching. Usa un **Trie (Árbol de Prefijos)** para que resolver una ruta entre 10.000 sea instantáneo ($O(L)$). No sabe qué es un browser ni le importa.
+2.  **`TuRouterCore` (El Orquestador)**: Gestiona el registro de rutas, middlewares (guards) y grupos. Es el cerebro agnóstico que podés correr en Bun, Node o el Browser.
+3.  **`TuRouterWeb` (El Adaptador DOM)**: La implementación específica para la web. Gestiona el `history`, el `hash`, y sincroniza el estado con **Signals** para que tu UI reaccione sola.
+
+---
+
+## 🚀 Uso Rápido
+
+### 1. Definir Rutas (Con Type-Safety)
+Olvidate de escribir strings a mano como un principiante. Usamos funciones generadoras que sirven de tokens:
+
+```javascript
+// routes.js
+/** @param {{ id?: string }} [p] */
+export const URL_USER = ({ id = '{id}' } = {}) => `/user/${id}`;
+
+export const URL_HOME = () => '/';
+```
+
+### 2. Registrar e Instanciar
+En tu entry point, configurás el contenedor de dependencias (DI):
+
+```javascript
+import { TuContainer } from "frankjstein";
+import { ITuRouter, TuRouterWeb } from "frankjstein/turouter";
+
+// Instanciamos la implementación web
+const router = new TuRouterWeb();
+
+// Registramos el router en el contenedor de dependencias
+TuContainer.addSingleton(ITuRouter, () => router);
+
+// Agregar rutas
+router.add(URL_HOME, () => import("./views/Home.js"));
+router.add(URL_USER, () => import("./views/UserProfile.js"));
+```
+
+### 🎯 Definición de Rutas Avanzada (`GroupUrl`)
+
+Para evitar tener que escribir funciones generadoras manuales, FrankJStein expone `createGroupUrl`. Esto permite declarar grupos de URLs jerárquicas con parámetros dinámicos, garantizando inferencia de tipos perfecta en el IDE:
+
+```javascript
+import { createGroupUrl } from "frankjstein/turouter";
+
+// Define un grupo principal y sus sub-rutas dinámicas
+export const URL_USER = createGroupUrl("/user/{user_id}", {
+    SETTINGS: "/config",
+    POST: "/posts/{post_id}"
+});
+
+// 1. Registro en el router
+router.add(URL_USER, () => "UserProfile");
+router.add(URL_USER.SETTINGS, () => "UserSettings");
+router.add(URL_USER.POST, () => "UserPostDetail");
+
+// 2. Generación bi-direccional de URLs con parámetros
+// Inferencia automática en el IDE: solicita { user_id } y { post_id }
+const userPostUrl = URL_USER.POST({ user_id: "123", post_id: "456" });
+console.log(userPostUrl); // "/user/123/posts/456"
+```
+
+El motor de `GroupUrl` está altamente optimizado: pre-calcula los resolvedores para que la generación de URLs en caliente sea prácticamente instantánea, logrando millones de ejecuciones por segundo sin sobrecargar el recolector de basura (GC).
+
+---
+
+## 🏎️ Adaptadores (Multimode)
+El router es camaleónico. Podés cambiar cómo se ve la URL sin tocar tu lógica de negocio. Ideal para entornos legacy (PHP), SPAs clásicas o PWAs modernas.
+
+- **`HistoryAdapter`**: URLs limpias (`/path`).
+- **`HashAdapter`**: Basado en Hash (`#/path`).
+- **`QueryAdapter`**: Basado en parámetros (`?ruta=/path`).
+
+> [!TIP]
+> Mirá el ejemplo en `examples/router-multimode/` para ver cómo alternar entre estos modos en tiempo de ejecución.
+
+
+### 3. Navegación
+Podés navegar usando el router directamente o mediante componentes:
+
+```javascript
+// Programático
+router.navigate(URL_USER({ id: 123 }));
+
+// En el HTML (TuJsHtml)
+tags.a({ href: URL_USER({ id: 456 }) }, "Ver Perfil");
+```
+
+---
+
+## 🛡️ Middlewares y Guards
+Podés meter interceptores para que nadie pase si no tiene permiso:
+
+```javascript
+router.beforeEach((to, from) => {
+    if (to.startsWith('/admin') && !user.isAdmin) {
+        return '/login'; // Redirección automática
+    }
+    return true; // Dale para adelante
+});
+```
+
+---
+
+## 💉 Inyección de Dependencias (IoC)
+Tus componentes no tienen que saber que el router existe. Podés inyectar los parámetros directamente:
+
+```javascript
+// UserProfile.js (Smart Component)
+export function UserProfile({ params }) {
+    // 'params' ya viene inyectado con { id: 123 }
+    return tags.div({}, `Viendo al usuario: ${params.id}`);
+}
+```
+
+Si estás en un componente muy anidado (Dumb Component) y necesitás los params sin pasarlos por props, podés acceder a ellos a través del Router. 
+
+Notarás que al método `currentParams` se le pasa la constante de la ruta (`URL_USER`). Esto no es obligatorio, pero es una **buena práctica vital para el autocompletado del IDE (VSCode)**:
+
+```javascript
+const router = TuContainer.resolve(ITuRouterWeb);
+
+// Al pasarle URL_USER, el IDE infiere qué parámetros tiene esa ruta.
+// Si URL_USER es "/users/{id}", VSCode sabrá que `params.id` existe.
+const params = router.currentParams(URL_USER);
+
+console.log(params.id); // Autocompletado seguro
+```
+
+> [!TIP]
+> Si el componente se renderiza accidentalmente en una ruta distinta a `URL_USER`, las propiedades como `id` serán `undefined`. Pasar la constante de la ruta actúa como un contrato de expectativas para el desarrollador.
+
+
+---
+# Source: docs/tuserializer.md
+
+# TuSerializer: Motor de Serialización Transversal
+
+El `TuSerializer` de FrankJStein no es simplemente un envoltorio sobre `JSON.stringify`. Es un **motor de Empaquetado y Rehidratación de Alto Rendimiento** diseñado específicamente para resolver problemas complejos de persistencia de estado, transferencia de datos hacia Web Workers (vía `RemoteModule`), y la comunicación agnóstica entre diferentes lenguajes de programación en el backend (PHP, C#, Go, Rust, etc.).
+
+Piensa en `TuSerializer` como una **alternativa ligera y sin dependencias a Protobuf o FlatBuffers**, utilizando puro JSON pero manteniendo la semántica orientada a objetos.
+
+## 🚀 Características Principales
+
+1. **Rehidratación de Prototipos**: Cuando deserializas, no obtienes un objeto plano de JavaScript (POJO). Obtienes la instancia de la clase original con todos sus métodos listos para usarse.
+2. **Soporte Nativo Ampliado**: Serializa y restaura correctamente `Date` y `Set` (que JSON nativo corrompe o ignora).
+3. **Control de Privacidad**: Automáticamente excluye de la serialización cualquier propiedad que empiece con guion bajo (`_`) y cualquier función o método, manteniendo los payloads limpios.
+4. **Validación por Manifiesto (Fail-Fast)**: Genera un manifiesto con la versión de las clases utilizadas. Si un JSON viejo intenta rehidratarse en una clase que evolucionó (o si falta una clase en el registro), lanza un error preventivo para evitar corromper la memoria del sistema.
+
+## 🛠 Modos de Uso
+
+TuSerializer está diseñado para trabajar en dos modalidades según tus necesidades de Developer Experience (DX) y arquitectura.
+
+### Modo 1: Instancia Heredada (Mejor DX y Autocompletado)
+
+Si tu clase puede heredar de `TuSerializer`, obtienes integración nativa con `JSON.stringify` y autocompletado automático al deserializar, ya que el archivo `.d.ts` sabe exactamente qué tipo va a retornar `fromJSON`.
+
+```javascript
+import { TuSerializer } from "frankjstein";
+
+class PerfilUsuario extends TuSerializer {
+    static VERSION = 1; // Obligatorio para evitar corrupciones de estado
+
+    constructor(nombre, rol) {
+        super();
+        this.nombre = nombre;
+        this.rol = rol;
+        this.permisos = new Set(["leer", "escribir"]);
+        this.ultimoAcceso = new Date();
+        this._tokenInterno = "secreto-123"; // No será serializado (prefijo _)
+    }
+
+    saludar() { return `Hola, soy ${this.nombre}`; }
+}
+
+const usuario = new PerfilUsuario("Alice", "Admin");
+
+// 1. Empaquetar: TuSerializer inyecta toJSON(), así que stringify funciona directo
+const jsonStr = JSON.stringify(usuario);
+
+// 2. Desempaquetar: Usamos fromJSON desde la clase. (Devuelve tipo 'PerfilUsuario' para el IDE)
+// La clase raíz ('PerfilUsuario') es implícitamente conocida por el motor.
+// El segundo argumento es para Clases Anidadas no-nativas (ej: { Rol, Departamento }).
+const usuarioRestaurado = PerfilUsuario.fromJSON(jsonStr, {});
+
+console.log(usuarioRestaurado.saludar()); // "Hola, soy Alice"
+```
+
+### Modo 2: Motor Estático Universal
+
+Para estructuras de datos crudas, Arrays, o clases externas que no puedes (o no quieres) obligar a heredar de `TuSerializer`. 
+Si las clases externas no tienen una propiedad estática `VERSION`, el motor les asigna automáticamente la versión `1`.
+
+```javascript
+import { TuSerializer } from "frankjstein";
+
+class ClaseExterna {
+    // Si no pones VERSION, asume 1
+    constructor(data) { this.data = data; }
+}
+
+const dataArbitraria = [ new ClaseExterna("A"), new ClaseExterna("B") ];
+
+// 1. Empaquetar: Usamos pack() estático
+const jsonStr = TuSerializer.pack(dataArbitraria, 2);
+
+// 2. Desempaquetar: Usamos unpack() estático
+// Aquí el IDE no puede adivinar el tipo, por lo que el desarrollador debe castearlo explícitamente si usa TS/JSDoc
+const restaurado = TuSerializer.unpack(jsonStr, { ClaseExterna });
+
+console.log(restaurado[0] instanceof ClaseExterna); // true
+```
+
+## 🌍 Intención Cross-Language (Interop)
+
+La estructura del JSON emitido por `TuSerializer` no es casualidad. Está pensada para poder ser implementada de manera trivial en cualquier lenguaje de Backend utilizando reflexión o mapeo manual.
+
+La anatomía del documento siempre será:
+```json
+{
+  "manifest": {
+    "TuClase": 1
+  },
+  "payload": {
+    "@": "TuClase",
+    "propiedad": "valor"
+  }
+}
+```
+
+- El **`manifest`** permite que tu servidor PHP o C# sepa de antemano si comprende la versión de los objetos que el Frontend le está enviando, abortando la petición HTTP con un `400 Bad Request` antes de procesar un payload potencialmente malicioso o desactualizado.
+- El atributo **`@`** actúa como discriminador de tipos polimórficos, indicando exactamente a qué clase DTO (Data Transfer Object) debe instanciarse ese objeto en memoria en el servidor.
+- Para tipos nativos de JS incompatibles o extraños como el `Set`, el atributo `@` también se usa: `{"@": "Set", "v": [...]}`. Esto permite a los parsers en otros lenguajes traducir ese bloque en su propia estructura (ej. un `HashSet` en Java).
+
+## ⚠️ Reglas y Anti-Patrones
+
+> [!CAUTION]
+> **El Diccionario de Clases (Registry) es innegociable.**
+> Para reconstruir la cadena de prototipos, el motor *necesita* saber qué clases están permitidas. **Nunca utilices `eval()` ni resolución global dinámica de clases** para intentar rehidratar objetos, ya que eso abriría una vulnerabilidad crítica de seguridad (RCE / Prototype Pollution).
+> Si llamas a `TuSerializer.unpack(str, { ClaseA })`, el sistema solo instanciará objetos de `ClaseA`, rechazando cualquier otro tipo inyectado en el payload.
+
+> [!WARNING]
+> **No olvides el `static VERSION = X`.**
+> Si cambias la estructura de tu clase (añadiendo propiedades requeridas o cambiando lógica crítica), **debes** incrementar el `VERSION`. Si lees datos de `localStorage` que tenían la versión 1, el `unpack` fallará proactivamente obligándote a manejar una ruta de migración o limpiar la caché, evitando que la aplicación actúe de manera errática con datos huérfanos.
 
 
 ---

@@ -117,7 +117,7 @@ new TuJsHtml((tags) => {
                 a(
                     {
                         className: "nav-link nav-link-server",
-                        href: window.location.pathname + "?r=/admin/dashboard"
+                        href: `{window.location.pathname}?r=/admin/dashboard`
                     },
                     "🔗 Cargar Panel Admin (Lazy)"
                 )

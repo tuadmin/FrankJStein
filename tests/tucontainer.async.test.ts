@@ -165,7 +165,7 @@ describe("TuContainer: Async Stress Tests and Scope Leaks", () => {
             // Even if the poison is reassigned to scopeB, instanceA already has a WeakRef pointing to scopeA.
 
             // Force property access to instantiate (here it evaluates the proxy)
-            let _ignoreThis = instanceB.id != instanceA.id;
+            const _ignoreThis = instanceB.id !== instanceA.id;
 
             // TuContainer is super robust! instanceA is instantiated in scopeA, and instanceB in scopeB.
             // Reassigning the context (DOM element) does not break previously created proxies.
@@ -191,7 +191,6 @@ describe("TuContainer: Async Stress Tests and Scope Leaks", () => {
 
     test("2. Async Hijacking (Bug Reproduction): Scope Loss", async () => {
         let asyncInstance: IDummyService | null = null;
-        let _rootInstance = null;
 
         const myScope = TuContainer.createScope((_scope) => {
             // Simulate "await import" or async event.

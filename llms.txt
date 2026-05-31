@@ -15,6 +15,7 @@
 - [frankjstein-tudiscovery](/.agents/skills/frankjstein-tudiscovery/SKILL.md)
 - [frankjstein-tujshtml](/.agents/skills/frankjstein-tujshtml/SKILL.md)
 - [frankjstein-utils](/.agents/skills/frankjstein-utils/SKILL.md)
+- [frankjstein-turouter](/.agents/skills/frankjstein-turouter/SKILL.md)
 
 ## ⚙️ Workflows (Sovereign Procedures)
 
@@ -24,6 +25,7 @@
 ## 📚 Core Documentation (Aesthetics & Logic)
 
 - [Diseño de Componentes en FrankJStein](/docs/component-design.md)
+- [Disposable (Gestión de Memoria)](/docs/disposable.md)
 - [KageBunshin (Signals & Reactividad)](/docs/kagebunshin.md)
 - [FrankJStein: Project Blueprint & Architectural Map](/docs/project-blueprint.md)
 - [RemoteModule (Web Workers Bridge)](/docs/remote.md)
@@ -32,6 +34,8 @@
 - [TuJsHtml (DOM Builder & UI)](/docs/tujshtml/README.md)
 - [Suspense y Bloques Reactivos](/docs/tujshtml/suspense-and-blocks.md)
 - [Templates y Clonación Masiva](/docs/tujshtml/templates.md)
+- [🧭 TuRouter: Enrutamiento Avanzado para FrankJStein](/docs/turouter.md)
+- [TuSerializer: Motor de Serialización Transversal](/docs/tuserializer.md)
 - [TUtils (Utilidades de Propósito General)](/docs/tutils.md)
 - [TuWebUtils (Utilidades Específicas de la Web)](/docs/tuwebutils.md)
 

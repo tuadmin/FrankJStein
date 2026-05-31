@@ -77,7 +77,7 @@ const app = new TuJsHtml((tags) => {
     // Consola de Logs Reactiva, consumiendo el Signal y formateando los saltos de línea a BRs
     // no está implementado aún @innerHTML
     // div({ class: "log-box", "@innerHTML": createSignal(() => logs.value.replace(/\n/g, '<br>')) });
-    div({ className: "log-box" }, (tags, refDiv) => {
+    div({ className: "log-box" }, (_tags, refDiv) => {
         createComputedSignal(logs, (value) => {
             refDiv.innerHTML = value.replace(/\n/g, "<br>");
         });

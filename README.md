@@ -98,6 +98,7 @@ Estos módulos forman parte del núcleo principal del framework y están disponi
 - **[Disposable (Gestión de Recursos)](./docs/disposable.md)**: Ciclo de vida y liberación determinista de memoria mediante patrones descartables.
 - **[RemoteModule (Web Workers)](./docs/remote.md)**: Multi-threading nativo y RPC para delegar tareas pesadas a hilos de ejecución secundarios.
 - **[TuDiscovery (Service Discovery)](./docs/tudiscovery.md)**: Localizador de servicios centralizado y patrón Bridge para comunicación asíncrona entre Workers.
+- **[TuSerializer (Empaquetado y Rehidratación)](./docs/tuserializer.md)**: Motor serializador cross-language para persistencia, DTOs y delegación compleja a Workers.
 - **[TUtils (Utilidades Core)](./docs/tutils.md)**: Utilidades del núcleo para caché asíncrona, control de tiempos y robustez general.
 - **[TuWebUtils (Utilidades Web)](./docs/tuwebutils.md)**: Utilidades de alto rendimiento para el navegador (time-slicing para colecciones gigantes, formularios y observadores).
 

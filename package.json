@@ -1,6 +1,6 @@
 {
     "name": "frankjstein",
-    "version": "0.6.4",
+    "version": "0.7.0",
     "publishConfig": {
         "tag": "latest",
         "access": "public"
@@ -10,10 +10,11 @@
     "types": "dist/frankjstein.d.ts",
     "type": "module",
     "scripts": {
+        "audit": "bun scripts/verify-agents.ts && bun scripts/bundle-ai-docs.ts",
         "test": "bun test tests/",
         "test:ia": "bun test tests-ia/",
         "test:all": "bun test",
-        "lint": "biome lint .",
+        "lint": "biome lint --max-diagnostics 200",
         "lint:fix": "biome check --apply .",
         "format": "biome format --write .",
         "build:addons": "rollup -c scripts/rollup.addons.mjs",

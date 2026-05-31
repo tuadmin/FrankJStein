@@ -1,5 +1,5 @@
 // @since 0.1.1-alpha
-import { TuContainer, TuInject, TuLazyInject } from "../../dist/frankjstein.js";
+import { TuContainer, TuLazyInject } from "../../dist/frankjstein.js";
 
 // --- Dominio / Lógica pura ---
 

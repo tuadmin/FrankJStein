@@ -8,7 +8,7 @@ Para asegurar la predictibilidad del código, evitar fugas de memoria por secues
 
 ## 1. El Marco de Convenciones (`convencion.js` y `convencion.d.ts`)
 
-Para que el editor de código proporcione autocompletado nativo completo y las IAs entiendan perfectamente los contratos esperados, el archivo [convencion.js](file:///Volumes/Monterey-DISK/Users/v3ct0r/ProyectosGit/FrankJStein/examples/router-multimode/convencion.js) y [convencion.d.ts](file:///Volumes/Monterey-DISK/Users/v3ct0r/ProyectosGit/FrankJStein/examples/router-multimode/convencion.d.ts) definen las firmas y tipos de los "esqueletos lógicos" de la aplicación.
+Para que el editor de código proporcione autocompletado nativo completo y las IAs entiendan perfectamente los contratos esperados, el archivo [convencion.js](./convencion.js) y [convencion.d.ts](./convencion.d.ts) definen las firmas y tipos de los "esqueletos lógicos" de la aplicación.
 
 ### Contrato A: Plantillas Sincrónicas (`IPageTpl`)
 - **Descripción:** Plantilla declarativa y fluida que usa `TuJsHtml`.
@@ -39,7 +39,7 @@ Cada vez que el enrutador cambia de ruta, el orquestador ejecuta el ciclo de can
 3. Inyecta la señal de aborto (`signal`) dentro del objeto de parámetros que recibe la página: `match.params.signal = signal;`.
 
 ### Cómo consumirlo en una página asíncrona:
-Dentro de tu plantilla asíncrona (ej: [Pokemon.$name.js](./pages/Pokemon.%24name.js)), siempre debes pasar `params.signal` a tus llamadas asíncronas de `fetch`:
+Dentro de tu plantilla asíncrona (ej: [Pokemon.$name.js](./pages/Pokemon.$name.js)), siempre debes pasar `params.signal` a tus llamadas asíncronas de `fetch`:
 
 ```javascript
 export default async function PokemonTpl(tags, params) {
@@ -66,7 +66,7 @@ export default async function PokemonTpl(tags, params) {
 
 ## 3. Ilustración de los 7 Estilos de Enrutamiento
 
-Para aprender las diferentes técnicas soportadas por el motor de enrutamiento y el inyector de dependencias (DI) de FrankJStein, en [routes.js](file:///Volumes/Monterey-DISK/Users/v3ct0r/ProyectosGit/FrankJStein/examples/router-multimode/routes.js) se exponen y comentan 7 enfoques de registro:
+Para aprender las diferentes técnicas soportadas por el motor de enrutamiento y el inyector de dependencias (DI) de FrankJStein, en [routes.js](./routes.js) se exponen y comentan 7 enfoques de registro:
 
 | Estilo | Mecánica | Carga | Ejemplo |
 |---|---|---|---|
@@ -86,8 +86,8 @@ Cuando una ruta acepta parámetros comodín (ej: `:name` o `:id`), el archivo co
 `NombreComponente.$parametro.js`
 
 Esto le da a la estructura del directorio una pista visual explícita de qué archivos son dinámicos y a qué parámetros corresponden:
-- [User.$id.js](file:///Volumes/Monterey-DISK/Users/v3ct0r/ProyectosGit/FrankJStein/examples/router-multimode/users/User.%24id.js) -> Atiende a `/usuario/:id` (`params.id`).
-- [Pokemon.$name.js](file:///Volumes/Monterey-DISK/Users/v3ct0r/ProyectosGit/FrankJStein/examples/router-multimode/pages/Pokemon.%24name.js) -> Atiende a `/pokemon/:name` (`params.name`).
+- [User.$id.js](./users/User.$id.js) -> Atiende a `/usuario/:id` (`params.id`).
+- [Pokemon.$name.js](./pages/Pokemon.$name.js) -> Atiende a `/pokemon/:name` (`params.name`).
 
 ---
 

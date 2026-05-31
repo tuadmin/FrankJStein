@@ -16,7 +16,7 @@ Esto es internamente convertido a operaciones eficientes de TextNodes reactivos.
 
 > [!WARNING]
 > **Error Común: String Interpolation vs Tagged Templates**
-> Es muy fácil confundir la sintaxis de invocación de función `()` con la sintaxis de Tagged Template `\``, y la diferencia de rendimiento/comportamiento es abismal.
+> Es muy fácil confundir la sintaxis de invocación de función `()` con la sintaxis de Tagged Template ``` ` ```, y la diferencia de rendimiento/comportamiento es abismal.
 > 
 > **Escenario 1: Renderizado Estándar (Reactividad Granular)**
 > Si utilizas paréntesis `()` con interpolación nativa de JavaScript `${}`, JS resuelve el string devolviendo el valor inicial de la Signal y la reactividad **se rompe**.

@@ -58,10 +58,10 @@ describe("TUtils: Core Engine Utilities", () => {
         });
 
         expect(counter).toBe(0);
-        // @ts-ignore
+        // @ts-expect-error
         expect(target.test).toBe("resolved");
         expect(counter).toBe(1);
-        // @ts-ignore
+        // @ts-expect-error
         expect(target.test).toBe("resolved");
         expect(counter).toBe(1); // Memoized
     });

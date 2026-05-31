@@ -156,3 +156,5 @@ desktop.ini
 
 .vscode/
 scripts/*.txt
+
+/*.sh

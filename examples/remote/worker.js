@@ -1,5 +1,5 @@
 // @since 0.1.1-alpha
-import { Remote, RemoteModule } from "../../dist/frankjstein.js";
+import { RemoteModule /*,Remote*/ } from "../../dist/frankjstein.js";
 
 /**
  * MathService

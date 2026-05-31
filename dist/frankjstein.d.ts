@@ -426,6 +426,89 @@ declare class TuDiscovery {
 }
 
 /**
+ * TuSerializer Type Definitions
+ * High-Performance Packing and Rehydration Engine.
+ * Automatically handles nested instances, Native types (Date, Set), and safely excludes private properties.
+ * @es Motor de Empaquetado y Rehidratación de Alto Rendimiento.
+ * Maneja automáticamente instancias anidadas, tipos nativos (Date, Set) y excluye de forma segura propiedades privadas.
+ */
+declare abstract class TuSerializer {
+    /**
+     * Default version for classes extending this serializer. 
+     * Used for strict Manifest compatibility validation during hydration.
+     * @es Versión por defecto para las clases que extienden este serializador. 
+     * Usado para validación estricta de compatibilidad del Manifiesto.
+     * @default 1
+     */
+    static VERSION: number;
+
+    // ==========================================
+    // INSTANCE & INHERITANCE API (DX)
+    // ==========================================
+
+    /**
+     * Automatically intercepted by the native JSON.stringify().
+     * Builds the structured document containing the dependency Manifest and the payload.
+     * @es Interceptado automáticamente por el JSON.stringify() nativo.
+     * Construye el documento estructurado que contiene el Manifiesto de dependencias y el payload.
+     */
+    toJSON(): {
+        manifest: Record<string, number>;
+        payload: any;
+    };
+
+    /**
+     * Factory Method: Unpacks a JSON string, validates the Manifest (Fail-Fast), 
+     * and rehydrates it into a fully functional instance of the calling class.
+     * @es Método Fábrica: Desempaqueta una cadena JSON, valida el Manifiesto (Fail-Fast) 
+     * y la rehidrata en una instancia de la clase que lo invoca.
+     * @template T
+     * @param this - The calling class constructor.
+     * @param jsonString - The JSON payload to parse.
+     * @param extraRegistry - Dictionary of nested class constructors required.
+     * @returns The rehydrated instance fully typed for IDE IntelliSense.
+     * @example
+     * const manager = ExampleClassBackupManager.fromJSON(str, { ExampleClassIncident });
+     */
+    static fromJSON<T extends new (...args: any[]) => any>(
+        this: T,
+        jsonString: string,
+        extraRegistry?: Record<string, any>
+    ): InstanceType<T>;
+
+    // ==========================================
+    // STATIC UNIVERSAL API (Swiss Army Knife)
+    // ==========================================
+
+    /**
+     * Universal Packer: Serializes any arbitrary object, array, or external class instance.
+     * @es Empaquetador Universal: Serializa cualquier objeto arbitrario, array o instancia de clase externa.
+     * @param dataRoot - The root element to serialize.
+     * @param space - Indentation level (default 2).
+     * @returns The packed JSON string.
+     * @example
+     * const jsonString = TuSerializer.pack([incidentA, incidentB]);
+     */
+    static pack(dataRoot: any, space?: number): string;
+
+    /**
+     * Universal Unpacker: Rehydrates any packed JSON string back into its original structure.
+     * @es Desempaquetador Universal: Rehidrata cualquier cadena JSON empaquetada a su estructura original.
+     * @template R - Expected return type (optional).
+     * @param jsonString - The JSON payload to parse.
+     * @param classRegistry - Dictionary of allowed classes.
+     * @returns The rehydrated payload.
+     * @throws {TypeError} If missing classes or version mismatch.
+     * @example
+     * const incidents = TuSerializer.unpack<ExampleClassIncident[]>(str, { ExampleClassIncident });
+     */
+    static unpack<R = any>(
+        jsonString: string,
+        classRegistry?: Record<string, any>
+    ): R;
+}
+
+/**
  * @file TuContainer.d.ts
  * @description Type definitions for the Sovereign DI Kernel.
  * @es Definiciones de tipos para el Núcleo de Inyección Soberano.
@@ -5930,4 +6013,4 @@ declare const Remote: {
     readonly Global: typeof RemoteGlobalModule;
 };
 
-export { AnyNode, DI, DISPOSE, Disposable, DisposableStore, ELEMENT_UTIL, ObservableDraft, ReactiveDraft, Remote, RemoteGlobalModule, RemoteLocalModule, RemoteModule, RemoteSharedModule, TUtils, TuContainer, TuDiscovery, TuInject, TuJsHtml, TuLazyInject, TuScope, TuTemplateHtml, TuWebUtils, createComputedSignal, createKageBunshinObject, createSignal, createTemplateHtml, debounce, debounceEvents, makeReactive, textSize, textSizeEvents, trim };
+export { AnyNode, DI, DISPOSE, Disposable, DisposableStore, ELEMENT_UTIL, ObservableDraft, ReactiveDraft, Remote, RemoteGlobalModule, RemoteLocalModule, RemoteModule, RemoteSharedModule, TUtils, TuContainer, TuDiscovery, TuInject, TuJsHtml, TuLazyInject, TuScope, TuSerializer, TuTemplateHtml, TuWebUtils, createComputedSignal, createKageBunshinObject, createSignal, createTemplateHtml, debounce, debounceEvents, makeReactive, textSize, textSizeEvents, trim };
